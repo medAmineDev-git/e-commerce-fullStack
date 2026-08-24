@@ -1,0 +1,111 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+
+:root {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --bg-page: #fffaf3;
+  --bg-surface: #ffffff;
+  --text-main: #221c15;
+  --text-muted: #6e6258;
+  --accent: #d56616;
+  --accent-strong: #8a3f06;
+  --accent-soft: #ffe8d2;
+  --line-soft: #eadfce;
+  --line-strong: #d1c2ad;
+  --shadow-soft: 0 8px 30px rgba(80, 44, 12, 0.08);
+  --motion-fast: 180ms;
+  --motion-medium: 320ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #16120f;
+    --bg-surface: #211a16;
+    --text-main: #f8efe2;
+    --text-muted: #c3b29f;
+    --accent: #ff9d4d;
+    --accent-strong: #ffd4aa;
+    --accent-soft: #3b2a1d;
+    --line-soft: #3f3228;
+    --line-strong: #5a4a3d;
+    --shadow-soft: 0 10px 32px rgba(0, 0, 0, 0.35);
+  }
+}
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+  background-image:
+    radial-gradient(circle at 8% -4%, rgba(252, 178, 111, 0.24), transparent 34%),
+    radial-gradient(circle at 92% 0%, rgba(255, 201, 152, 0.26), transparent 32%);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image:
+      radial-gradient(circle at 8% -4%, rgba(255, 157, 77, 0.18), transparent 36%),
+      radial-gradient(circle at 92% 0%, rgba(255, 212, 170, 0.12), transparent 34%);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softPulseIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* You can add global styles to this file, and also import other style files */

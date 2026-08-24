@@ -1,0 +1,81 @@
+<header class="public-header">
+  <a class="brand" routerLink="/">
+    <span class="brand-mark">NOVA</span>
+    <span class="brand-subtitle">Boutique urbaine</span>
+  </a>
+
+  <nav class="desktop-nav" aria-label="Navigation principale">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <a routerLink="/shop" routerLinkActive="active">Shop</a>
+    <a routerLink="/cart" routerLinkActive="active">Panier ({{ cartStore.totalItems() }})</a>
+    <button type="button" class="mini-cart-trigger" (click)="toggleCartDrawer()">
+      Mini panier
+      <span>{{ cartStore.totalItems() }}</span>
+    </button>
+    <a href="http://localhost:8080/swagger.html" target="_blank" rel="noopener noreferrer" class="admin-link">API Docs</a>
+    <a routerLink="/admin/products" class="admin-link">Admin</a>
+  </nav>
+</header>
+
+<section class="search-bar-wrap">
+  <label class="search-bar" for="global-search">
+    <span class="search-icon" aria-hidden="true">⌕</span>
+    <input
+      id="global-search"
+      type="search"
+      placeholder="Rechercher une veste, sneaker, accessoire..."
+      [value]="searchTerm()"
+      (input)="searchTerm.set($any($event.target).value)"
+      (keyup.enter)="goToSearch(searchTerm())"
+    />
+    <button type="button" (click)="goToSearch(searchTerm())">Chercher</button>
+  </label>
+</section>
+
+<main class="public-main">
+  <router-outlet />
+</main>
+
+@if (cartDrawerOpen()) {
+  <div class="drawer-backdrop" (click)="closeCartDrawer()"></div>
+  <aside class="cart-drawer" aria-label="Mini panier">
+    <header>
+      <div>
+        <p>Mini panier</p>
+        <h2>{{ cartStore.totalItems() }} article(s)</h2>
+      </div>
+      <button type="button" class="close-btn" (click)="closeCartDrawer()">Fermer</button>
+    </header>
+
+    @if (cartStore.isEmpty()) {
+      <p class="drawer-empty">Ton panier est vide. Ajoute un produit pour le voir ici.</p>
+    } @else {
+      <div class="drawer-items">
+        @for (item of cartStore.items(); track item.product.id) {
+          <article>
+            <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+            <div>
+              <h3>{{ item.product.name }}</h3>
+              <p>{{ item.quantity }} x {{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="drawer-summary">
+        <div>
+          <span>Total</span>
+          <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+        <a routerLink="/cart" (click)="closeCartDrawer()">Voir le panier</a>
+        <a routerLink="/checkout" (click)="closeCartDrawer()">Passer la commande</a>
+      </div>
+    }
+  </aside>
+}
+
+<nav class="mobile-bottom-nav" aria-label="Navigation mobile">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+  <a routerLink="/shop" routerLinkActive="active">Shop</a>
+  <a routerLink="/cart" routerLinkActive="active">Panier <span>{{ cartStore.totalItems() }}</span></a>
+</nav>

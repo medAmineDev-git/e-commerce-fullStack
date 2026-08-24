@@ -1,0 +1,101 @@
+<div class="list-header">
+	<h1>Catégories</h1>
+	<a mat-raised-button color="primary" routerLink="/admin/categories/new">
+		<mat-icon>add</mat-icon>
+		Nouvelle catégorie
+	</a>
+</div>
+
+<div class="list-toolbar">
+	<input
+		class="search-input"
+		type="text"
+		placeholder="Rechercher (nom, description...)"
+		[value]="store.searchTerm()"
+		(input)="onSearch($any($event.target).value)"
+	/>
+
+	<label class="toolbar-field">
+		Trier par
+		<select [value]="store.sortBy()" (change)="onSort($any($event.target).value)">
+			@for (option of sortOptions; track option.value) {
+				<option [value]="option.value">{{ option.label }}</option>
+			}
+		</select>
+	</label>
+
+	<button mat-stroked-button type="button" (click)="onSort(store.sortBy())">
+		{{ store.sortDirection() === 'asc' ? 'Asc' : 'Desc' }}
+	</button>
+</div>
+
+@if (store.loading()) {
+	<p>Chargement...</p>
+} @else {
+	<table mat-table [dataSource]="store.pagedCategories()" class="mat-elevation-z2 category-table">
+		<ng-container matColumnDef="id">
+			<th mat-header-cell *matHeaderCellDef>ID</th>
+			<td mat-cell *matCellDef="let category">{{ category.id }}</td>
+		</ng-container>
+
+		<ng-container matColumnDef="name">
+			<th mat-header-cell *matHeaderCellDef>Nom</th>
+			<td mat-cell *matCellDef="let category">{{ category.name }}</td>
+		</ng-container>
+
+		<ng-container matColumnDef="description">
+			<th mat-header-cell *matHeaderCellDef>Description</th>
+			<td mat-cell *matCellDef="let category">{{ category.description || '-' }}</td>
+		</ng-container>
+
+		<ng-container matColumnDef="actions">
+			<th mat-header-cell *matHeaderCellDef>Actions</th>
+			<td mat-cell *matCellDef="let category">
+				<a mat-icon-button [routerLink]="['/admin/categories', category.id]">
+					<mat-icon>edit</mat-icon>
+				</a>
+				<button mat-icon-button color="warn" (click)="deleteCategory(category)">
+					<mat-icon>delete</mat-icon>
+				</button>
+			</td>
+		</ng-container>
+
+		<tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+		<tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+	</table>
+
+	@if (store.totalFiltered() === 0) {
+		<p class="empty-state">Aucune catégorie pour le moment.</p>
+	}
+
+	@if (store.totalFiltered() > 0) {
+		<div class="pager">
+			<span>{{ store.totalFiltered() }} catégorie(s) - page {{ store.currentPage() }} / {{ store.totalPages() }}</span>
+			<div class="pager-actions">
+				<label class="toolbar-field">
+					Taille
+					<select [value]="store.pageSize()" (change)="onPageSizeChange($any($event.target).value)">
+						@for (size of pageSizes; track size) {
+							<option [value]="size">{{ size }}</option>
+						}
+					</select>
+				</label>
+				<button mat-stroked-button type="button" (click)="previousPage()" [disabled]="store.pageIndex() === 0">
+					Précédent
+				</button>
+				<button
+					mat-stroked-button
+					type="button"
+					(click)="nextPage()"
+					[disabled]="store.pageIndex() >= store.totalPages() - 1"
+				>
+					Suivant
+				</button>
+			</div>
+		</div>
+	}
+
+	@if (store.error()) {
+		<p class="error-state">{{ store.error() }}</p>
+	}
+}

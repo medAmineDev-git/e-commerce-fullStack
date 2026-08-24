@@ -1,0 +1,178 @@
+@if (loading()) {
+  <p class="state">Chargement du produit...</p>
+} @else if (!product()) {
+  <section class="state-card">
+    <h2>Produit introuvable</h2>
+    <a routerLink="/shop">Retour au shop</a>
+  </section>
+} @else {
+  <section class="product-wrap">
+    <div class="top-actions">
+      <button type="button" class="back-link" (click)="goBack()">Retour</button>
+      <a routerLink="/shop">Voir le shop</a>
+    </div>
+
+    <div class="gallery">
+      <img
+        class="hero-image"
+        [src]="imageHasSource() ? currentImage() : fallbackImage"
+        [alt]="product()!.name"
+        (error)="onMainImageError()"
+      />
+      <div class="thumbs">
+        @for (image of product()!.gallery; track image) {
+          <button type="button" (click)="selectImage(image)">
+            <img [src]="image" [alt]="product()!.name" (error)="onMainImageError()" />
+          </button>
+        }
+      </div>
+    </div>
+
+    <article class="details">
+      <p class="category">{{ product()!.category }}</p>
+      <h1>{{ product()!.name }}</h1>
+      <p class="desc">{{ product()!.longDescription }}</p>
+
+      <div class="rating">{{ product()!.rating | number: '1.1-1' }}/5 - {{ product()!.reviewsCount }} avis</div>
+
+      <div class="price-row">
+        <strong>{{ product()!.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        @if (product()!.originalPrice) {
+          <span>{{ product()!.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+        }
+      </div>
+
+      <section class="variant-block">
+        <p>Couleur</p>
+        <div class="color-list">
+          @for (color of product()!.colors ?? []; track color.name) {
+            <button
+              type="button"
+              class="color-dot"
+              [class.active]="selectedColor()?.name === color.name"
+              [title]="color.name"
+              [attr.aria-label]="color.name"
+              [style.background]="color.hex"
+              (click)="selectColor(color)"
+            ></button>
+          }
+        </div>
+        <small>{{ selectedColor()?.name ?? 'Choisir une couleur' }}</small>
+      </section>
+
+      @if (hasSizes()) {
+        <section class="variant-block">
+          <p>Taille</p>
+          <div class="color-list">
+            @for (size of product()!.sizes ?? []; track size) {
+              <button
+                type="button"
+                class="size-chip"
+                [class.active]="selectedSize() === size"
+                [attr.aria-label]="'Taille ' + size"
+                (click)="selectSize(size)"
+              >
+                {{ size }}
+              </button>
+            }
+          </div>
+          <small>{{ selectedSize() ?? 'Choisir une taille' }}</small>
+        </section>
+      }
+
+      <label class="quantity">
+        Quantite
+        <input type="number" min="1" [value]="quantity()" (input)="setQuantity($any($event.target).value)" />
+      </label>
+
+      <section class="purchase-recap">
+        <h2>Recap achat</h2>
+        <div>
+          <span>Prix unitaire</span>
+          <strong>{{ unitPrice() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+        <div>
+          <span>Sous-total ({{ quantity() }}x)</span>
+          <strong>{{ subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+        <div>
+          <span>Livraison</span>
+          <strong>{{ deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+        <div class="recap-total">
+          <span>Total</span>
+          <strong>{{ orderTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+      </section>
+
+      @if (hasAddedToCart()) {
+        <button type="button" class="cta secondary" disabled>Produit Ajouté au Panier</button>
+        <button type="button" class="cta secondary" (click)="goToCheckout()">Passer la commande</button>
+        <p class="added-state">Produit ajoute au panier. Panier actuel: {{ cartCount() }} article(s).</p>
+      } @else {
+        <button type="button" class="cta" [disabled]="!canAddToCart()" (click)="addToCart()">
+          Ajouter au panier - {{ formatPrice(orderTotal()) }}
+        </button>
+        <p class="added-state muted">
+          @if (requiresSizeSelection()) {
+            Choisis une taille pour activer l'ajout au panier.
+          } @else {
+            Sélectionne une couleur si besoin, puis ajoute au panier.
+          }
+        </p>
+      }
+      <p class="stock">Stock disponible: {{ product()!.stockQuantity }}</p>
+
+      <ul class="benefits">
+        <li>Livraison en 48-72h</li>
+        <li>Paiement a la livraison</li>
+        <li>Retour possible sous 7 jours</li>
+      </ul>
+
+      <div class="trust-strip">
+        <span>Commande confirmee par SMS</span>
+        <span>Support client 6j/7</span>
+        <span>Colis controle avant expedition</span>
+      </div>
+
+      <section class="reviews">
+        <div class="section-title">
+          <h2>Avis clients</h2>
+          <span>{{ product()!.reviews?.length ?? 0 }} retours</span>
+        </div>
+        @for (review of product()!.reviews ?? []; track review.author + review.date) {
+          <article class="review-card">
+            <div class="review-header">
+              <strong>{{ review.author }}</strong>
+              <span>{{ review.date }}</span>
+            </div>
+            <div class="review-rating">{{ review.rating }}/5</div>
+            <p>{{ review.comment }}</p>
+          </article>
+        }
+      </section>
+
+      @if (relatedProducts().length > 0) {
+        <section>
+          <div class="section-title">
+            <h2>Produits similaires</h2>
+            <span>{{ relatedProducts().length }} suggestions</span>
+          </div>
+          <div class="similar-grid">
+            @for (item of relatedProducts(); track item.id) {
+              <article class="similar-card">
+                <img [src]="item.imageUrl" [alt]="item.name" />
+                <div>
+                  <p>{{ item.category }}</p>
+                  <h3>{{ item.name }}</h3>
+                  <strong>{{ item.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+                  <button type="button" (click)="openProduct(item.id)">Voir la fiche</button>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+    </article>
+  </section>
+}

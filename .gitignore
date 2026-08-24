@@ -1,0 +1,22 @@
+# Build output
+Front/node_modules/
+Front/dist/
+Front/coverage/
+Front/.angular/
+back-spring/target/
+
+# Local configuration and IDEs
+*.env
+.env
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.iml
+.classpath
+.project
+.settings/
+
+# Operating system files
+.DS_Store
+Thumbs.db

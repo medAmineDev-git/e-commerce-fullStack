@@ -1,0 +1,22 @@
+<section class="success-wrap">
+  <p class="ok">Commande confirmee</p>
+  <h1>Merci pour ton achat</h1>
+  <p class="meta">Numero: {{ orderId() }}</p>
+
+  <div class="card">
+    <div>
+      <span>Total</span>
+      <strong>{{ total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+    </div>
+    <div>
+      <span>Livraison estimee</span>
+      <strong>{{ eta() }}</strong>
+    </div>
+    <p>Paiement a la livraison: reglement au moment de reception.</p>
+  </div>
+
+  <div class="actions">
+    <a routerLink="/shop">Continuer mes achats</a>
+    <a routerLink="/">Retour home</a>
+  </div>
+</section>

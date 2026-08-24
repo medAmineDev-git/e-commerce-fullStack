@@ -1,0 +1,82 @@
+<section class="toolbar">
+  <div class="search-wrap">
+    <input
+      type="search"
+      placeholder="Recherche produit..."
+      [value]="draftSearch()"
+      (input)="draftSearch.set($any($event.target).value)"
+      (keyup.enter)="applySearch()"
+    />
+    <button type="button" (click)="applySearch()">OK</button>
+  </div>
+
+  <div class="filter-row">
+    <select [value]="catalogStore.selectedCategory()" (change)="setCategory($any($event.target).value)">
+      @for (category of catalogStore.categories(); track category) {
+        <option [value]="category">{{ category }}</option>
+      }
+    </select>
+
+    <select [value]="catalogStore.sortBy()" (change)="setSort($any($event.target).value)">
+      @for (opt of sortOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+
+    <button type="button" class="sort-dir" (click)="toggleSort()">
+      {{ catalogStore.sortDirection() === 'asc' ? 'Asc' : 'Desc' }}
+    </button>
+
+    <button type="button" class="clear-btn" (click)="clearAll()">Reset</button>
+  </div>
+</section>
+
+@if (catalogStore.loading()) {
+  <p class="state">Chargement...</p>
+} @else if (catalogStore.totalFiltered() === 0) {
+  <p class="state">Aucun produit trouve. Essaie une autre recherche.</p>
+} @else {
+  <section class="grid">
+    @for (product of catalogStore.pagedProducts(); track product.id) {
+      <article class="card">
+        @if (product.badge) {
+          <span class="badge">{{ product.badge }}</span>
+        }
+        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" (click)="openProduct(product)" />
+        <div class="body">
+          <p>{{ product.category }}</p>
+          <h3 (click)="openProduct(product)">{{ product.name }}</h3>
+          @if ((product.colors?.length ?? 0) > 0) {
+            <div class="preview-row">
+              @for (color of product.colors ?? []; track color.name) {
+                <span class="preview-dot" [title]="color.name" [style.background]="color.hex"></span>
+              }
+            </div>
+          }
+          @if ((product.sizes?.length ?? 0) > 0) {
+            <div class="preview-row sizes">
+              @for (size of product.sizes ?? []; track size) {
+                <span>{{ size }}</span>
+              }
+            </div>
+          }
+          <div class="price-line">
+            <strong>{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+            @if (product.originalPrice) {
+              <span>{{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+            }
+          </div>
+          <button type="button" (click)="openProduct(product)">Voir la fiche</button>
+        </div>
+      </article>
+    }
+  </section>
+
+  <footer class="pager">
+    <span>{{ catalogStore.totalFiltered() }} resultats - page {{ catalogStore.currentPage() }}/{{ catalogStore.totalPages() }}</span>
+    <div>
+      <button type="button" (click)="previousPage()" [disabled]="catalogStore.pageIndex() === 0">Prec</button>
+      <button type="button" (click)="nextPage()" [disabled]="catalogStore.currentPage() >= catalogStore.totalPages()">Suiv</button>
+    </div>
+  </footer>
+}

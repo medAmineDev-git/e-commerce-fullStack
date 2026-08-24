@@ -1,0 +1,58 @@
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Nouvelle collection</p>
+    <h1>Style urbain, livraison rapide, paiement a la livraison.</h1>
+    <p>
+      Decouvre une selection orientee streetwear premium avec une experience mobile ultra simple:
+      recherche, panier et checkout en moins de 2 minutes.
+    </p>
+    <div class="hero-actions">
+      <a routerLink="/shop" class="primary-btn">Explorer le shop</a>
+      <a routerLink="/cart" class="ghost-btn">Voir le panier</a>
+    </div>
+  </div>
+
+  @if (spotlight(); as focus) {
+    <article class="hero-card" (click)="openProduct(focus)">
+      <img [src]="focus.imageUrl" [alt]="focus.name" loading="lazy" />
+      <div>
+        <p>{{ focus.category }}</p>
+        <h3>{{ focus.name }}</h3>
+        <span>{{ focus.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+      </div>
+    </article>
+  }
+</section>
+
+<section class="category-strip">
+  <button type="button" (click)="openCategory('Homme')">Homme</button>
+  <button type="button" (click)="openCategory('Femme')">Femme</button>
+  <button type="button" (click)="openCategory('Sneakers')">Sneakers</button>
+  <button type="button" (click)="openCategory('Accessoires')">Accessoires</button>
+</section>
+
+<section class="section-head">
+  <h2>Produits en tendance</h2>
+  <a routerLink="/shop">Tout voir</a>
+</section>
+
+<div class="cards-grid">
+  @if (catalogStore.loading()) {
+    <p class="state-label">Chargement du catalogue...</p>
+  } @else {
+    @for (product of topProducts(); track product.id) {
+      <article class="product-card">
+        @if (product.badge) {
+          <span class="badge">{{ product.badge }}</span>
+        }
+        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" (click)="openProduct(product)" />
+        <div class="card-body">
+          <p>{{ product.category }}</p>
+          <h3 (click)="openProduct(product)">{{ product.name }}</h3>
+          <span>{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+          <button type="button" (click)="addToCart(product)">Ajouter au panier</button>
+        </div>
+      </article>
+    }
+  }
+</div>

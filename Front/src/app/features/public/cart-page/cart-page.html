@@ -1,0 +1,51 @@
+<section class="cart-wrap">
+  <header>
+    <h1>Ton panier</h1>
+    <p>{{ cartStore.totalItems() }} article(s)</p>
+  </header>
+
+  @if (cartStore.isEmpty()) {
+    <div class="empty">
+      <p>Le panier est vide pour le moment.</p>
+      <a routerLink="/shop">Explorer le shop</a>
+    </div>
+  } @else {
+    <div class="items">
+      @for (item of cartStore.items(); track item.product.id) {
+        <article>
+          <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+          <div class="content">
+            <h3>{{ item.product.name }}</h3>
+            <p>{{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
+            <div class="actions">
+              <input
+                type="number"
+                min="1"
+                [value]="item.quantity"
+                (input)="setQuantity(item, $any($event.target).value)"
+              />
+              <button type="button" (click)="remove(item)">Supprimer</button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    <aside class="summary">
+      <div>
+        <span>Sous-total</span>
+        <strong>{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+      <div>
+        <span>Livraison</span>
+        <strong>{{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+      <div class="total">
+        <span>Total</span>
+        <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+
+      <button type="button" (click)="proceedToCheckout()">Passer commande</button>
+    </aside>
+  }
+</section>

@@ -1,0 +1,80 @@
+<h1>{{ isEditMode() ? 'Modifier le produit' : 'Nouveau produit' }}</h1>
+
+<form (ngSubmit)="save()" class="product-form">
+  <mat-form-field appearance="outline">
+    <mat-label>Nom</mat-label>
+    <input
+      matInput
+      [value]="model().name"
+      (input)="updateTextField('name', $any($event.target).value)"
+      (blur)="touch('name')"
+      required
+    />
+    @if ((submitted() || touched().name) && errors().name) {
+      <mat-error>{{ errors().name }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Catégorie</mat-label>
+    <input
+      matInput
+      [value]="model().category"
+      (input)="updateTextField('category', $any($event.target).value)"
+      (blur)="touch('category')"
+      required
+    />
+    @if ((submitted() || touched().category) && errors().category) {
+      <mat-error>{{ errors().category }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Description</mat-label>
+    <textarea
+      matInput
+      rows="3"
+      [value]="model().description"
+      (input)="updateTextField('description', $any($event.target).value)"
+      (blur)="touch('description')"
+    ></textarea>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Prix (€)</mat-label>
+    <input
+      matInput
+      type="number"
+      step="0.01"
+      [value]="model().price"
+      (input)="updateNumberField('price', $any($event.target).value)"
+      (blur)="touch('price')"
+      required
+    />
+    @if ((submitted() || touched().price) && errors().price) {
+      <mat-error>{{ errors().price }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Stock</mat-label>
+    <input
+      matInput
+      type="number"
+      [value]="model().stockQuantity"
+      (input)="updateNumberField('stockQuantity', $any($event.target).value)"
+      (blur)="touch('stockQuantity')"
+      required
+    />
+    @if ((submitted() || touched().stockQuantity) && errors().stockQuantity) {
+      <mat-error>{{ errors().stockQuantity }}</mat-error>
+    }
+  </mat-form-field>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="cancel()">Annuler</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="saving() || !formValid()">
+      Enregistrer
+    </button>
+  </div>
+</form>

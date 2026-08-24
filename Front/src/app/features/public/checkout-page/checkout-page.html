@@ -1,0 +1,100 @@
+<section class="checkout-wrap">
+  <h1>Finaliser la commande</h1>
+  <button type="button" class="back-button" (click)="goBack()">Retourner</button>
+
+  @if (cartStore.isEmpty()) {
+    <div class="state-card">
+      <p>Panier vide. Ajoute des produits avant de continuer.</p>
+      <a routerLink="/shop">Retour au shop</a>
+    </div>
+  } @else {
+    <div class="pay-chip">Paiement a la livraison (COD)</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="checkout-form">
+      <label>
+        Nom complet
+        <input type="text" formControlName="customerName" />
+        @if (shouldShowError('customerName')) {
+          <small class="field-error">Nom requis (minimum 2 caracteres).</small>
+        }
+      </label>
+
+      <label>
+        Telephone
+        <input type="text" formControlName="phone" />
+        @if (shouldShowError('phone')) {
+          <small class="field-error">Telephone requis (minimum 8 chiffres).</small>
+        }
+      </label>
+
+      <label>
+        Ville
+        <input type="text" formControlName="city" />
+        @if (shouldShowError('city')) {
+          <small class="field-error">Ville requise.</small>
+        }
+      </label>
+
+      <label>
+        Adresse
+        <textarea rows="3" formControlName="address"></textarea>
+        @if (shouldShowError('address')) {
+          <small class="field-error">Adresse requise (minimum 6 caracteres).</small>
+        }
+      </label>
+
+      <label>
+        Note de livraison (optionnel)
+        <textarea rows="2" formControlName="note"></textarea>
+      </label>
+
+      @if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" [disabled]="!canSubmit()">
+        {{ submitting() ? 'Validation...' : 'Confirmer la commande' }}
+      </button>
+    </form>
+
+    <aside class="summary">
+      <h2>Recap</h2>
+      <div>
+        <span>Sous-total</span>
+        <strong>{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+      <div>
+        <span>Livraison</span>
+        <strong>{{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+      <div class="total">
+        <span>Total</span>
+        <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+      <button type="button" class="summary-toggle" (click)="toggleCartDetails()">
+        {{ toggleDetailsLabel() }}
+      </button>
+    </aside>
+
+    @if (showCartDetails()) {
+      <section class="cart-details-panel">
+        <h3>Detail du panier</h3>
+        <div class="detail-list">
+          @for (item of cartStore.items(); track item.product.id) {
+            <article class="detail-item">
+              <div class="detail-main">
+                <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+                <div>
+                  <strong>{{ item.product.name }}</strong>
+                  <p>{{ item.quantity }} x {{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
+                </div>
+              </div>
+              <strong>{{ item.product.price * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+            </article>
+          }
+        </div>
+        <a class="edit-cart-button" routerLink="/cart">Modifier panier</a>
+      </section>
+    }
+  }
+</section>
