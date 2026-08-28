@@ -4,10 +4,12 @@ import com.ecommerce.backend.order.dto.OrderItemRequest;
 import com.ecommerce.backend.order.dto.OrderItemResponse;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
+import com.ecommerce.backend.order.dto.OrderSummaryResponse;
 import com.ecommerce.backend.product.Product;
 import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +31,20 @@ public class OrderService {
     public OrderService(ProductRepository productRepository, OrderRepository orderRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+    }
+
+    public List<OrderSummaryResponse> getOrders() {
+        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).stream()
+                .map(order -> new OrderSummaryResponse(
+                        order.getOrderNumber(),
+                        order.getCustomerName(),
+                        order.getCity(),
+                        order.getPaymentMethod(),
+                        order.getStatus(),
+                        order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
+                        order.getTotal()
+                ))
+                .toList();
     }
 
     @Transactional

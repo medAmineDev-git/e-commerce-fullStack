@@ -784,3 +784,111 @@ Verifier explicitement les nouveaux modules ajoutes pour l'integration complete 
 
 - Une integration fonctionnelle doit etre protegee par des tests de contrat API sur chaque nouveau module.
 - Les tests web (MockMvc) permettent de valider rapidement statut HTTP + payload + gestion d'erreurs.
+
+### Session 14 - PostgreSQL Docker + pgAdmin
+
+#### Objectif
+
+Pouvoir lancer la base et l'observer graphiquement avec pgAdmin, tout en conservant les donnees entre les redemarrages.
+
+#### Fichier Compose
+
+- fichier racine: `docker-compose.yml`
+- services:
+  - `postgres`: PostgreSQL 16
+  - `pgadmin`: interface graphique PostgreSQL
+- volumes persistants:
+  - `ecommerce_postgres_data`
+  - `ecommerce_pgadmin_data`
+
+#### Commandes
+
+Depuis la racine du projet:
+
+```powershell
+docker compose up -d
+docker compose ps
+docker compose logs -f postgres
+```
+
+Arreter les services sans supprimer les donnees:
+
+```powershell
+docker compose down
+```
+
+Supprimer aussi les donnees (commande destructive):
+
+```powershell
+docker compose down -v
+```
+
+#### Connexions
+
+Backend Spring depuis Windows:
+- host: `127.0.0.1`
+- port: `55432`
+- database: `ecommerce_dev_db`
+- user: `ecommerce_app`
+- password: `ecommerce_app_pwd`
+
+pgAdmin dans le navigateur:
+- URL: `http://localhost:5050`
+- email: `admin@ecommerce.local`
+- password: `admin_ecommerce_pwd`
+
+Dans pgAdmin, pour enregistrer PostgreSQL:
+- host: `postgres` (nom du service Docker, pas `localhost`)
+- port: `5432`
+- database: `ecommerce_dev_db`
+- user/password: identifiants PostgreSQL ci-dessus
+
+#### A retenir
+
+- Un volume persistant evite de perdre la base quand le conteneur est recree.
+- Depuis l'hote Windows, on utilise le port publie `55432`.
+- Depuis un autre conteneur Compose, on utilise le nom de service `postgres` et le port interne `5432`.
+
+### Session 15 - Transition vers Docker Compose sans perte de donnees
+
+#### Probleme rencontre
+
+Un conteneur PostgreSQL existait deja avec le nom `ecommerce-postgres`. Compose ne pouvait donc pas recreer un conteneur du meme nom.
+
+#### Solution appliquee
+
+1. Conservation du volume existant
+- le volume Docker PostgreSQL existant a ete declare `external` dans `docker-compose.yml`
+- les donnees, migrations Flyway et tables existantes sont conservees
+
+2. Remplacement du conteneur uniquement
+- ancien conteneur arrete puis supprime
+- volume conserve
+- nouveau conteneur gere par Compose recree avec le meme port `55432`
+
+3. pgAdmin ajoute au meme Compose
+- URL: `http://localhost:5050`
+- connexion pgAdmin vers le service Docker `postgres:5432`
+
+4. Volume rendu portable
+- les donnees ont ete copiees dans le volume nomme `e-commerce_ecommerce_postgres_data`
+- Compose peut maintenant recreer la stack sans dependre d'un identifiant technique de volume
+
+#### Demarrage recommande
+
+```powershell
+cd C:\Users\grine\projects\E-commerce
+docker compose up -d
+```
+
+Puis:
+- backend Spring: `back-spring\\mvnw.cmd spring-boot:run`
+- frontend Angular: `Front\\npm.cmd start`
+
+#### Validation
+
+- `docker compose config` valide
+- `docker compose up -d` execute avec succes
+- PostgreSQL healthy
+- pgAdmin demarre
+- volume de donnees preserve

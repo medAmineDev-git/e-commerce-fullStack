@@ -1,5 +1,10 @@
 @if (loading()) {
   <p class="state">Chargement du produit...</p>
+} @else if (error()) {
+  <section class="state-card">
+    <h2>{{ error() }}</h2>
+    <a routerLink="/shop">Retour au shop</a>
+  </section>
 } @else if (!product()) {
   <section class="state-card">
     <h2>Produit introuvable</h2>

@@ -2,8 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PublicCategory, PublicProduct } from '../models/public-product.model';
-import { PublicCatalogMockService } from './public-catalog.mock';
+import { ProductSizeOption, PublicCategory, PublicProduct } from '../models/public-product.model';
 import { SortDirection } from '../stores/crud-list.helpers';
 
 type BackendProduct = {
@@ -13,6 +12,10 @@ type BackendProduct = {
   description: string;
   price: number;
   stockQuantity: number;
+  compareAtPrice?: number | null;
+  imageUrls?: string[];
+  sizes?: string[];
+  colors?: Array<{ name: string; hex: string }>;
 };
 
 type BackendProductPageResponse = {
@@ -66,72 +69,46 @@ const FALLBACK_SIZES = ['S', 'M', 'L'] as const;
 @Service()
 export class PublicCatalogService {
   private readonly http = inject(HttpClient);
-  private readonly mockService = inject(PublicCatalogMockService);
   private readonly baseUrl = `${environment.apiBaseUrl}/products`;
 
   async listProducts(): Promise<PublicProduct[]> {
-    if (environment.useMockPublicCatalog) {
-      return this.mockService.listProducts();
-    }
-
-    try {
-      const products = await firstValueFrom(this.http.get<BackendProduct[]>(this.baseUrl));
-      return products.map((product) => this.mapBackendProduct(product));
-    } catch {
-      // Fallback resilient: the public shop remains usable if backend is offline.
-      return this.mockService.listProducts();
-    }
+    const products = await firstValueFrom(this.http.get<BackendProduct[]>(this.baseUrl));
+    return products.map((product) => this.mapBackendProduct(product));
   }
 
   async listProductsPage(query: PublicCatalogPageQuery): Promise<PublicCatalogPageResponse> {
-    if (environment.useMockPublicCatalog) {
-      const mockProducts = await this.mockService.listProducts();
-      return this.pageMockProducts(mockProducts, query);
-    }
+    const backendPage = await firstValueFrom(
+      this.http.get<BackendProductPageResponse>(`${this.baseUrl}/page`, {
+        params: {
+          q: query.query,
+          category: query.category === 'Tous' ? '' : query.category,
+          page: String(query.page),
+          size: String(query.size),
+          sortBy: query.sortBy,
+          sortDirection: query.sortDirection,
+        },
+      }),
+    );
 
-    try {
-      const backendPage = await firstValueFrom(
-        this.http.get<BackendProductPageResponse>(`${this.baseUrl}/page`, {
-          params: {
-            q: query.query,
-            category: query.category === 'Tous' ? '' : query.category,
-            page: String(query.page),
-            size: String(query.size),
-            sortBy: query.sortBy,
-            sortDirection: query.sortDirection,
-          },
-        }),
-      );
-
-      return {
-        items: backendPage.items.map((product) => this.mapBackendProduct(product)),
-        page: backendPage.page,
-        size: backendPage.size,
-        totalElements: backendPage.totalElements,
-        totalPages: backendPage.totalPages,
-        last: backendPage.last,
-      };
-    } catch {
-      const mockProducts = await this.mockService.listProducts();
-      return this.pageMockProducts(mockProducts, query);
-    }
+    return {
+      items: backendPage.items.map((product) => this.mapBackendProduct(product)),
+      page: backendPage.page,
+      size: backendPage.size,
+      totalElements: backendPage.totalElements,
+      totalPages: backendPage.totalPages,
+      last: backendPage.last,
+    };
   }
 
-  async getProductById(id: number): Promise<PublicProduct | null> {
-    if (environment.useMockPublicCatalog) {
-      return this.mockService.getProductById(id);
-    }
-
-    try {
-      const product = await firstValueFrom(this.http.get<BackendProduct>(`${this.baseUrl}/${id}`));
-      return this.mapBackendProduct(product);
-    } catch {
-      return this.mockService.getProductById(id);
-    }
+  async getProductById(id: number): Promise<PublicProduct> {
+    const product = await firstValueFrom(this.http.get<BackendProduct>(`${this.baseUrl}/${id}`));
+    return this.mapBackendProduct(product);
   }
 
   private mapBackendProduct(product: BackendProduct): PublicProduct {
-    const imageUrl = IMAGE_POOL[Math.abs(product.id) % IMAGE_POOL.length];
+    const imageUrl = product.imageUrls?.[0] ?? IMAGE_POOL[Math.abs(product.id) % IMAGE_POOL.length];
+    const gallery = product.imageUrls?.length ? [...product.imageUrls] : [imageUrl];
+    const sizes = (product.sizes ?? []).filter(this.isProductSize);
 
     return {
       id: product.id,
@@ -141,72 +118,20 @@ export class PublicCatalogService {
       longDescription: product.description,
       category: product.category,
       price: product.price,
+      originalPrice: product.compareAtPrice ?? undefined,
       rating: 4.5,
       reviewsCount: 0,
       stockQuantity: product.stockQuantity,
       imageUrl,
-      gallery: [imageUrl],
-      colors: [...FALLBACK_COLORS],
-      sizes: [...FALLBACK_SIZES],
+      gallery,
+      colors: product.colors?.length ? [...product.colors] : [...FALLBACK_COLORS],
+      sizes: sizes.length ? sizes : [...FALLBACK_SIZES],
       reviews: [],
     };
   }
 
-  private pageMockProducts(
-    products: PublicProduct[],
-    query: PublicCatalogPageQuery,
-  ): PublicCatalogPageResponse {
-    const normalizedQuery = query.query.trim().toLowerCase();
-    const searched = normalizedQuery
-      ? products.filter((product) => {
-          const index = `${product.name} ${product.shortDescription} ${product.longDescription}`.toLowerCase();
-          return index.includes(normalizedQuery);
-        })
-      : products;
-
-    const filteredByCategory =
-      query.category === 'Tous'
-        ? searched
-        : searched.filter((product) => product.category === query.category);
-
-    const sorted = [...filteredByCategory].sort((left, right) => {
-      const leftValue = this.sortValue(left, query.sortBy);
-      const rightValue = this.sortValue(right, query.sortBy);
-
-      if (leftValue < rightValue) {
-        return query.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (leftValue > rightValue) {
-        return query.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    const page = Math.max(query.page, 0);
-    const size = Math.max(query.size, 1);
-    const start = page * size;
-    const items = sorted.slice(start, start + size);
-    const totalElements = sorted.length;
-    const totalPages = Math.max(Math.ceil(totalElements / size), 1);
-
-    return {
-      items,
-      page,
-      size,
-      totalElements,
-      totalPages,
-      last: page >= totalPages - 1,
-    };
-  }
-
-  private sortValue(product: PublicProduct, sortBy: CatalogSortField): string | number {
-    if (sortBy === 'id') {
-      return product.id;
-    }
-    if (sortBy === 'stockQuantity') {
-      return product.stockQuantity;
-    }
-    return product[sortBy];
+  private isProductSize(value: string): value is ProductSizeOption {
+    return ['XS', 'S', 'M', 'L', 'XL'].includes(value);
   }
 
   private slugify(value: string): string {

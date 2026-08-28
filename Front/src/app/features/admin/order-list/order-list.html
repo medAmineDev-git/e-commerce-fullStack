@@ -1,0 +1,48 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Ventes</p>
+    <h1>Commandes</h1>
+    <p>Suivez les commandes et leurs informations de livraison.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <p class="state">Chargement des commandes...</p>
+} @else if (error()) {
+  <section class="state-card">
+    <p>{{ error() }}</p>
+    <button type="button" (click)="retry()">Réessayer</button>
+  </section>
+} @else if (!orders().length) {
+  <section class="state-card">
+    <h2>Aucune commande</h2>
+    <p>Les nouvelles ventes apparaîtront ici.</p>
+  </section>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Commande</th>
+          <th>Client</th>
+          <th>Livraison</th>
+          <th>Paiement</th>
+          <th>Statut</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.orderId) {
+          <tr>
+            <td><strong>{{ order.orderId }}</strong></td>
+            <td>{{ order.customerName }}<small>{{ order.city }}</small></td>
+            <td>{{ order.estimatedDelivery }}</td>
+            <td>{{ order.paymentMethod }}</td>
+            <td><span class="status">{{ order.status }}</span></td>
+            <td><strong>{{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

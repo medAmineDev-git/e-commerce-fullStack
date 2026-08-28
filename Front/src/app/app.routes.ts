@@ -5,7 +5,11 @@ export const routes: Routes = [
     path: 'admin',
     loadComponent: () => import('./features/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
     children: [
-      { path: '', redirectTo: 'products', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/admin/dashboard/dashboard').then((m) => m.Dashboard),
+      },
       {
         path: 'products',
         loadComponent: () => import('./features/admin/product-list/product-list').then((m) => m.ProductList),
@@ -32,6 +36,10 @@ export const routes: Routes = [
         path: 'categories/:id',
         loadComponent: () =>
           import('./features/admin/category-form/category-form').then((m) => m.CategoryForm),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/admin/order-list/order-list').then((m) => m.OrderList),
       },
     ],
   },

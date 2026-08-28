@@ -1,0 +1,95 @@
+<section class="dashboard-header">
+  <div>
+    <p class="eyebrow">Pilotage e-commerce</p>
+    <h1>Tableau de bord</h1>
+    <p>Suivez votre catalogue, votre stock et vos ventes depuis un seul espace.</p>
+  </div>
+  <div class="header-actions">
+    <a routerLink="/admin/products/new">Ajouter un produit</a>
+    <a class="secondary-action" routerLink="/admin/categories/new">Créer un catalogue</a>
+  </div>
+</section>
+
+@if (loading()) {
+  <p class="state">Chargement des indicateurs...</p>
+} @else if (error()) {
+  <section class="state-card">
+    <p>{{ error() }}</p>
+    <button type="button" (click)="retry()">Réessayer</button>
+  </section>
+} @else {
+  <section class="metrics">
+    <article class="metric-card">
+      <span>Chiffre d'affaires</span>
+      <strong>{{ revenue() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      <small>{{ orders().length }} commande(s) enregistrée(s)</small>
+    </article>
+    <article class="metric-card">
+      <span>Produits actifs</span>
+      <strong>{{ products().length }}</strong>
+      <small>{{ categoryCount() }} catalogue(s) structuré(s)</small>
+    </article>
+    <article class="metric-card">
+      <span>Unités en stock</span>
+      <strong>{{ inventoryUnits() }}</strong>
+      <small>Sur l'ensemble du catalogue</small>
+    </article>
+    <article class="metric-card attention">
+      <span>Stock à surveiller</span>
+      <strong>{{ lowStockProducts().length }}</strong>
+      <small>Produit(s) à 10 unités ou moins</small>
+    </article>
+  </section>
+
+  <section class="dashboard-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Alertes de stock</h2>
+          <p>Réapprovisionnez les produits à risque.</p>
+        </div>
+        <a routerLink="/admin/products">Gérer le stock</a>
+      </div>
+      @if (lowStockProducts().length) {
+        <div class="stock-list">
+          @for (product of lowStockProducts(); track product.id) {
+            <div class="stock-row">
+              <div>
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.category }}</span>
+              </div>
+              <b [class.critical]="product.stockQuantity <= 3">{{ product.stockQuantity }} unités</b>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty">Aucune alerte : le niveau de stock est sain.</p>
+      }
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Dernières commandes</h2>
+          <p>Suivi rapide des ventes récentes.</p>
+        </div>
+        <a routerLink="/admin/orders">Voir tout</a>
+      </div>
+      @if (recentOrders().length) {
+        <div class="order-list">
+          @for (order of recentOrders(); track order.orderId) {
+            <div class="order-row">
+              <div>
+                <strong>{{ order.orderId }}</strong>
+                <span>{{ order.customerName }} · {{ order.city }}</span>
+              </div>
+              <b>{{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</b>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty">Aucune commande enregistrée pour le moment.</p>
+      }
+    </article>
+  </section>
+}

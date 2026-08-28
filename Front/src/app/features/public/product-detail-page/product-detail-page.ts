@@ -25,6 +25,7 @@ export class ProductDetailPage {
   readonly cartStore = inject(CartStore);
   readonly product = signal<PublicProduct | null>(null);
   readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
   readonly quantity = signal(1);
   readonly currentImage = signal('');
   readonly selectedColor = signal<ProductColorOption | null>(null);
@@ -45,21 +46,23 @@ export class ProductDetailPage {
 
   private async loadProduct(): Promise<void> {
     this.loading.set(true);
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    const product = await this.catalogService.getProductById(id);
-    this.product.set(product);
-    this.currentImage.set(product?.gallery?.[0] ?? product?.imageUrl ?? this.fallbackImage);
-    this.selectedColor.set(product?.colors?.[0] ?? null);
-    this.selectedSize.set(product?.sizes?.[0] ?? null);
-    this.addedToCart.set(false);
-
-    if (product) {
+    this.error.set(null);
+    try {
+      const id = Number(this.route.snapshot.paramMap.get('id'));
+      const product = await this.catalogService.getProductById(id);
+      this.product.set(product);
+      this.currentImage.set(product.gallery[0] ?? product.imageUrl ?? this.fallbackImage);
+      this.selectedColor.set(product.colors?.[0] ?? null);
+      this.selectedSize.set(product.sizes?.[0] ?? null);
+      this.addedToCart.set(false);
       await this.loadRelatedProducts(product);
-    } else {
+    } catch {
+      this.product.set(null);
       this.relatedProducts.set([]);
+      this.error.set('Impossible de charger ce produit depuis le serveur.');
+    } finally {
+      this.loading.set(false);
     }
-
-    this.loading.set(false);
   }
 
   private async loadRelatedProducts(product: PublicProduct): Promise<void> {

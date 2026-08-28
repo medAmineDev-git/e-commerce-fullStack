@@ -5,12 +5,19 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -37,4 +44,35 @@ public class Product {
 
     @Column(nullable = false)
     private Integer stockQuantity;
+
+    @Column(length = 80)
+    private String sku;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal compareAtPrice;
+
+    @Column(nullable = false, length = 20)
+    private String status = "ACTIVE";
+
+    @Column(length = 160)
+    private String seoTitle;
+
+    @Column(length = 320)
+    private String seoDescription;
+
+    @ElementCollection
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "image_url", nullable = false, length = 2000)
+    private List<String> imageUrls = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "size_value", nullable = false, length = 20)
+    private List<String> sizes = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))
+    private List<ProductColor> colors = new ArrayList<>();
 }

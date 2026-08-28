@@ -1,80 +1,165 @@
-<h1>{{ isEditMode() ? 'Modifier le produit' : 'Nouveau produit' }}</h1>
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Catalogue</p>
+    <h1>{{ isEditMode() ? 'Modifier le produit' : 'Créer un produit' }}</h1>
+    <p>Construisez une fiche produit prête à être vendue dans votre boutique.</p>
+  </div>
+  <span class="status" [class.draft]="model().status === 'DRAFT'">
+    {{ model().status === 'ACTIVE' ? 'Publié' : 'Brouillon' }}
+  </span>
+</section>
 
-<form (ngSubmit)="save()" class="product-form">
-  <mat-form-field appearance="outline">
-    <mat-label>Nom</mat-label>
-    <input
-      matInput
-      [value]="model().name"
-      (input)="updateTextField('name', $any($event.target).value)"
-      (blur)="touch('name')"
-      required
-    />
-    @if ((submitted() || touched().name) && errors().name) {
-      <mat-error>{{ errors().name }}</mat-error>
+<form class="product-form" (ngSubmit)="save()">
+  <section class="form-card">
+    <div class="section-heading">
+      <div>
+        <h2>Informations produit</h2>
+        <p>Les éléments principaux visibles dans le catalogue.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="field field-wide">
+        <span>Nom du produit *</span>
+        <input [value]="model().name" (input)="updateTextField('name', $any($event.target).value)" placeholder="Ex. Veste en denim Atelier" />
+        @if (submitted() && errors().name) { <small class="error">{{ errors().name }}</small> }
+      </label>
+      <label class="field">
+        <span>Catalogue *</span>
+        <select [value]="model().category" (change)="updateTextField('category', $any($event.target).value)">
+          <option value="">Sélectionner</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.name">{{ category.name }}</option>
+          }
+        </select>
+        @if (submitted() && errors().category) { <small class="error">{{ errors().category }}</small> }
+      </label>
+      <label class="field">
+        <span>Référence SKU</span>
+        <input [value]="model().sku" (input)="updateTextField('sku', $any($event.target).value)" placeholder="VD-ATELIER-001" />
+      </label>
+      <label class="field field-wide">
+        <span>Description *</span>
+        <textarea rows="5" [value]="model().description" (input)="updateTextField('description', $any($event.target).value)" placeholder="Décrivez les matières, la coupe, les usages et bénéfices produit."></textarea>
+        @if (submitted() && errors().description) { <small class="error">{{ errors().description }}</small> }
+      </label>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <div class="section-heading">
+      <div>
+        <h2>Prix & disponibilité</h2>
+        <p>Définissez le prix de vente et la publication.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Prix de vente (€) *</span>
+        <input type="number" min="0.01" step="0.01" [value]="model().price" (input)="updateNumberField('price', $any($event.target).value)" />
+        @if (submitted() && errors().price) { <small class="error">{{ errors().price }}</small> }
+      </label>
+      <label class="field">
+        <span>Prix avant remise (€)</span>
+        <input type="number" min="0.01" step="0.01" [value]="model().compareAtPrice ?? ''" (input)="updateNumberField('compareAtPrice', $any($event.target).value)" />
+        @if (submitted() && errors().compareAtPrice) { <small class="error">{{ errors().compareAtPrice }}</small> }
+      </label>
+      <label class="field">
+        <span>Stock disponible *</span>
+        <input type="number" min="0" step="1" [value]="model().stockQuantity" (input)="updateNumberField('stockQuantity', $any($event.target).value)" />
+        @if (submitted() && errors().stockQuantity) { <small class="error">{{ errors().stockQuantity }}</small> }
+      </label>
+      <label class="field">
+        <span>Statut</span>
+        <select [value]="model().status" (change)="updateStatus($any($event.target).value)">
+          <option value="DRAFT">Brouillon</option>
+          <option value="ACTIVE">Publié</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <div class="section-heading">
+      <div>
+        <h2>Galerie photos</h2>
+        <p>Ajoutez des URLs d'images. La première image sera utilisée comme image principale.</p>
+      </div>
+    </div>
+    <div class="add-row">
+      <input [value]="imageDraft()" (input)="imageDraft.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); addImage()" placeholder="https://.../produit.jpg" />
+      <button type="button" (click)="addImage()">Ajouter l'image</button>
+    </div>
+    @if (submitted() && errors().imageUrls) { <small class="error">{{ errors().imageUrls }}</small> }
+    @if (model().imageUrls.length) {
+      <div class="image-grid">
+        @for (image of model().imageUrls; track image; let index = $index) {
+          <figure>
+            <img [src]="image" [alt]="model().name || 'Aperçu produit'" />
+            @if (index === 0) { <figcaption>Image principale</figcaption> }
+            <button type="button" class="remove" (click)="removeImage(image)" [attr.aria-label]="'Supprimer l’image ' + (index + 1)">×</button>
+          </figure>
+        }
+      </div>
     }
-  </mat-form-field>
+  </section>
 
-  <mat-form-field appearance="outline">
-    <mat-label>Catégorie</mat-label>
-    <input
-      matInput
-      [value]="model().category"
-      (input)="updateTextField('category', $any($event.target).value)"
-      (blur)="touch('category')"
-      required
-    />
-    @if ((submitted() || touched().category) && errors().category) {
-      <mat-error>{{ errors().category }}</mat-error>
-    }
-  </mat-form-field>
+  <section class="form-card variant-grid">
+    <div>
+      <div class="section-heading">
+        <div>
+          <h2>Tailles</h2>
+          <p>Les déclinaisons proposées à l'achat.</p>
+        </div>
+      </div>
+      <div class="size-list">
+        @for (size of availableSizes; track size) {
+          <button type="button" [class.selected]="model().sizes.includes(size)" (click)="toggleSize(size)">{{ size }}</button>
+        }
+      </div>
+    </div>
+    <div>
+      <div class="section-heading">
+        <div>
+          <h2>Couleurs</h2>
+          <p>Ajoutez des options visuelles.</p>
+        </div>
+      </div>
+      <div class="color-form">
+        <input type="color" [value]="colorHexDraft()" (input)="colorHexDraft.set($any($event.target).value)" />
+        <input [value]="colorNameDraft()" (input)="colorNameDraft.set($any($event.target).value)" placeholder="Ex. Bleu nuit" />
+        <button type="button" (click)="addColor()">Ajouter</button>
+      </div>
+      <div class="color-list">
+        @for (color of model().colors; track color.name) {
+          <span><i [style.background]="color.hex"></i>{{ color.name }}<button type="button" (click)="removeColor(color.name)">×</button></span>
+        }
+      </div>
+    </div>
+  </section>
 
-  <mat-form-field appearance="outline">
-    <mat-label>Description</mat-label>
-    <textarea
-      matInput
-      rows="3"
-      [value]="model().description"
-      (input)="updateTextField('description', $any($event.target).value)"
-      (blur)="touch('description')"
-    ></textarea>
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Prix (€)</mat-label>
-    <input
-      matInput
-      type="number"
-      step="0.01"
-      [value]="model().price"
-      (input)="updateNumberField('price', $any($event.target).value)"
-      (blur)="touch('price')"
-      required
-    />
-    @if ((submitted() || touched().price) && errors().price) {
-      <mat-error>{{ errors().price }}</mat-error>
-    }
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Stock</mat-label>
-    <input
-      matInput
-      type="number"
-      [value]="model().stockQuantity"
-      (input)="updateNumberField('stockQuantity', $any($event.target).value)"
-      (blur)="touch('stockQuantity')"
-      required
-    />
-    @if ((submitted() || touched().stockQuantity) && errors().stockQuantity) {
-      <mat-error>{{ errors().stockQuantity }}</mat-error>
-    }
-  </mat-form-field>
+  <section class="form-card">
+    <div class="section-heading">
+      <div>
+        <h2>Référencement</h2>
+        <p>Optimisez la présentation dans les moteurs de recherche.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="field field-wide">
+        <span>Titre SEO <em>{{ model().seoTitle.length }}/160</em></span>
+        <input maxlength="160" [value]="model().seoTitle" (input)="updateTextField('seoTitle', $any($event.target).value)" placeholder="Titre affiché dans les résultats de recherche" />
+      </label>
+      <label class="field field-wide">
+        <span>Méta-description <em>{{ model().seoDescription.length }}/320</em></span>
+        <textarea rows="3" maxlength="320" [value]="model().seoDescription" (input)="updateTextField('seoDescription', $any($event.target).value)" placeholder="Résumé concis du produit pour les moteurs de recherche."></textarea>
+      </label>
+    </div>
+  </section>
 
   <div class="form-actions">
     <button mat-button type="button" (click)="cancel()">Annuler</button>
-    <button mat-raised-button color="primary" type="submit" [disabled]="saving() || !formValid()">
-      Enregistrer
+    <button mat-raised-button color="primary" type="submit" [disabled]="saving()">
+      {{ saving() ? 'Enregistrement...' : isEditMode() ? 'Mettre à jour' : 'Créer le produit' }}
     </button>
   </div>
 </form>

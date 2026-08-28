@@ -35,10 +35,24 @@ type BackendOrderResponse = {
   items: BackendOrderItemResponse[];
 };
 
+export type AdminOrder = {
+  orderId: string;
+  customerName: string;
+  city: string;
+  paymentMethod: string;
+  status: string;
+  estimatedDelivery: string;
+  total: number;
+};
+
 @Service()
 export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/orders`;
+
+  async listOrders(): Promise<AdminOrder[]> {
+    return firstValueFrom(this.http.get<AdminOrder[]>(this.baseUrl));
+  }
 
   async placeOrder(
     payload: CheckoutPayload,
