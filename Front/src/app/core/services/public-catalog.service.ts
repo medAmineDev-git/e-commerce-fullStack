@@ -3,18 +3,21 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ProductSizeOption, PublicCategory, PublicProduct } from '../models/public-product.model';
+import { Category } from '../models/category.model';
 import { SortDirection } from '../stores/crud-list.helpers';
 
 type BackendProduct = {
   id: number;
   name: string;
   category: PublicCategory;
+  subcategory?: string;
   description: string;
   price: number;
   stockQuantity: number;
   compareAtPrice?: number | null;
   imageUrls?: string[];
   sizes?: string[];
+  seasons?: string[];
   colors?: Array<{ name: string; hex: string }>;
 };
 
@@ -36,6 +39,8 @@ export type CatalogSortField = 'id' | 'name' | 'price' | 'stockQuantity';
 export type PublicCatalogPageQuery = {
   query: string;
   category: PublicCategory | 'Tous';
+  subcategory: string;
+  season: string;
   page: number;
   size: number;
   sortBy: CatalogSortField;
@@ -69,7 +74,13 @@ const FALLBACK_SIZES = ['S', 'M', 'L'] as const;
 @Service()
 export class PublicCatalogService {
   private readonly http = inject(HttpClient);
+  private readonly apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '');
   private readonly baseUrl = `${environment.apiBaseUrl}/products`;
+  private readonly categoriesUrl = `${environment.apiBaseUrl}/categories`;
+
+  async listCategories(): Promise<Category[]> {
+    return firstValueFrom(this.http.get<Category[]>(this.categoriesUrl));
+  }
 
   async listProducts(): Promise<PublicProduct[]> {
     const products = await firstValueFrom(this.http.get<BackendProduct[]>(this.baseUrl));
@@ -82,6 +93,8 @@ export class PublicCatalogService {
         params: {
           q: query.query,
           category: query.category === 'Tous' ? '' : query.category,
+            subcategory: query.subcategory,
+            season: query.season,
           page: String(query.page),
           size: String(query.size),
           sortBy: query.sortBy,
@@ -106,8 +119,11 @@ export class PublicCatalogService {
   }
 
   private mapBackendProduct(product: BackendProduct): PublicProduct {
-    const imageUrl = product.imageUrls?.[0] ?? IMAGE_POOL[Math.abs(product.id) % IMAGE_POOL.length];
-    const gallery = product.imageUrls?.length ? [...product.imageUrls] : [imageUrl];
+    const gallery = product.imageUrls?.length
+      ? product.imageUrls.map((image) => this.resolveImageUrl(image))
+      : [];
+    const imageUrl = gallery[0] ?? IMAGE_POOL[Math.abs(product.id) % IMAGE_POOL.length];
+    const resolvedGallery = gallery.length ? gallery : [imageUrl];
     const sizes = (product.sizes ?? []).filter(this.isProductSize);
 
     return {
@@ -117,17 +133,23 @@ export class PublicCatalogService {
       shortDescription: this.truncate(product.description, 96),
       longDescription: product.description,
       category: product.category,
+      subcategory: product.subcategory,
+      seasons: product.seasons ?? [],
       price: product.price,
       originalPrice: product.compareAtPrice ?? undefined,
       rating: 4.5,
       reviewsCount: 0,
       stockQuantity: product.stockQuantity,
       imageUrl,
-      gallery,
+      gallery: resolvedGallery,
       colors: product.colors?.length ? [...product.colors] : [...FALLBACK_COLORS],
       sizes: sizes.length ? sizes : [...FALLBACK_SIZES],
       reviews: [],
     };
+  }
+
+  private resolveImageUrl(image: string): string {
+    return image.startsWith('/') ? `${this.apiOrigin}${image}` : image;
   }
 
   private isProductSize(value: string): value is ProductSizeOption {

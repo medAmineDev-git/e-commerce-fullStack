@@ -134,7 +134,85 @@ Example:
 curl -X DELETE "http://localhost:8080/api/products/1"
 ```
 
-## 4. Paged Search Endpoint
+### 3.6 Upload product image
+
+- Method: POST
+- Path: /api/products/images
+- Content-Type: multipart/form-data
+- Form field: `file`
+- Formats: JPEG, PNG, GIF, WebP
+- Maximum size: 5 MB
+- Response: 201 Created
+
+Example:
+
+```bash
+curl -X POST "http://localhost:8080/api/products/images" \
+  -F "file=@C:/images/sneaker.png"
+```
+
+Example response:
+
+```json
+{
+  "url": "/uploads/products/550e8400-e29b-41d4-a716-446655440000.png"
+}
+```
+
+The returned URL can then be added to `imageUrls` when creating or updating a product.
+
+### 3.7 Product category hierarchy
+
+Products support both `category` (parent) and optional `subcategory`.
+Categories support an optional `parentId`:
+
+```json
+{
+  "name": "T-shirt",
+  "description": "T-shirts homme",
+  "parentId": 1
+}
+```
+
+When `parentId` is omitted or null, the category is a top-level category.
+
+Products can belong to multiple seasons. Supported values are `Printemps`, `Été`, `Automne` and `Hiver`.
+
+## 4. Home Configuration
+
+### 4.1 Get home configuration
+
+- Method: GET
+- Path: /api/home/configuration
+- Response: 200 OK
+
+Example response:
+
+```json
+{
+  "title": "Style urbain, livraison rapide, paiement a la livraison.",
+  "text": "Decouvre une selection orientee streetwear premium.",
+  "featuredProductId": 1
+}
+```
+
+### 4.2 Save home configuration
+
+- Method: PUT
+- Path: /api/home/configuration
+- Body:
+
+```json
+{
+  "title": "Nouvelle collection automne",
+  "text": "Decouvre les pieces fortes de la saison.",
+  "featuredProductId": 5
+}
+```
+
+The selected product must exist. The frontend admin screen is available at `/admin/home`.
+
+## 5. Paged Search Endpoint
 
 ### 4.1 Search + category + pagination + sort
 
@@ -145,6 +223,8 @@ curl -X DELETE "http://localhost:8080/api/products/1"
   - category: category filter (optional)
     - allowed values: Homme, Femme, Sneakers, Accessoires
     - invalid value is ignored (treated as empty)
+  - subcategory: exact subcategory filter (optional)
+  - season: exact season filter (optional)
   - page: 0-based page index (default 0)
   - size: page size (default 12, max 100)
   - sortBy: id | name | price | stockQuantity (default id)
@@ -182,7 +262,7 @@ Example response:
 }
 ```
 
-## 5. Dev-only Endpoint (Reseed)
+## 6. Dev-only Endpoint (Reseed)
 
 This endpoint exists only when the active Spring profile is dev.
 
@@ -215,7 +295,7 @@ If profile is not dev:
 - endpoint is not registered
 - expected result: 404 Not Found
 
-## 6. Category Endpoints
+## 7. Category Endpoints
 
 ### 6.1 Get all categories
 
@@ -251,7 +331,7 @@ If profile is not dev:
 - Method: DELETE
 - Path: /api/categories/{id}
 
-## 7. Order Endpoint
+## 8. Order Endpoint
 
 ### 7.1 Place order
 
@@ -294,7 +374,36 @@ Example response:
 }
 ```
 
-## 8. Error Response Contract
+### 8.2 Get order detail
+
+- Method: GET
+- Path: /api/orders/{orderId}
+- Response: 200 OK with customer, delivery, note, items, total and status
+
+### 8.3 Update order status and note
+
+- Method: PUT
+- Path: /api/orders/{orderId}
+- Body:
+
+```json
+{
+  "status": "VALIDEE_PAR_LE_CLIENT",
+  "note": "Client confirme par telephone."
+}
+```
+
+Allowed statuses:
+- `EN_ATTENTE_VALIDATION_ADMIN`
+- `ANNULEE`
+- `VALIDEE_PAR_LE_CLIENT`
+- `LIVREE_ET_PAYEE`
+- `RETOURNEE_PAR_LE_CLIENT`
+- `LIVRAISON_EN_COURS`
+
+Every new order starts with `EN_ATTENTE_VALIDATION_ADMIN`.
+
+## 9. Error Response Contract
 
 All handled errors use this shape:
 
@@ -316,7 +425,7 @@ Status mapping:
 - 404: product not found
 - 500: unexpected server error
 
-## 9. Quick PowerShell Examples
+## 10. Quick PowerShell Examples
 
 ```powershell
 # Get paged sneakers sorted by price asc

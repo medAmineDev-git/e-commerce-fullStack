@@ -11,10 +11,27 @@
   </div>
 
   <div class="filter-row">
-    <select [value]="catalogStore.selectedCategory()" (change)="setCategory($any($event.target).value)">
-      @for (category of catalogStore.categories(); track category) {
-        <option [value]="category">{{ category }}</option>
+    @if (!isCategoryPage) {
+      <select [value]="catalogStore.selectedCategory()" (change)="setCategory($any($event.target).value)">
+        @for (category of catalogStore.categories(); track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
+    }
+
+    <select [value]="catalogStore.selectedSubcategory()" (change)="setSubcategory($any($event.target).value)" [disabled]="!catalogStore.subcategories().length">
+      <option value="">Toutes les sous-catégories</option>
+      @for (subcategory of catalogStore.subcategories(); track subcategory) {
+        <option [value]="subcategory">{{ subcategory }}</option>
       }
+    </select>
+
+    <select [value]="catalogStore.selectedSeason()" (change)="setSeason($any($event.target).value)">
+      <option value="">Toutes les saisons</option>
+      <option value="Printemps">Printemps</option>
+      <option value="Été">Été</option>
+      <option value="Automne">Automne</option>
+      <option value="Hiver">Hiver</option>
     </select>
 
     <select [value]="catalogStore.sortBy()" (change)="setSort($any($event.target).value)">
@@ -44,7 +61,7 @@
         }
         <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" (click)="openProduct(product)" />
         <div class="body">
-          <p>{{ product.category }}</p>
+          <p>{{ product.category }}{{ product.subcategory ? ' · ' + product.subcategory : '' }}</p>
           <h3 (click)="openProduct(product)">{{ product.name }}</h3>
           @if ((product.colors?.length ?? 0) > 0) {
             <div class="preview-row">
@@ -66,7 +83,9 @@
               <span>{{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
             }
           </div>
-          <button type="button" (click)="openProduct(product)">Voir la fiche</button>
+          <button type="button" class="detail-button" (click)="openProduct(product)">
+            Afficher Détail
+          </button>
         </div>
       </article>
     }

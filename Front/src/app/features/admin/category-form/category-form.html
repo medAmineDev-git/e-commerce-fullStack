@@ -1,6 +1,6 @@
 <h1>{{ isEditMode() ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h1>
 
-<form (ngSubmit)="save()" class="category-form">
+<form (submit)="$event.preventDefault()" class="category-form">
 	<mat-form-field appearance="outline">
 		<mat-label>Nom</mat-label>
 		<input
@@ -26,10 +26,20 @@
 		></textarea>
 	</mat-form-field>
 
+	<mat-form-field appearance="outline">
+		<mat-label>Catégorie parent</mat-label>
+		<select matNativeControl [value]="model().parentId ?? ''" (change)="updateParent($any($event.target).value)">
+			<option value="">Catégorie principale</option>
+			@for (parent of parentCategories(); track parent.id) {
+				<option [value]="parent.id">{{ parent.name }}</option>
+			}
+		</select>
+	</mat-form-field>
+
 	<div class="form-actions">
 		<button mat-button type="button" (click)="cancel()">Annuler</button>
-		<button mat-raised-button color="primary" type="submit" [disabled]="saving() || !formValid()">
-			Enregistrer
+		<button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="saving() || !formValid()">
+			{{ saving() ? 'Enregistrement...' : isEditMode() ? 'Modifier la catégorie' : 'Créer la catégorie' }}
 		</button>
 	</div>
 </form>

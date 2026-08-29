@@ -9,7 +9,7 @@
   </span>
 </section>
 
-<form class="product-form" (ngSubmit)="save()">
+<form class="product-form" (submit)="$event.preventDefault()">
   <section class="form-card">
     <div class="section-heading">
       <div>
@@ -32,6 +32,15 @@
           }
         </select>
         @if (submitted() && errors().category) { <small class="error">{{ errors().category }}</small> }
+      </label>
+      <label class="field">
+        <span>Sous-catégorie</span>
+        <select [value]="model().subcategory" (change)="updateSubcategory($any($event.target).value)" [disabled]="!subcategories().length">
+          <option value="">Aucune sous-catégorie</option>
+          @for (subcategory of subcategories(); track subcategory.id) {
+            <option [value]="subcategory.name">{{ subcategory.name }}</option>
+          }
+        </select>
       </label>
       <label class="field">
         <span>Référence SKU</span>
@@ -85,6 +94,18 @@
         <p>Ajoutez des URLs d'images. La première image sera utilisée comme image principale.</p>
       </div>
     </div>
+    <div class="upload-row">
+      <label class="file-picker">
+        <span>{{ uploadingImage() ? 'Téléversement...' : 'Choisir une image' }}</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          [disabled]="uploadingImage()"
+          (change)="uploadImage($any($event.target).files?.[0])"
+        />
+      </label>
+      <small>JPEG, PNG, GIF ou WebP · 5 Mo maximum</small>
+    </div>
     <div class="add-row">
       <input [value]="imageDraft()" (input)="imageDraft.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); addImage()" placeholder="https://.../produit.jpg" />
       <button type="button" (click)="addImage()">Ajouter l'image</button>
@@ -96,6 +117,11 @@
           <figure>
             <img [src]="image" [alt]="model().name || 'Aperçu produit'" />
             @if (index === 0) { <figcaption>Image principale</figcaption> }
+            @if (index > 0) {
+              <button type="button" class="primary" (click)="setPrimaryImage(image)">
+                Définir principale
+              </button>
+            }
             <button type="button" class="remove" (click)="removeImage(image)" [attr.aria-label]="'Supprimer l’image ' + (index + 1)">×</button>
           </figure>
         }
@@ -114,6 +140,19 @@
       <div class="size-list">
         @for (size of availableSizes; track size) {
           <button type="button" [class.selected]="model().sizes.includes(size)" (click)="toggleSize(size)">{{ size }}</button>
+        }
+      </div>
+    </div>
+    <div>
+      <div class="section-heading">
+        <div>
+          <h2>Saisons</h2>
+          <p>Les saisons pendant lesquelles le produit est disponible.</p>
+        </div>
+      </div>
+      <div class="size-list">
+        @for (season of availableSeasons; track season) {
+          <button type="button" [class.selected]="model().seasons.includes(season)" (click)="toggleSeason(season)">{{ season }}</button>
         }
       </div>
     </div>
@@ -157,8 +196,8 @@
   </section>
 
   <div class="form-actions">
-    <button mat-button type="button" (click)="cancel()">Annuler</button>
-    <button mat-raised-button color="primary" type="submit" [disabled]="saving()">
+    <button mat-button type="button" (click)="cancel()">Retourner</button>
+    <button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="saving()">
       {{ saving() ? 'Enregistrement...' : isEditMode() ? 'Mettre à jour' : 'Créer le produit' }}
     </button>
   </div>

@@ -40,7 +40,10 @@
 
 		<ng-container matColumnDef="name">
 			<th mat-header-cell *matHeaderCellDef>Nom</th>
-			<td mat-cell *matCellDef="let category">{{ category.name }}</td>
+			<td mat-cell *matCellDef="let category">
+				{{ category.name }}
+				@if (category.parentName) { <small>Sous-catégorie de {{ category.parentName }}</small> }
+			</td>
 		</ng-container>
 
 		<ng-container matColumnDef="description">

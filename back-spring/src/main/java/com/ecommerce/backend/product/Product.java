@@ -36,6 +36,9 @@ public class Product {
     @Column(nullable = false, length = 80)
     private String category;
 
+    @Column(length = 80)
+    private String subcategory;
+
     @Column(nullable = false, length = 1500)
     private String description;
 
@@ -71,6 +74,12 @@ public class Product {
     @OrderColumn(name = "position")
     @Column(name = "size_value", nullable = false, length = 20)
     private List<String> sizes = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "product_seasons", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "season_value", nullable = false, length = 20)
+    private List<String> seasons = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))

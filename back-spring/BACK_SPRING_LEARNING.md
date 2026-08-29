@@ -892,3 +892,365 @@ Puis:
 - PostgreSQL healthy
 - pgAdmin demarre
 - volume de donnees preserve
+
+### Session 16 - Upload d'images produit
+
+#### Objectif
+
+Permettre a l'administrateur de selectionner une image locale depuis le formulaire produit, puis de la reutiliser dans la galerie produit.
+
+#### Implementation backend
+
+- `ProductImageController` expose `POST /api/products/images`
+- reception via `multipart/form-data`, champ `file`
+- `ProductImageStorageService`:
+  - accepte JPEG, PNG, GIF et WebP
+  - limite la taille a 5 Mo
+  - genere un nom UUID pour eviter les collisions et noms dangereux
+  - stocke dans `uploads/products`
+- `WebConfig` sert les fichiers via `/uploads/products/**`
+- limites multipart configurees dans `application-dev.properties`
+
+#### Implementation front
+
+- `ProductService.uploadImage(file)` envoie le fichier avec `FormData`
+- le formulaire admin propose un selecteur de fichier, un apercu et la suppression
+- l'URL retournee est ajoutee a `imageUrls`
+- l'ajout manuel par URL reste disponible
+
+#### Flux complet
+
+```text
+Fichier local -> FormData -> POST /api/products/images
+             -> fichier uploads/products
+             -> URL retournee
+             -> imageUrls du produit
+             -> POST/PUT /api/products
+```
+
+#### A retenir
+
+- Un upload ne doit pas faire confiance au nom original du fichier.
+- La taille et le type MIME doivent etre limites cote backend.
+- Les fichiers uploades doivent etre servis par une route controlee.
+
+### Session 17 - Selection de l'image principale
+
+#### Objectif
+
+Permettre plusieurs images par produit et donner le controle de l'image affichee en premier.
+
+#### Fonctionnement
+
+- la galerie conserve les images dans `imageUrls`
+- l'action `Definir principale` deplace l'image choisie en position 0
+- l'image en position 0 est utilisee comme:
+  - image principale dans la fiche produit
+  - premiere image de la galerie publique
+- l'ordre est persiste cote backend avec `@OrderColumn(name = "position")`
+
+#### A retenir
+
+- La notion d'image principale est geree par l'ordre de la collection.
+- Reordonner avant le `POST`/`PUT` permet de conserver le contrat API existant.
+
+### Session 18 - Configuration administrable de la home
+
+#### Objectif
+
+Permettre a l'administrateur de modifier le contenu principal de la home sans changer le code Angular.
+
+#### Donnees configurables
+
+- titre principal
+- texte descriptif sous le titre
+- produit vedette affiche a droite
+
+#### Backend
+
+- nouvelle table `home_configurations`
+- une configuration unique identifiee par `config_key = home`
+- endpoints:
+  - `GET /api/home/configuration`
+  - `PUT /api/home/configuration`
+- le produit selectionne est verifie avant sauvegarde
+- migration: `V103__create_home_configurations_table.sql`
+
+#### Frontend
+
+- nouvel ecran admin: `/admin/home`
+- formulaire de titre et texte
+- selecteur des produits existants
+- apercu du produit choisi
+- home publique charge la configuration depuis l'API
+- fallback sur le contenu par defaut si l'API est indisponible
+
+#### Flux
+
+```text
+Admin -> PUT configuration -> PostgreSQL
+Visiteur -> GET configuration + GET products -> Home publique
+```
+
+#### A retenir
+
+- Le contenu editorial configurable doit etre separe du code de presentation.
+- Une reference `featuredProductId` evite de dupliquer les donnees produit.
+- Le fallback protege l'experience publique pendant une panne backend.
+
+### Session 19 - Fiabilisation de la sauvegarde home
+
+#### Probleme
+
+Apres un clic sur enregistrer, les anciennes valeurs pouvaient reapparaitre si une reponse de chargement initial arrivait apres la modification.
+
+#### Diagnostic
+
+- le `PUT /api/home/configuration` persistait correctement en base
+- le test direct `PUT` puis `GET` confirmait la nouvelle valeur
+- le risque se situait donc dans le cycle de vie de l'ecran Angular et ses requetes concurrentes
+
+#### Correction
+
+- l'ecran marque la configuration comme chargee apres une sauvegarde reussie
+- une reponse tardive du chargement initial ne remplace plus les valeurs deja sauvegardees
+- le bouton reste bloque pendant la sauvegarde avec un libelle explicite
+
+#### Validation
+
+- backend: PUT/GET direct confirme la persistance
+- front: 60 tests passants
+
+#### A retenir
+
+- Une sauvegarde asynchrone doit proteger l'etat local contre les reponses obsoletes.
+- Tester le backend directement permet de separer un probleme de persistance d'un probleme UI.
+
+### Session 20 - Sauvegarde home sans refresh navigateur
+
+#### Probleme
+
+Le bouton de sauvegarde etait un bouton `submit` dans un formulaire. Le comportement HTML natif pouvait recharger la page avant ou pendant l'appel Angular.
+
+#### Correction
+
+- le formulaire bloque explicitement l'evenement `submit`
+- le bouton utilise `type="button"`
+- le clic appelle directement `save()`
+- aucun `router.navigate` ni refresh n'est execute apres le `PUT`
+- les signaux locaux sont mis a jour avec la reponse API
+- toaster Material ajoute:
+  - succes apres sauvegarde
+  - erreur si le `PUT` echoue
+
+#### Validation
+
+- front build: OK
+- tests front: 60 tests passants
+
+#### A retenir
+
+- Pour une sauvegarde SPA, eviter le submit HTML natif si aucune navigation n'est necessaire.
+- Le feedback utilisateur doit distinguer succes et erreur de l'appel API.
+
+### Session 21 - Conservation du produit sélectionné au chargement
+
+#### Probleme
+
+La configuration API contenait bien `featuredProductId`, mais le select pouvait afficher l'option vide a cause d'une comparaison entre valeurs numeriques et valeurs texte du DOM.
+
+#### Correction
+
+- conversion explicite de l'id en valeur texte pour le `select`
+- conversion controlee de la valeur choisie vers un nombre
+- attribut `selected` applique explicitement sur l'option correspondante
+
+#### A retenir
+
+- Les valeurs d'un select HTML sont des chaines, meme si les ids metier sont numeriques.
+- Aligner explicitement les types evite de perdre une selection deja persistee.
+
+### Session 22 - Detail et workflow de validation des commandes
+
+#### Objectif
+
+Donner a l'admin une vue complete d'une commande et un workflow de suivi modifiable.
+
+#### Backend
+
+- nouveau detail: `GET /api/orders/{orderId}`
+- mise a jour admin: `PUT /api/orders/{orderId}`
+- payload de mise a jour:
+  - `status`
+  - `note`
+- statuts autorises:
+  - `EN_ATTENTE_VALIDATION_ADMIN`
+  - `ANNULEE`
+  - `VALIDEE_PAR_LE_CLIENT`
+  - `LIVREE_ET_PAYEE`
+  - `RETOURNEE_PAR_LE_CLIENT`
+  - `LIVRAISON_EN_COURS`
+- toute nouvelle commande commence par `EN_ATTENTE_VALIDATION_ADMIN`
+- migration des anciennes commandes `confirmed` vers ce statut
+
+#### Frontend admin
+
+- bouton `Détail` dans la liste des commandes
+- panneau detail sans refresh de page contenant:
+  - informations client et livraison
+  - articles et total
+  - selecteur de statut
+  - champ note admin
+- sauvegarde asynchrone et toast de succes/erreur
+- la ligne de commande est mise a jour localement apres reponse API
+
+#### A retenir
+
+- Les statuts doivent etre bornes par une liste autorisee cote backend.
+- Le detail utilise un DTO dedie pour ne pas exposer directement l'entity.
+- Une mise a jour UI locale evite un rechargement inutile apres une sauvegarde.
+
+### Session 23 - Sous-categories et navigation catalogue
+
+#### Objectif
+
+Organiser les produits par categorie parent et sous-categorie, par exemple `Homme > T-shirt`.
+
+#### Backend
+
+- `Category` accepte un parent via `parent_id`
+- `CategoryRequest` accepte `parentId`
+- `CategoryResponse` renvoie `parentId` et `parentName`
+- `Product` accepte `subcategory`
+- recherche paginee accepte `subcategory`
+- migration: `V105__add_category_hierarchy.sql`
+
+#### Admin
+
+- creation/modification d'une categorie:
+  - choix `Catégorie principale`
+  - ou choix d'une categorie parent
+- formulaire produit:
+  - choix du catalogue parent
+  - choix de la sous-categorie dependante
+- liste categories affiche la relation parent/enfant
+
+#### Boutique publique
+
+- `/category/Homme` ouvre le catalogue filtre sur Homme
+- la page `/shop` propose un filtre sous-categorie
+- les URLs peuvent contenir `category` et `subcategory`
+- le backend applique le filtre en base avant pagination
+
+#### A retenir
+
+- Une sous-categorie est une categorie avec un parent, pas un simple texte isole.
+- Le produit conserve le parent et la sous-categorie pour un affichage et un filtrage simples.
+- Le filtrage doit etre applique avant la pagination pour afficher des resultats coherents.
+
+### Session 24 - Sous-categories chargees depuis la base
+
+#### Probleme observe
+
+Le select des sous-categories etait grise car le store public cherchait les sous-categories uniquement dans les produits deja charges sur la page courante.
+
+#### Correction
+
+- ajout de `listCategories()` dans le service catalogue public
+- le store charge `/api/categories` et conserve `availableCategories`
+- les sous-categories sont calculees depuis `parentId`, independamment de la page produits
+- le select envoie ensuite `subcategory` a `/api/products/page`
+- sur `/category/Homme`, le filtre parent `Tous/Homme` est masque car la categorie est deja imposee par la route
+
+#### Flux attendu
+
+```text
+/category/Homme
+  -> category = Homme
+  -> GET /api/categories
+  -> sous-categories parentId = id(Homme)
+  -> selection T-Shirt
+  -> GET /api/products/page?category=Homme&subcategory=T-Shirt
+```
+
+#### A retenir
+
+- Les options de filtre doivent venir de la ressource de reference (`categories`), pas seulement des resultats pagines.
+- Une page de categorie ne doit pas afficher un filtre qui contredit son contexte.
+
+### Session 25 - Sauvegarde produit admin sans rechargement
+
+#### Probleme
+
+Le formulaire produit utilisait encore un `submit` HTML natif. Le navigateur pouvait recharger la page avant que la creation ou la modification Angular soit correctement traitee.
+
+#### Correction
+
+- formulaire configure avec `(submit)="$event.preventDefault()"`
+- bouton configure en `type="button"`
+- appel explicite de `save()` au clic
+- protection contre les doubles clics pendant `saving()`
+- toaster de validation si les champs sont invalides
+- toaster de succes distinct pour creation et modification
+- toaster d'erreur si le store/API echoue
+
+#### A retenir
+
+- Dans une SPA, une action API doit rester controlee par Angular.
+- Le message de succes ne doit apparaitre qu'apres la reponse positive du backend.
+
+### Session 26 - Modification sous-categorie produit sans redirection
+
+#### Probleme
+
+La modification generale du produit fonctionnait, mais la sous-categorie n'etait pas traitee par une action explicite dans le formulaire et la sauvegarde redirigeait automatiquement.
+
+#### Correction
+
+- ajout de `updateSubcategory(value)` dans le formulaire
+- la valeur est conservee dans `model().subcategory`
+- `toPayload()` transmet cette valeur au `PUT /api/products/{id}`
+- `ProductMapper` mappe la sous-categorie aussi bien en creation qu'en modification
+- apres succes:
+  - toast de confirmation
+  - aucune navigation automatique
+  - retour vers la liste uniquement via le bouton retour manuel
+
+#### A retenir
+
+- Chaque champ important doit avoir un flux de mise a jour clair jusqu'au DTO.
+- Une edition admin ne doit pas perdre le contexte de travail apres une sauvegarde.
+
+### Session 27 - Saisons multiples et filtre catalogue
+
+#### Objectif
+
+Associer plusieurs saisons a un produit, par exemple `Hiver` et `Été`, puis filtrer le catalogue public.
+
+#### Backend
+
+- ajout de la collection `Product.seasons`
+- stockage dans `product_seasons` avec ordre preserve
+- `ProductRequest` et `ProductResponse` exposent `seasons`
+- migration: `V106__add_product_seasons.sql`
+- endpoint pagine accepte `season`
+- valeurs autorisees:
+  - `Printemps`
+  - `Été`
+  - `Automne`
+  - `Hiver`
+
+#### Frontend
+
+- formulaire produit admin:
+  - boutons multi-selection comme pour les tailles
+  - plusieurs saisons peuvent etre cochees
+- page `/shop`:
+  - select `Toutes les saisons`
+  - filtrage par saison
+  - parametre URL `season`
+
+#### A retenir
+
+- Une relation multi-valeurs se modelise par une collection, pas par une chaine concatenee.
+- Le filtre saison est applique cote serveur avant pagination.

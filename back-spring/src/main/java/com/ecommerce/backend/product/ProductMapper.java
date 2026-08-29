@@ -15,6 +15,7 @@ public class ProductMapper {
         Product product = new Product();
         product.setName(request.name());
         product.setCategory(request.category());
+        product.setSubcategory(blankToNull(request.subcategory()));
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
@@ -25,6 +26,7 @@ public class ProductMapper {
     public void updateEntity(Product existing, ProductRequest request) {
         existing.setName(request.name());
         existing.setCategory(request.category());
+        existing.setSubcategory(blankToNull(request.subcategory()));
         existing.setDescription(request.description());
         existing.setPrice(request.price());
         existing.setStockQuantity(request.stockQuantity());
@@ -36,6 +38,7 @@ public class ProductMapper {
                 product.getId(),
                 product.getName(),
             product.getCategory(),
+                product.getSubcategory(),
                 product.getDescription(),
                 product.getPrice(),
                 product.getStockQuantity(),
@@ -44,6 +47,7 @@ public class ProductMapper {
                 product.getStatus(),
                 List.copyOf(product.getImageUrls()),
                 List.copyOf(product.getSizes()),
+                List.copyOf(product.getSeasons()),
                 product.getColors().stream()
                         .map(color -> new ProductColorResponse(color.getName(), color.getHex()))
                         .toList(),
@@ -60,6 +64,7 @@ public class ProductMapper {
         product.setSeoDescription(blankToNull(request.seoDescription()));
         product.setImageUrls(new ArrayList<>(request.imageUrls() == null ? List.of() : request.imageUrls()));
         product.setSizes(new ArrayList<>(request.sizes() == null ? List.of() : request.sizes()));
+        product.setSeasons(new ArrayList<>(request.seasons() == null ? List.of() : request.seasons()));
         product.setColors(new ArrayList<>((request.colors() == null ? List.<com.ecommerce.backend.product.dto.ProductColorRequest>of() : request.colors())
                 .stream()
                 .map(color -> new ProductColor(color.name(), color.hex()))

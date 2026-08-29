@@ -20,6 +20,10 @@ public class CategoryMapper {
     }
 
     public CategoryResponse toResponse(Category category) {
-        return new CategoryResponse(category.getId(), category.getName(), category.getDescription());
+        return new CategoryResponse(
+            category.getId(), category.getName(), category.getDescription(),
+            category.getParent() == null ? null : category.getParent().getId(),
+            category.getParent() == null ? null : category.getParent().getName()
+        );
     }
 }

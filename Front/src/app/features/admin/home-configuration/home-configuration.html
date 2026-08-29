@@ -1,0 +1,49 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Boutique</p>
+    <h1>Configuration de la home</h1>
+    <p>Personnalisez le texte d’accueil et le produit mis en avant.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <p class="state">Chargement...</p>
+} @else {
+  <form class="configuration-form" (submit)="$event.preventDefault()">
+    <section class="form-card">
+      <label class="field">
+        <span>Titre *</span>
+        <input [value]="title()" (input)="title.set($any($event.target).value)" maxlength="160" required />
+      </label>
+      <label class="field">
+        <span>Texte *</span>
+        <textarea rows="5" [value]="text()" (input)="text.set($any($event.target).value)" maxlength="1200" required></textarea>
+      </label>
+      <label class="field">
+        <span>Produit affiché à droite *</span>
+        <select [value]="selectedProductValue()" (change)="selectFeaturedProduct($any($event.target).value)" required>
+          <option value="">Sélectionner un produit</option>
+          @for (product of products(); track product.id) {
+            <option [value]="product.id" [selected]="product.id === featuredProductId()">{{ product.name }} - {{ product.price | number: '1.2-2' }} €</option>
+          }
+        </select>
+      </label>
+
+      @if (featuredProductId(); as productId) {
+        @for (product of products(); track product.id) {
+          @if (product.id === productId) {
+            <div class="preview">
+              <span>Aperçu du produit sélectionné</span>
+              <strong>{{ product.name }}</strong>
+              <small>{{ product.category }} · {{ product.stockQuantity }} en stock</small>
+            </div>
+          }
+        }
+      }
+
+      @if (message()) { <p class="success">{{ message() }}</p> }
+      @if (error()) { <p class="error">{{ error() }}</p> }
+      <button type="button" (click)="save()" [disabled]="!canSave()">{{ saving() ? 'Enregistrement...' : 'Enregistrer la configuration' }}</button>
+    </section>
+  </form>
+}

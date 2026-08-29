@@ -14,6 +14,8 @@ describe('CategoryForm', () => {
   let mockStore: {
     saving: ReturnType<typeof signal<boolean>>;
     error: ReturnType<typeof signal<string | null>>;
+    categories: ReturnType<typeof signal<any[]>>;
+    loadCategories: ReturnType<typeof vi.fn>;
     loadCategory: ReturnType<typeof vi.fn>;
     createCategory: ReturnType<typeof vi.fn>;
     updateCategory: ReturnType<typeof vi.fn>;
@@ -23,6 +25,8 @@ describe('CategoryForm', () => {
     mockStore = {
       saving: signal(false),
       error: signal(null),
+      categories: signal([]),
+      loadCategories: vi.fn().mockResolvedValue(undefined),
       loadCategory: vi.fn().mockResolvedValue(null),
       createCategory: vi.fn().mockResolvedValue({ id: 1, name: 'Homme', description: 'Collection homme' }),
       updateCategory: vi.fn().mockResolvedValue(null),
@@ -63,6 +67,7 @@ describe('CategoryForm', () => {
     expect(mockStore.createCategory).toHaveBeenCalledWith({
       name: 'Accessoires',
       description: 'Collection accessoires',
+      parentId: null,
     });
     expect(mockNavigate).toHaveBeenCalledWith(['/admin/categories']);
   });

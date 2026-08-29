@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductStore } from '../../../core/stores/product.store';
+import { ProductService } from '../../../core/services/product';
 
 import { ProductForm } from './product-form';
 
@@ -40,6 +41,7 @@ describe('ProductForm', () => {
       providers: [
         provideRouter([]),
         { provide: ProductStore, useValue: mockStore },
+        { provide: ProductService, useValue: { uploadImage: vi.fn() } },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => null } } },
@@ -67,6 +69,8 @@ describe('ProductForm', () => {
     component.updateTextField('description', 'Laine');
     component.updateNumberField('price', '35');
     component.updateNumberField('stockQuantity', '12');
+    component.imageDraft.set('https://example.com/pull.jpg');
+    await component.addImage();
 
     await component.save();
 
@@ -76,7 +80,32 @@ describe('ProductForm', () => {
       description: 'Laine',
       price: 35,
       stockQuantity: 12,
+      status: 'DRAFT',
+      imageUrls: ['https://example.com/pull.jpg'],
+      sizes: [],
+      seasons: [],
+      colors: [],
+      sku: '',
+      compareAtPrice: null,
+      seoTitle: '',
+      seoDescription: '',
+      subcategory: '',
     });
-    expect(mockNavigate).toHaveBeenCalledWith(['/admin/products']);
+    expect(mockNavigate).not.toHaveBeenCalledWith(['/admin/products']);
+    expect(mockSnackBarOpen).toHaveBeenCalledWith('Produit créé avec succès.', 'Fermer', { duration: 3000 });
+  });
+
+  it('should move a selected gallery image to the primary position', async () => {
+    component.imageDraft.set('https://example.com/first.jpg');
+    await component.addImage();
+    component.imageDraft.set('https://example.com/second.jpg');
+    await component.addImage();
+
+    component.setPrimaryImage('https://example.com/second.jpg');
+
+    expect(component.model().imageUrls).toEqual([
+      'https://example.com/second.jpg',
+      'https://example.com/first.jpg',
+    ]);
   });
 });

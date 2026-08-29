@@ -9,6 +9,7 @@ export interface Product {
   id: number;
   name: string;
   category: string;
+  subcategory?: string;
   description: string;
   price: number;
   stockQuantity: number;
@@ -17,6 +18,7 @@ export interface Product {
   status?: ProductStatus;
   imageUrls?: string[];
   sizes?: string[];
+  seasons?: string[];
   colors?: ProductColor[];
   seoTitle?: string;
   seoDescription?: string;

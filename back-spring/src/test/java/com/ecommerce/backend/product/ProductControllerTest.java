@@ -72,7 +72,7 @@ class ProductControllerTest {
             "Sneakers"
         );
 
-        when(productService.searchProducts("sneaker", "Sneakers", 0, 12, "price", "asc")).thenReturn(page);
+        when(productService.searchProducts("sneaker", "Sneakers", "", "", 0, 12, "price", "asc")).thenReturn(page);
 
         mockMvc.perform(get("/api/products/page")
                 .param("q", "sneaker")

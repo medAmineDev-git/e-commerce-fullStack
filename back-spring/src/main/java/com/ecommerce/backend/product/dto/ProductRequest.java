@@ -15,6 +15,8 @@ public record ProductRequest(
         @NotBlank(message = "category is required")
         String category,
 
+        String subcategory,
+
         @NotBlank(message = "description is required")
         String description,
 
@@ -36,6 +38,8 @@ public record ProductRequest(
 
         List<String> sizes,
 
+        List<String> seasons,
+
         List<ProductColorRequest> colors,
 
         String seoTitle,
@@ -52,12 +56,14 @@ public record ProductRequest(
         this(
                 name,
                 category,
+                "",
                 description,
                 price,
                 stockQuantity,
                 "",
                 null,
                 "ACTIVE",
+                List.of(),
                 List.of(),
                 List.of(),
                 List.of(),

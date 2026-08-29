@@ -41,6 +41,13 @@ export const routes: Routes = [
         path: 'orders',
         loadComponent: () => import('./features/admin/order-list/order-list').then((m) => m.OrderList),
       },
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/admin/home-configuration/home-configuration').then(
+            (m) => m.HomeConfigurationPage,
+          ),
+      },
     ],
   },
   {
@@ -54,6 +61,10 @@ export const routes: Routes = [
       },
       {
         path: 'shop',
+        loadComponent: () => import('./features/public/shop-page/shop-page').then((m) => m.ShopPage),
+      },
+      {
+        path: 'category/:category',
         loadComponent: () => import('./features/public/shop-page/shop-page').then((m) => m.ShopPage),
       },
       {

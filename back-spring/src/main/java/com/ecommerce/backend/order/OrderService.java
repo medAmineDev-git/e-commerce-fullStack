@@ -5,6 +5,8 @@ import com.ecommerce.backend.order.dto.OrderItemResponse;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.order.dto.OrderSummaryResponse;
+import com.ecommerce.backend.order.dto.OrderDetailResponse;
+import com.ecommerce.backend.order.dto.OrderUpdateRequest;
 import com.ecommerce.backend.product.Product;
 import com.ecommerce.backend.product.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -16,11 +18,22 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
+
+        public static final String PENDING_ADMIN_VALIDATION = "EN_ATTENTE_VALIDATION_ADMIN";
+        public static final Set<String> ALLOWED_STATUSES = Set.of(
+                        PENDING_ADMIN_VALIDATION,
+                        "ANNULEE",
+                        "VALIDEE_PAR_LE_CLIENT",
+                        "LIVREE_ET_PAYEE",
+                        "RETOURNEE_PAR_LE_CLIENT",
+                        "LIVRAISON_EN_COURS"
+        );
 
     private static final DateTimeFormatter DELIVERY_FORMATTER =
             DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRANCE);
@@ -47,6 +60,22 @@ public class OrderService {
                 .toList();
     }
 
+        public OrderDetailResponse getOrder(String orderNumber) {
+                return toDetail(findByOrderNumber(orderNumber));
+        }
+
+        @Transactional
+        public OrderDetailResponse updateOrder(String orderNumber, OrderUpdateRequest request) {
+                if (!ALLOWED_STATUSES.contains(request.status())) {
+                        throw new IllegalArgumentException("Invalid order status: " + request.status());
+                }
+
+                CustomerOrder order = findByOrderNumber(orderNumber);
+                order.setStatus(request.status());
+                order.setNote(request.note());
+                return toDetail(orderRepository.save(order));
+        }
+
     @Transactional
     public OrderResponse placeOrder(OrderRequest request) {
         CustomerOrder order = new CustomerOrder();
@@ -57,7 +86,7 @@ public class OrderService {
         order.setAddress(request.address());
         order.setNote(request.note());
         order.setPaymentMethod(request.paymentMethod());
-        order.setStatus("confirmed");
+        order.setStatus(PENDING_ADMIN_VALIDATION);
         order.setEstimatedDelivery(LocalDate.now().plusDays(3));
 
         List<OrderItemResponse> items = request.items().stream()
@@ -102,4 +131,29 @@ public class OrderService {
                 item.quantity()
         );
     }
+
+        private CustomerOrder findByOrderNumber(String orderNumber) {
+                return orderRepository.findByOrderNumber(orderNumber)
+                                .orElseThrow(() -> new IllegalArgumentException("Order does not exist: " + orderNumber));
+        }
+
+        private OrderDetailResponse toDetail(CustomerOrder order) {
+                List<OrderItemResponse> items = order.getItems().stream()
+                                .map(item -> new OrderItemResponse(item.getProductId(), item.getProductName(), item.getUnitPrice(), item.getQuantity()))
+                                .toList();
+
+                return new OrderDetailResponse(
+                                order.getOrderNumber(),
+                                order.getCustomerName(),
+                                order.getPhone(),
+                                order.getCity(),
+                                order.getAddress(),
+                                order.getNote(),
+                                order.getPaymentMethod(),
+                                order.getStatus(),
+                                order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
+                                order.getTotal(),
+                                items
+                );
+        }
 }

@@ -6,6 +6,7 @@ describe('PublicCatalogStore', () => {
   let store: any;
   let service: {
     listProductsPage: ReturnType<typeof vi.fn>;
+    listCategories: ReturnType<typeof vi.fn>;
     getProductById: ReturnType<typeof vi.fn>;
   };
 
@@ -17,6 +18,7 @@ describe('PublicCatalogStore', () => {
       shortDescription: 'desc',
       longDescription: 'long',
       category: 'Homme',
+      subcategory: 'T-Shirt',
       price: 70,
       rating: 4.8,
       reviewsCount: 20,
@@ -31,6 +33,7 @@ describe('PublicCatalogStore', () => {
       shortDescription: 'desc',
       longDescription: 'long',
       category: 'Sneakers',
+      subcategory: '',
       price: 90,
       rating: 4.5,
       reviewsCount: 40,
@@ -42,7 +45,11 @@ describe('PublicCatalogStore', () => {
 
   beforeEach(() => {
     service = {
-      listProductsPage: vi.fn().mockImplementation((params?: { query?: string; category?: string }) => {
+      listCategories: vi.fn().mockResolvedValue([
+        { id: 1, name: 'Homme', description: '', parentId: null },
+        { id: 2, name: 'T-Shirt', description: '', parentId: 1 },
+      ]),
+      listProductsPage: vi.fn().mockImplementation((params?: { query?: string; category?: string; subcategory?: string }) => {
         const normalizedQuery = (params?.query ?? '').trim().toLowerCase();
         const filteredByQuery = normalizedQuery
           ? mockProducts.filter((product) => product.name.toLowerCase().includes(normalizedQuery))
@@ -53,11 +60,15 @@ describe('PublicCatalogStore', () => {
             ? filteredByQuery.filter((product) => product.category === params.category)
             : filteredByQuery;
 
+        const filteredItems = params?.subcategory
+          ? items.filter((product) => product.subcategory === params.subcategory)
+          : items;
+
         return Promise.resolve({
-          items,
+          items: filteredItems,
           page: 0,
           size: 8,
-          totalElements: items.length,
+          totalElements: filteredItems.length,
           totalPages: 1,
           last: true,
         });

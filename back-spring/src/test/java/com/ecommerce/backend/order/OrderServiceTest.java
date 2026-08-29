@@ -45,7 +45,7 @@ class OrderServiceTest {
         CustomerOrder savedOrder = orderCaptor.getValue();
 
         assertEquals(new BigDecimal("99.80"), response.total());
-        assertEquals("confirmed", response.status());
+        assertEquals(OrderService.PENDING_ADMIN_VALIDATION, response.status());
         assertEquals(1, savedOrder.getItems().size());
         assertEquals(savedOrder, savedOrder.getItems().getFirst().getOrder());
         assertEquals(1, product.getStockQuantity());

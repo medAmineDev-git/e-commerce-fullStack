@@ -31,7 +31,10 @@ export class CategoryForm {
   readonly model = signal<CategoryInput>({
     name: '',
     description: '',
+    parentId: null,
   });
+
+  readonly parentCategories = computed(() => this.store.categories().filter((category) => !category.parentId));
 
   readonly touched = signal<CategoryFormTouched>({
     name: false,
@@ -53,6 +56,7 @@ export class CategoryForm {
   });
 
   constructor() {
+    void this.store.loadCategories();
     void this.initializeForm();
   }
 
@@ -72,11 +76,20 @@ export class CategoryForm {
     this.model.set({
       name: category.name,
       description: category.description,
+      parentId: category.parentId ?? null,
     });
   }
 
   updateTextField(field: 'name' | 'description', value: string): void {
     this.model.update((current) => ({ ...current, [field]: value }));
+  }
+
+  updateParent(value: string): void {
+    const parentId = Number(value);
+    this.model.update((current) => ({
+      ...current,
+      parentId: Number.isInteger(parentId) && parentId > 0 ? parentId : null,
+    }));
   }
 
   touch(field: keyof CategoryFormTouched): void {
@@ -86,6 +99,10 @@ export class CategoryForm {
   async save(): Promise<void> {
     this.submitted.set(true);
     if (!this.formValid()) {
+      this.snackBar.open('Le nom de la catégorie est obligatoire.', 'Fermer', { duration: 3000 });
+      return;
+    }
+    if (this.saving()) {
       return;
     }
 
@@ -101,7 +118,11 @@ export class CategoryForm {
       return;
     }
 
-    this.snackBar.open('Catégorie enregistrée', 'Fermer', { duration: 2000 });
+    this.snackBar.open(
+      this.isEditMode() ? 'Catégorie modifiée avec succès.' : 'Catégorie créée avec succès.',
+      'Fermer',
+      { duration: 3000 },
+    );
     await this.router.navigate(['/admin/categories']);
   }
 

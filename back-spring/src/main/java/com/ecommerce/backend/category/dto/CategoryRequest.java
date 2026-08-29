@@ -7,6 +7,11 @@ public record CategoryRequest(
         String name,
 
         @NotBlank(message = "description is required")
-        String description
+        String description,
+
+        Long parentId
 ) {
+        public CategoryRequest(String name, String description) {
+                this(name, description, null);
+        }
 }

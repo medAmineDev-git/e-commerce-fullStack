@@ -29,6 +29,7 @@
           <th>Paiement</th>
           <th>Statut</th>
           <th>Total</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -38,11 +39,68 @@
             <td>{{ order.customerName }}<small>{{ order.city }}</small></td>
             <td>{{ order.estimatedDelivery }}</td>
             <td>{{ order.paymentMethod }}</td>
-            <td><span class="status">{{ order.status }}</span></td>
+            <td><span class="status">{{ statusLabel(order.status) }}</span></td>
             <td><strong>{{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong></td>
+            <td><button type="button" class="detail-button" (click)="openDetails(order.orderId)">Détail</button></td>
           </tr>
         }
       </tbody>
     </table>
   </div>
+}
+
+@if (selectedOrder(); as order) {
+  <div class="dialog-backdrop" (click)="closeDetails()"></div>
+  <section class="order-dialog" aria-label="Détail de la commande">
+    <header>
+      <div>
+        <p class="eyebrow">Commande</p>
+        <h2>{{ order.orderId }}</h2>
+      </div>
+      <button type="button" class="close-button" (click)="closeDetails()">Fermer</button>
+    </header>
+
+    <div class="order-information">
+      <div><span>Client</span><strong>{{ order.customerName }}</strong></div>
+      <div><span>Téléphone</span><strong>{{ order.phone }}</strong></div>
+      <div><span>Ville</span><strong>{{ order.city }}</strong></div>
+      <div><span>Adresse</span><strong>{{ order.address }}</strong></div>
+      <div><span>Paiement</span><strong>{{ order.paymentMethod }}</strong></div>
+      <div><span>Livraison prévue</span><strong>{{ order.estimatedDelivery }}</strong></div>
+    </div>
+
+    <h3>Articles</h3>
+    <div class="items-list">
+      @for (item of order.items; track item.productId) {
+        <div class="item-row">
+          <span>{{ item.productName }} × {{ item.quantity }}</span>
+          <strong>{{ item.unitPrice * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+      }
+    </div>
+
+    <label class="field">
+      <span>Statut</span>
+      <select [value]="selectedStatus()" (change)="selectedStatus.set($any($event.target).value)">
+        @for (status of orderStatuses; track status) {
+          <option [value]="status">{{ statusLabel(status) }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Note admin</span>
+      <textarea rows="4" [value]="selectedNote()" (input)="selectedNote.set($any($event.target).value)" placeholder="Note de suivi ou confirmation client"></textarea>
+    </label>
+
+    @if (order.note) {
+      <p class="existing-note"><strong>Note enregistrée:</strong> {{ order.note }}</p>
+    }
+
+    <footer>
+      <strong>Total {{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      <button type="button" (click)="saveDetails()" [disabled]="saving()">
+        {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </footer>
+  </section>
 }

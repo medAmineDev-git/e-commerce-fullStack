@@ -6,11 +6,13 @@ import { firstValueFrom } from 'rxjs';
 import { Category } from '../../../core/models/category.model';
 import { ProductColor, ProductInput, ProductStatus } from '../../../core/models/product.model';
 import { CategoryService } from '../../../core/services/category';
+import { ProductService } from '../../../core/services/product';
 import { ProductStore } from '../../../core/stores/product.store';
 
 type ProductFormModel = {
   name: string;
   category: string;
+  subcategory: string;
   description: string;
   sku: string;
   price: number;
@@ -19,6 +21,7 @@ type ProductFormModel = {
   status: ProductStatus;
   imageUrls: string[];
   sizes: string[];
+  seasons: string[];
   colors: ProductColor[];
   seoTitle: string;
   seoDescription: string;
@@ -36,15 +39,22 @@ export class ProductForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly productService = inject(ProductService);
 
   private readonly productId = this.route.snapshot.paramMap.get('id');
   readonly isEditMode = signal(this.productId !== null && this.productId !== 'new');
   readonly submitted = signal(false);
+  readonly uploadingImage = signal(false);
   readonly categories = signal<Category[]>([]);
+  readonly subcategories = computed(() => {
+    const parent = this.categories().find((category) => category.name === this.model().category);
+    return this.categories().filter((category) => category.parentId === parent?.id);
+  });
   readonly imageDraft = signal('');
   readonly colorNameDraft = signal('');
   readonly colorHexDraft = signal('#000000');
   readonly availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+  readonly availableSeasons = ['Printemps', 'Été', 'Automne', 'Hiver'] as const;
 
   readonly model = signal<ProductFormModel>(this.emptyModel());
   readonly saving = computed(() => this.store.saving());
@@ -83,11 +93,45 @@ export class ProductForm {
     this.imageDraft.set('');
   }
 
+  async uploadImage(file: File | undefined): Promise<void> {
+    if (!file || this.uploadingImage()) {
+      return;
+    }
+
+    this.uploadingImage.set(true);
+    try {
+      const response = await firstValueFrom(this.productService.uploadImage(file));
+      const imageUrl = response.url.startsWith('/')
+        ? `${this.productService.apiOrigin}${response.url}`
+        : response.url;
+      this.model.update((current) => ({ ...current, imageUrls: [...current.imageUrls, imageUrl] }));
+      this.snackBar.open('Image ajoutée à la galerie.', 'Fermer', { duration: 2000 });
+    } catch (error) {
+      this.snackBar.open(this.getUploadErrorMessage(error), 'Fermer', { duration: 3500 });
+    } finally {
+      this.uploadingImage.set(false);
+    }
+  }
+
   removeImage(imageUrl: string): void {
     this.model.update((current) => ({
       ...current,
       imageUrls: current.imageUrls.filter((image) => image !== imageUrl),
     }));
+  }
+
+  setPrimaryImage(imageUrl: string): void {
+    this.model.update((current) => {
+      const imageIndex = current.imageUrls.indexOf(imageUrl);
+      if (imageIndex <= 0) {
+        return current;
+      }
+
+      return {
+        ...current,
+        imageUrls: [imageUrl, ...current.imageUrls.filter((image) => image !== imageUrl)],
+      };
+    });
   }
 
   toggleSize(size: string): void {
@@ -96,6 +140,15 @@ export class ProductForm {
       sizes: current.sizes.includes(size)
         ? current.sizes.filter((item) => item !== size)
         : [...current.sizes, size],
+    }));
+  }
+
+  toggleSeason(season: string): void {
+    this.model.update((current) => ({
+      ...current,
+      seasons: current.seasons.includes(season)
+        ? current.seasons.filter((item) => item !== season)
+        : [...current.seasons, season],
     }));
   }
 
@@ -122,8 +175,16 @@ export class ProductForm {
     }));
   }
 
-  updateTextField(field: keyof Pick<ProductFormModel, 'name' | 'category' | 'description' | 'sku' | 'seoTitle' | 'seoDescription'>, value: string): void {
-    this.model.update((current) => ({ ...current, [field]: value }));
+  updateTextField(field: keyof Pick<ProductFormModel, 'name' | 'category' | 'subcategory' | 'description' | 'sku' | 'seoTitle' | 'seoDescription'>, value: string): void {
+    this.model.update((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === 'category' ? { subcategory: '' } : {}),
+    }));
+  }
+
+  updateSubcategory(value: string): void {
+    this.model.update((current) => ({ ...current, subcategory: value }));
   }
 
   updateNumberField(field: 'price' | 'compareAtPrice' | 'stockQuantity', value: string): void {
@@ -144,6 +205,9 @@ export class ProductForm {
       this.snackBar.open('Corrigez les champs indiqués avant de publier.', 'Fermer', { duration: 3000 });
       return;
     }
+    if (this.saving()) {
+      return;
+    }
 
     const payload = this.toPayload(this.model());
     const product = this.isEditMode()
@@ -157,8 +221,15 @@ export class ProductForm {
       return;
     }
 
-    this.snackBar.open('Produit enregistré', 'Fermer', { duration: 2000 });
-    await this.router.navigate(['/admin/products']);
+    this.snackBar.open(
+      this.isEditMode()
+        ? this.model().subcategory
+          ? 'Produit et sous-catégorie modifiés avec succès.'
+          : 'Produit modifié avec succès.'
+        : 'Produit créé avec succès.',
+      'Fermer',
+      { duration: 3000 },
+    );
   }
 
   cancel(): void {
@@ -186,6 +257,7 @@ export class ProductForm {
     this.model.set({
       name: product.name,
       category: product.category,
+      subcategory: product.subcategory ?? '',
       description: product.description,
       sku: product.sku ?? '',
       price: product.price,
@@ -194,6 +266,7 @@ export class ProductForm {
       status: product.status ?? 'ACTIVE',
       imageUrls: [...(product.imageUrls ?? [])],
       sizes: [...(product.sizes ?? [])],
+      seasons: [...(product.seasons ?? [])],
       colors: [...(product.colors ?? [])],
       seoTitle: product.seoTitle ?? '',
       seoDescription: product.seoDescription ?? '',
@@ -204,6 +277,7 @@ export class ProductForm {
     return {
       name: '',
       category: '',
+      subcategory: '',
       description: '',
       sku: '',
       price: 0,
@@ -212,6 +286,7 @@ export class ProductForm {
       status: 'DRAFT',
       imageUrls: [],
       sizes: [],
+      seasons: [],
       colors: [],
       seoTitle: '',
       seoDescription: '',
@@ -237,5 +312,10 @@ export class ProductForm {
     } catch {
       return false;
     }
+  }
+
+  private getUploadErrorMessage(error: unknown): string {
+    const response = error as { error?: { message?: string } };
+    return response.error?.message ?? 'Impossible de téléverser cette image.';
   }
 }

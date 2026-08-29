@@ -12,6 +12,8 @@ servers:
 tags:
   - name: Products
     description: Product CRUD and search
+  - name: Home
+    description: Public home page configuration
   - name: Categories
     description: Category CRUD
   - name: Orders
@@ -120,6 +122,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiErrorResponse'
 
+  /api/products/images:
+    post:
+      tags: [Products]
+      summary: Upload a product image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400':
+          description: Invalid image or file too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
   /api/products/page:
     get:
       tags: [Products]
@@ -169,6 +203,13 @@ paths:
             type: string
             default: desc
             enum: [asc, desc]
+          - name: season
+            in: query
+            required: false
+            schema:
+              type: string
+              enum: [Printemps, Été, Automne, Hiver]
+            description: Exact season filter
       responses:
         '200':
           description: Paged result
@@ -176,6 +217,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductPageResponse'
+
+  /api/home/configuration:
+    get:
+      tags: [Home]
+      summary: Get home page configuration
+      responses:
+        '200':
+          description: Current home configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeConfigurationResponse'
+    put:
+      tags: [Home]
+      summary: Save home page configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HomeConfigurationRequest'
+      responses:
+        '200':
+          description: Configuration saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeConfigurationResponse'
+        '400':
+          description: Validation error or featured product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
 
   /api/categories:
     get:
@@ -341,6 +416,8 @@ components:
         category:
           type: string
           minLength: 1
+        subcategory:
+          type: string
         description:
           type: string
           minLength: 1
@@ -351,6 +428,11 @@ components:
         stockQuantity:
           type: integer
           minimum: 0
+        seasons:
+          type: array
+          items:
+            type: string
+            enum: [Printemps, Été, Automne, Hiver]
 
     ProductResponse:
       type: object
@@ -362,6 +444,8 @@ components:
           type: string
         category:
           type: string
+        subcategory:
+          type: string
         description:
           type: string
         price:
@@ -369,6 +453,11 @@ components:
           format: decimal
         stockQuantity:
           type: integer
+        seasons:
+          type: array
+          items:
+            type: string
+            enum: [Printemps, Été, Automne, Hiver]
 
     ProductPageResponse:
       type: object
@@ -397,6 +486,33 @@ components:
         category:
           type: string
 
+    HomeConfigurationRequest:
+      type: object
+      required: [title, text, featuredProductId]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        text:
+          type: string
+          minLength: 1
+          maxLength: 1200
+        featuredProductId:
+          type: integer
+          format: int64
+
+    HomeConfigurationResponse:
+      type: object
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+        featuredProductId:
+          type: integer
+          format: int64
+
     CategoryRequest:
       type: object
       required: [name, description]
@@ -407,6 +523,9 @@ components:
         description:
           type: string
           minLength: 1
+        parentId:
+          type: integer
+          format: int64
 
     CategoryResponse:
       type: object
@@ -418,6 +537,13 @@ components:
           type: string
         description:
           type: string
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        parentName:
+          type: string
+          nullable: true
 
     OrderRequest:
       type: object

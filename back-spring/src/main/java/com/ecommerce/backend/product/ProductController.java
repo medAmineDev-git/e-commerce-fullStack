@@ -28,12 +28,14 @@ public class ProductController {
     public ProductPageResponse searchProducts(
             @RequestParam(name = "q", defaultValue = "") String query,
             @RequestParam(name = "category", defaultValue = "") String category,
+            @RequestParam(name = "subcategory", defaultValue = "") String subcategory,
+            @RequestParam(name = "season", defaultValue = "") String season,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
             @RequestParam(name = "sortBy", defaultValue = "id") String sortBy,
             @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDirection
     ) {
-        return productService.searchProducts(query, category, page, size, sortBy, sortDirection);
+        return productService.searchProducts(query, category, subcategory, season, page, size, sortBy, sortDirection);
     }
 
     @GetMapping("/{id}")

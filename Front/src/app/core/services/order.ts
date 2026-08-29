@@ -45,6 +45,31 @@ export type AdminOrder = {
   total: number;
 };
 
+export type AdminOrderItem = {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+};
+
+export type AdminOrderDetail = AdminOrder & {
+  phone: string;
+  address: string;
+  note: string | null;
+  items: AdminOrderItem[];
+};
+
+export const ORDER_STATUSES = [
+  'EN_ATTENTE_VALIDATION_ADMIN',
+  'ANNULEE',
+  'VALIDEE_PAR_LE_CLIENT',
+  'LIVREE_ET_PAYEE',
+  'RETOURNEE_PAR_LE_CLIENT',
+  'LIVRAISON_EN_COURS',
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
 @Service()
 export class OrderService {
   private readonly http = inject(HttpClient);
@@ -79,5 +104,15 @@ export class OrderService {
       status: response.status,
       items,
     };
+  }
+
+  async getOrder(orderId: string): Promise<AdminOrderDetail> {
+    return firstValueFrom(this.http.get<AdminOrderDetail>(`${this.baseUrl}/${orderId}`));
+  }
+
+  async updateOrder(orderId: string, status: OrderStatus, note: string): Promise<AdminOrderDetail> {
+    return firstValueFrom(
+      this.http.put<AdminOrderDetail>(`${this.baseUrl}/${orderId}`, { status, note }),
+    );
   }
 }

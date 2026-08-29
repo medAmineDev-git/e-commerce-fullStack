@@ -21,6 +21,8 @@ export interface PublicProduct {
   shortDescription: string;
   longDescription: string;
   category: PublicCategory;
+  subcategory?: string;
+  seasons?: string[];
   price: number;
   originalPrice?: number;
   rating: number;

@@ -1,18 +1,15 @@
 <section class="hero">
   <div class="hero-copy">
     <p class="eyebrow">Nouvelle collection</p>
-    <h1>Style urbain, livraison rapide, paiement a la livraison.</h1>
-    <p>
-      Decouvre une selection orientee streetwear premium avec une experience mobile ultra simple:
-      recherche, panier et checkout en moins de 2 minutes.
-    </p>
+    <h1>{{ heroTitle() }}</h1>
+    <p>{{ heroText() }}</p>
     <div class="hero-actions">
       <a routerLink="/shop" class="primary-btn">Explorer le shop</a>
       <a routerLink="/cart" class="ghost-btn">Voir le panier</a>
     </div>
   </div>
 
-  @if (spotlight(); as focus) {
+  @if (configuredSpotlight(); as focus) {
     <article class="hero-card" (click)="openProduct(focus)">
       <img [src]="focus.imageUrl" [alt]="focus.name" loading="lazy" />
       <div>
@@ -50,7 +47,7 @@
           <p>{{ product.category }}</p>
           <h3 (click)="openProduct(product)">{{ product.name }}</h3>
           <span>{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
-          <button type="button" (click)="addToCart(product)">Ajouter au panier</button>
+          <button type="button" (click)="openProduct(product)">Afficher Détail</button>
         </div>
       </article>
     }

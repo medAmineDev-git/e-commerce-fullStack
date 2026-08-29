@@ -139,8 +139,27 @@
   text-decoration: line-through;
 }
 
-.body button {
+.detail-button {
   width: 100%;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 11px 14px;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.detail-button:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.detail-button:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
 }
 
 .pager {

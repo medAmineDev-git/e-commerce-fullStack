@@ -20,6 +20,8 @@ export class ShopPage {
 
   readonly catalogStore = inject(PublicCatalogStore);
   readonly draftSearch = signal('');
+  readonly isCategoryPage =
+    this.route.snapshot.paramMap.has('category') || this.route.snapshot.queryParamMap.has('category');
 
   readonly sortOptions = [
     { label: 'Nouveautes', value: 'id' as const },
@@ -41,7 +43,9 @@ export class ShopPage {
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const q = params.get('q') ?? '';
-      const categoryRaw = params.get('category') ?? 'Tous';
+      const categoryRaw = params.get('category') ?? this.route.snapshot.paramMap.get('category') ?? 'Tous';
+      const subcategory = params.get('subcategory') ?? '';
+      const season = params.get('season') ?? '';
       const sortByRaw = params.get('sortBy') ?? 'id';
       const sortDirectionRaw = params.get('sortDirection') ?? 'desc';
       const pageRaw = Number(params.get('page') ?? '1');
@@ -63,6 +67,8 @@ export class ShopPage {
         .applyQueryState({
           q,
           category,
+          subcategory,
+          season,
           sortBy,
           sortDirection,
           page: page - 1,
@@ -80,7 +86,17 @@ export class ShopPage {
 
   setCategory(value: string): void {
     this.catalogStore.setCategory(value as PublicCategory | 'Tous');
-    this.syncUrl({ category: value, page: 1 });
+    this.syncUrl({ category: value, subcategory: '', page: 1 });
+  }
+
+  setSubcategory(value: string): void {
+    this.catalogStore.setSubcategory(value);
+    this.syncUrl({ subcategory: value, page: 1 });
+  }
+
+  setSeason(value: string): void {
+    this.catalogStore.setSeason(value);
+    this.syncUrl({ season: value, page: 1 });
   }
 
   toggleSort(): void {
@@ -123,6 +139,8 @@ export class ShopPage {
   private syncUrl(changes: {
     q?: string;
     category?: string;
+    subcategory?: string;
+    season?: string;
     sortBy?: CatalogSortField;
     sortDirection?: SortDirection;
     page?: number;
@@ -134,6 +152,8 @@ export class ShopPage {
     const queryParams = {
       q: changes.q ?? this.catalogStore.searchTerm(),
       category: changes.category ?? this.catalogStore.selectedCategory(),
+      subcategory: changes.subcategory ?? this.catalogStore.selectedSubcategory(),
+      season: changes.season ?? this.catalogStore.selectedSeason(),
       sortBy: changes.sortBy ?? this.catalogStore.sortBy(),
       sortDirection: changes.sortDirection ?? this.catalogStore.sortDirection(),
       page: changes.page ?? this.catalogStore.currentPage(),

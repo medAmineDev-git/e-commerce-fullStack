@@ -22,6 +22,8 @@ public class ProductService {
             new LinkedHashSet<>(List.of("id", "name", "price", "stockQuantity"));
         private static final Set<String> ALLOWED_CATEGORIES =
             new LinkedHashSet<>(List.of("Homme", "Femme", "Sneakers", "Accessoires"));
+            private static final Set<String> ALLOWED_SEASONS =
+                new LinkedHashSet<>(List.of("Printemps", "Été", "Automne", "Hiver"));
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
@@ -45,6 +47,8 @@ public class ProductService {
         public ProductPageResponse searchProducts(
             String query,
             String category,
+            String subcategory,
+            String season,
             int page,
             int size,
             String sortBy,
@@ -62,11 +66,20 @@ public class ProductService {
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(direction, safeSortBy));
         String safeQuery = query == null ? "" : query.trim();
         String safeCategory = category == null ? "" : category.trim();
+        String safeSubcategory = subcategory == null ? "" : subcategory.trim();
+        String safeSeason = season == null ? "" : season.trim();
         if (!safeCategory.isBlank() && !ALLOWED_CATEGORIES.contains(safeCategory)) {
             safeCategory = "";
         }
+        if (!safeSeason.isBlank() && !ALLOWED_SEASONS.contains(safeSeason)) {
+            safeSeason = "";
+        }
 
-        Page<Product> resultPage = productRepository.searchProducts(safeQuery, safeCategory, pageable);
+        Page<Product> resultPage = safeSeason.isBlank() && safeSubcategory.isBlank()
+            ? productRepository.searchProducts(safeQuery, safeCategory, pageable)
+            : safeSeason.isBlank()
+                ? productRepository.searchProductsWithSubcategory(safeQuery, safeCategory, safeSubcategory, pageable)
+                : productRepository.searchProductsWithSeason(safeQuery, safeCategory, safeSubcategory, safeSeason, pageable);
 
         return new ProductPageResponse(
             resultPage.getContent().stream().map(productMapper::toResponse).toList(),
@@ -81,6 +94,39 @@ public class ProductService {
             safeCategory
         );
         }
+
+    public ProductPageResponse searchProducts(
+            String query,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+    ) {
+        return searchProducts(query, "", "", "", page, size, sortBy, sortDirection);
+    }
+
+    public ProductPageResponse searchProducts(
+            String query,
+            String category,
+            String subcategory,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+        ) {
+        return searchProducts(query, category, subcategory, "", page, size, sortBy, sortDirection);
+        }
+
+        public ProductPageResponse searchProducts(
+            String query,
+            String category,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+    ) {
+        return searchProducts(query, category, "", "", page, size, sortBy, sortDirection);
+    }
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {

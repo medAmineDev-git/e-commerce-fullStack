@@ -71,7 +71,7 @@ describe('HomePage', () => {
     component.openCategory('Homme');
 
     expect(mockCatalogStore.setCategory).toHaveBeenCalledWith('Homme');
-    expect(navigateSpy).toHaveBeenCalledWith(['/shop']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/shop'], { queryParams: { category: 'Homme' } });
   });
 
   it('should add product to cart', () => {
