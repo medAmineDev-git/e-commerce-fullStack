@@ -11,6 +11,7 @@ public record OrderDetailResponse(
         String address,
         String note,
         String paymentMethod,
+        String publisherRef,
         String status,
         String estimatedDelivery,
         BigDecimal total,

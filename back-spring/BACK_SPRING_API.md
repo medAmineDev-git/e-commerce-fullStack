@@ -7,6 +7,34 @@
 - Main resource: products
 - Response format: JSON
 
+## Authentication
+
+### Login admin
+
+- Method: POST
+- Path: /api/auth/login
+- The identifier accepts either username or email.
+
+```json
+{
+  "identifier": "admin",
+  "password": "admin"
+}
+```
+
+The development seed account is:
+- username: `admin`
+- email: `admin@ecommerce.local`
+- password: `admin`
+
+The response contains an `accessToken`. Send it for protected requests:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+Protected operations include admin product/category/home changes, all order administration, and dev reseed routes.
+
 OpenAPI + Swagger UI (served by the app):
 - OpenAPI spec: http://localhost:8080/openapi.yaml
 - Swagger UI: http://localhost:8080/swagger.html
@@ -372,6 +400,25 @@ Example response:
     }
   ]
 }
+```
+
+### Publisher reference
+
+An optional `publisherRef` can be sent when creating an order. Currently accepted values are `am` and `wa`.
+
+```json
+{
+  "publisherRef": "am"
+}
+```
+
+Unknown values are ignored and stored as `null`.
+
+To filter the admin order list by publisher reference:
+
+```text
+GET /api/orders?ref=am
+GET /api/orders?ref=wa
 ```
 
 ### 8.2 Get order detail

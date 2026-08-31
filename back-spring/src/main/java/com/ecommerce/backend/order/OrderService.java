@@ -34,6 +34,7 @@ public class OrderService {
                         "RETOURNEE_PAR_LE_CLIENT",
                         "LIVRAISON_EN_COURS"
         );
+        private static final Set<String> ALLOWED_PUBLISHER_REFERENCES = Set.of("am", "wa");
 
     private static final DateTimeFormatter DELIVERY_FORMATTER =
             DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRANCE);
@@ -46,19 +47,30 @@ public class OrderService {
         this.orderRepository = orderRepository;
     }
 
-    public List<OrderSummaryResponse> getOrders() {
-        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).stream()
+        public List<OrderSummaryResponse> getOrders(String publisherRef) {
+                Sort sort = Sort.by(Sort.Direction.DESC, "id");
+                String safePublisherRef = normalizePublisherRef(publisherRef);
+                List<CustomerOrder> orders = safePublisherRef == null
+                                ? orderRepository.findAll(sort)
+                                : orderRepository.findByPublisherRef(safePublisherRef, sort);
+
+                return orders.stream()
                 .map(order -> new OrderSummaryResponse(
                         order.getOrderNumber(),
                         order.getCustomerName(),
                         order.getCity(),
                         order.getPaymentMethod(),
+                        order.getPublisherRef(),
                         order.getStatus(),
                         order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
                         order.getTotal()
                 ))
                 .toList();
     }
+
+        public List<OrderSummaryResponse> getOrders() {
+                return getOrders(null);
+        }
 
         public OrderDetailResponse getOrder(String orderNumber) {
                 return toDetail(findByOrderNumber(orderNumber));
@@ -86,6 +98,7 @@ public class OrderService {
         order.setAddress(request.address());
         order.setNote(request.note());
         order.setPaymentMethod(request.paymentMethod());
+        order.setPublisherRef(normalizePublisherRef(request.publisherRef()));
         order.setStatus(PENDING_ADMIN_VALIDATION);
         order.setEstimatedDelivery(LocalDate.now().plusDays(3));
 
@@ -150,10 +163,19 @@ public class OrderService {
                                 order.getAddress(),
                                 order.getNote(),
                                 order.getPaymentMethod(),
+                                order.getPublisherRef(),
                                 order.getStatus(),
                                 order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
                                 order.getTotal(),
                                 items
                 );
+        }
+
+        private String normalizePublisherRef(String publisherRef) {
+                if (publisherRef == null || publisherRef.isBlank()) {
+                        return null;
+                }
+                String normalized = publisherRef.trim().toLowerCase(Locale.ROOT);
+                return ALLOWED_PUBLISHER_REFERENCES.contains(normalized) ? normalized : null;
         }
 }

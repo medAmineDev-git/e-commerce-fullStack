@@ -1,0 +1,22 @@
+<main class="login-page">
+  <section class="login-panel">
+    <p class="eyebrow">Administration</p>
+    <h1>Connexion</h1>
+    <p>Accédez à la gestion du catalogue et des commandes.</p>
+
+    <form (submit)="$event.preventDefault()">
+      <label>
+        <span>Pseudo ou email</span>
+        <input [value]="identifier()" (input)="identifier.set($any($event.target).value)" autocomplete="username" />
+      </label>
+      <label>
+        <span>Mot de passe</span>
+        <input type="password" [value]="password()" (input)="password.set($any($event.target).value)" autocomplete="current-password" />
+      </label>
+      @if (error()) { <p class="error">{{ error() }}</p> }
+      <button type="button" (click)="login()" [disabled]="submitting()">
+        {{ submitting() ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+  </section>
+</main>

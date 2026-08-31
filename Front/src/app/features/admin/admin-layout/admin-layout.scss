@@ -24,6 +24,17 @@
   font-size: 0.9rem;
 }
 
+.logout-button {
+  margin-left: 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 6px 10px;
+  font: inherit;
+}
+
 .admin-sidenav {
   width: 245px;
   z-index: 1;

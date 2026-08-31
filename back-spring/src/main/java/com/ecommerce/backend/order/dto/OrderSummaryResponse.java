@@ -7,6 +7,7 @@ public record OrderSummaryResponse(
         String customerName,
         String city,
         String paymentMethod,
+        String publisherRef,
         String status,
         String estimatedDelivery,
         BigDecimal total

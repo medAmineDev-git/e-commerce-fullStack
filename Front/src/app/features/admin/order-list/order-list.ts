@@ -22,6 +22,8 @@ export class OrderList {
   readonly selectedNote = signal('');
   readonly saving = signal(false);
   readonly orderStatuses = ORDER_STATUSES;
+  readonly selectedPublisherReference = signal('');
+  readonly publisherReferences = ['am', 'wa'] as const;
 
   statusLabel(status: string): string {
     const labels: Record<string, string> = {
@@ -40,6 +42,11 @@ export class OrderList {
   }
 
   async retry(): Promise<void> {
+    await this.loadOrders();
+  }
+
+  async filterByPublisherReference(value: string): Promise<void> {
+    this.selectedPublisherReference.set(value);
     await this.loadOrders();
   }
 
@@ -86,7 +93,10 @@ export class OrderList {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.orders.set(await this.orderService.listOrders());
+      const publisherRef = this.selectedPublisherReference();
+      this.orders.set(publisherRef
+        ? await this.orderService.listOrdersByPublisherReference(publisherRef)
+        : await this.orderService.listOrders());
     } catch {
       this.error.set('Impossible de charger les commandes.');
     } finally {

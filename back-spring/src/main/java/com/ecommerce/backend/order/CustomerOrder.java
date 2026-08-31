@@ -49,6 +49,9 @@ public class CustomerOrder {
     @Column(nullable = false, length = 40)
     private String paymentMethod;
 
+    @Column(length = 20)
+    private String publisherRef;
+
     @Column(nullable = false, length = 30)
     private String status;
 

@@ -1254,3 +1254,75 @@ Associer plusieurs saisons a un produit, par exemple `Hiver` et `Été`, puis fi
 
 - Une relation multi-valeurs se modelise par une collection, pas par une chaine concatenee.
 - Le filtre saison est applique cote serveur avant pagination.
+
+### Session 28 - Attribution des commandes par publisher reference
+
+#### Objectif
+
+Savoir quel publisher a amene une commande, par exemple apres une publicite partagee avec `?ref=am` ou `?ref=wa`.
+
+#### Frontend
+
+- `PublisherReferenceService` lit le parametre `ref` sur chaque navigation publique
+- seules les references `am` et `wa` sont acceptees
+- une reference URL valide ecrase la valeur precedente dans le `localStorage`
+- le checkout ajoute `publisherRef` au payload de commande
+
+#### Backend
+
+- colonne `orders.publisher_ref` ajoutee par `V107__add_orders_publisher_ref.sql`
+- `OrderRequest`, detail et liste de commandes exposent `publisherRef`
+- le backend normalise et valide les references acceptees
+- `GET /api/orders?ref=am` et `GET /api/orders?ref=wa` filtrent la liste admin
+
+#### Admin
+
+- filtre `Toutes les references`, `AM`, `WA`
+- colonne Ref dans la liste commandes
+- reference visible dans le detail de commande
+
+#### A retenir
+
+- Le stockage local permet de conserver l'attribution entre la visite et le checkout.
+- La whitelist backend empeche de persister des valeurs de tracking arbitraires.
+
+### Session 29 - Authentification Admin avec Spring Security
+
+#### Objectif
+
+Proteger l'espace admin et les operations sensibles avec un compte admin pouvant se connecter par pseudo ou email.
+
+#### Backend
+
+- table `admin_users` creee par `V108__create_admin_users.sql`
+- compte dev initialise au demarrage (profil `dev` seulement):
+  - pseudo: `admin`
+  - email: `admin@ecommerce.local`
+  - mot de passe: `admin`
+- le mot de passe est encode BCrypt, jamais stocke en clair
+- endpoint: `POST /api/auth/login`
+- le token signe est envoye dans `Authorization: Bearer <token>`
+- Spring Security est stateless et protege:
+  - creation/modification/suppression produits et categories
+  - configuration home
+  - gestion commandes
+  - routes dev reseed
+
+#### Frontend
+
+- page `/login` avec pseudo ou email + mot de passe
+- token stocke dans `sessionStorage`
+- interceptor HTTP ajoute automatiquement le header Authorization
+- guard bloque `/admin/**` sans session valide
+- bouton deconnexion dans le layout admin
+
+#### Validation
+
+- tests backend passes
+- tests frontend: 60/60
+- test reel: `admin/admin` retourne un token et autorise `GET /api/orders`
+
+#### A retenir
+
+- Le guard Angular est un confort UI, mais la vraie protection reste Spring Security.
+- Le secret JWT doit etre fourni par `JWT_SECRET` hors developpement.

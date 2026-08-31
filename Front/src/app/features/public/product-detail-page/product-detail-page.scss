@@ -336,4 +336,8 @@
     grid-template-columns: 1.05fr 0.95fr;
     align-items: start;
   }
+
+  .top-actions {
+    grid-column: 1 / -1;
+  }
 }

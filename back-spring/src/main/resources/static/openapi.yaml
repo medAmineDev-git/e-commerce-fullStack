@@ -10,6 +10,8 @@ servers:
     description: Local development
 
 tags:
+  - name: Auth
+    description: Admin authentication
   - name: Products
     description: Product CRUD and search
   - name: Home
@@ -22,6 +24,26 @@ tags:
     description: Development-only utilities
 
 paths:
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with username or email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated admin token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid credentials or body
+
   /api/products:
     get:
       tags: [Products]
@@ -406,6 +428,27 @@ components:
         format: int64
 
   schemas:
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+          description: Username or email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+
     ProductRequest:
       type: object
       required: [name, category, description, price, stockQuantity]

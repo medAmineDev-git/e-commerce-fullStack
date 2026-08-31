@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CartItem, CheckoutPayload, OrderConfirmation } from '../models/order.model';
+import { PublisherReferenceService } from './publisher-reference';
 
 type BackendOrderItemRequest = {
   productId: number;
@@ -18,6 +19,7 @@ type BackendOrderRequest = {
   paymentMethod: string;
   items: BackendOrderItemRequest[];
   total: number;
+  publisherRef: string | null;
 };
 
 type BackendOrderItemResponse = {
@@ -40,6 +42,7 @@ export type AdminOrder = {
   customerName: string;
   city: string;
   paymentMethod: string;
+  publisherRef: string | null;
   status: string;
   estimatedDelivery: string;
   total: number;
@@ -73,10 +76,15 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 @Service()
 export class OrderService {
   private readonly http = inject(HttpClient);
+  private readonly publisherReferenceService = inject(PublisherReferenceService);
   private readonly baseUrl = `${environment.apiBaseUrl}/orders`;
 
   async listOrders(): Promise<AdminOrder[]> {
     return firstValueFrom(this.http.get<AdminOrder[]>(this.baseUrl));
+  }
+
+  async listOrdersByPublisherReference(publisherRef: string): Promise<AdminOrder[]> {
+    return firstValueFrom(this.http.get<AdminOrder[]>(this.baseUrl, { params: { ref: publisherRef } }));
   }
 
   async placeOrder(
@@ -93,6 +101,7 @@ export class OrderService {
       paymentMethod: payload.paymentMethod,
       items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
       total,
+      publisherRef: this.publisherReferenceService.reference(),
     };
 
     const response = await firstValueFrom(this.http.post<BackendOrderResponse>(this.baseUrl, body));

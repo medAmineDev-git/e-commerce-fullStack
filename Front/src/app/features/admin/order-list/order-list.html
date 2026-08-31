@@ -6,6 +6,16 @@
   </div>
 </section>
 
+<label class="publisher-filter">
+  <span>Référence publisher</span>
+  <select [value]="selectedPublisherReference()" (change)="filterByPublisherReference($any($event.target).value)">
+    <option value="">Toutes les références</option>
+    @for (reference of publisherReferences; track reference) {
+      <option [value]="reference">{{ reference.toUpperCase() }}</option>
+    }
+  </select>
+</label>
+
 @if (loading()) {
   <p class="state">Chargement des commandes...</p>
 } @else if (error()) {
@@ -27,6 +37,7 @@
           <th>Client</th>
           <th>Livraison</th>
           <th>Paiement</th>
+          <th>Ref</th>
           <th>Statut</th>
           <th>Total</th>
           <th>Actions</th>
@@ -39,6 +50,7 @@
             <td>{{ order.customerName }}<small>{{ order.city }}</small></td>
             <td>{{ order.estimatedDelivery }}</td>
             <td>{{ order.paymentMethod }}</td>
+            <td>{{ order.publisherRef?.toUpperCase() ?? 'Direct' }}</td>
             <td><span class="status">{{ statusLabel(order.status) }}</span></td>
             <td><strong>{{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong></td>
             <td><button type="button" class="detail-button" (click)="openDetails(order.orderId)">Détail</button></td>
@@ -66,6 +78,7 @@
       <div><span>Ville</span><strong>{{ order.city }}</strong></div>
       <div><span>Adresse</span><strong>{{ order.address }}</strong></div>
       <div><span>Paiement</span><strong>{{ order.paymentMethod }}</strong></div>
+      <div><span>Référence publisher</span><strong>{{ order.publisherRef?.toUpperCase() ?? 'Direct' }}</strong></div>
       <div><span>Livraison prévue</span><strong>{{ order.estimatedDelivery }}</strong></div>
     </div>
 

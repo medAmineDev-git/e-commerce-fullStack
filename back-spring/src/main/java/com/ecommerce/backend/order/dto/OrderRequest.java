@@ -28,6 +28,20 @@ public record OrderRequest(
         @NotEmpty(message = "items is required")
         List<@Valid OrderItemRequest> items,
 
-        BigDecimal total
+        BigDecimal total,
+
+        String publisherRef
 ) {
+        public OrderRequest(
+                        String customerName,
+                        String phone,
+                        String city,
+                        String address,
+                        String note,
+                        String paymentMethod,
+                        List<OrderItemRequest> items,
+                        BigDecimal total
+        ) {
+                this(customerName, phone, city, address, note, paymentMethod, items, total, null);
+        }
 }
