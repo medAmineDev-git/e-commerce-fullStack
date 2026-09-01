@@ -32,6 +32,24 @@ Root Directory: back-spring
 
 Ajoute les variables `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PASSWORD` et `JWT_SECRET` dans Render.
 
+## Deploiement Railway
+
+1. Cree un nouveau projet Railway depuis le depot GitHub.
+2. Dans le service backend, configure le `Root Directory` sur `back-spring`.
+3. Railway detecte `railway.toml` et construit l'image avec le `Dockerfile` Java 21.
+4. Ajoute un service PostgreSQL dans le meme projet Railway.
+5. Ajoute ces variables au backend:
+
+```text
+SPRING_PROFILES_ACTIVE=prod
+DB_URL=${{Postgres.DATABASE_URL}}
+DB_USER=${{Postgres.PGUSER}}
+DB_PASSWORD=${{Postgres.PGPASSWORD}}
+JWT_SECRET=<secret-long-aleatoire>
+```
+
+Railway fournit automatiquement `PORT`, utilise par `server.port=${PORT:8080}`.
+
 ## Tests
 
 ```bash
