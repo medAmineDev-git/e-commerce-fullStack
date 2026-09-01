@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ecommerce-backend
+    runtime: java
+    rootDir: back-spring
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/backend-0.0.1-SNAPSHOT.jar
+    healthCheckPath: /swagger.html
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_VERSION
+        value: 21
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

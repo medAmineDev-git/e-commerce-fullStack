@@ -19,6 +19,21 @@ Premiere version d'une boutique de vetements avec un frontend Angular et une API
 
 L'API est disponible sur `http://localhost:8080`, et sa documentation sur `http://localhost:8080/swagger.html`.
 
+## Deploiement Render
+
+Le fichier `render.yaml` force Render a utiliser le runtime Java 21 pour le backend.
+
+Pour un service Render deja cree, configure manuellement:
+
+```text
+Runtime: Java
+Root Directory: back-spring
+Build Command: ./mvnw clean package -DskipTests
+Start Command: java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+Ajoute les variables `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PASSWORD` et `JWT_SECRET` dans Render.
+
 ## Tests
 
 ```bash
