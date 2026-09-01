@@ -21,15 +21,13 @@ L'API est disponible sur `http://localhost:8080`, et sa documentation sur `http:
 
 ## Deploiement Render
 
-Le fichier `render.yaml` force Render a utiliser le runtime Java 21 pour le backend.
+Le fichier `render.yaml` configure le backend avec le runtime Docker et Java 21 est fourni par le `back-spring/Dockerfile`.
 
 Pour un service Render deja cree, configure manuellement:
 
 ```text
-Runtime: Java
+Runtime: Docker
 Root Directory: back-spring
-Build Command: ./mvnw clean package -DskipTests
-Start Command: java -jar target/backend-0.0.1-SNAPSHOT.jar
 ```
 
 Ajoute les variables `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PASSWORD` et `JWT_SECRET` dans Render.
