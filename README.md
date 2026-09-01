@@ -35,8 +35,8 @@ Ajoute les variables `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PAS
 ## Deploiement Railway
 
 1. Cree un nouveau projet Railway depuis le depot GitHub.
-2. Dans le service backend, configure le `Root Directory` sur `back-spring`.
-3. Railway detecte `railway.toml` et construit l'image avec le `Dockerfile` Java 21.
+2. Dans le service backend, laisse le `Root Directory` vide.
+3. Railway detecte le `Dockerfile` a la racine, qui construit explicitement `back-spring` avec Java 21.
 4. Ajoute un service PostgreSQL dans le meme projet Railway.
 5. Ajoute ces variables au backend:
 

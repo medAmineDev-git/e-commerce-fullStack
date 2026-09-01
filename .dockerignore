@@ -1,0 +1,6 @@
+.git/
+.vscode/
+Front/node_modules/
+Front/dist/
+back-spring/target/
+back-spring/uploads/

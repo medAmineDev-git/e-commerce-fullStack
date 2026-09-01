@@ -2,7 +2,6 @@ services:
   - type: web
     name: ecommerce-backend
     runtime: docker
-    rootDir: back-spring
     healthCheckPath: /swagger.html
     envVars:
       - key: SPRING_PROFILES_ACTIVE
