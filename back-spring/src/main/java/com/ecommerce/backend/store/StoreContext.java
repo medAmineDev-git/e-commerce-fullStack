@@ -1,5 +1,6 @@
 package com.ecommerce.backend.store;
 
+import com.ecommerce.backend.auth.AuthenticatedUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -24,9 +25,14 @@ public class StoreContext {
     /**
      * Boutique administree par le compte authentifie.
      *
-     * @throws StoreNotFoundException si la requete est anonyme, ou si le compte
-     *         n'est rattache a aucune boutique. L'absence de perimetre est une
-     *         erreur, jamais une invitation a en choisir un par defaut.
+     * L'identifiant vient du jeton signe. La boutique est tout de meme relue en
+     * base, par cle primaire et en verifiant l'appartenance : un jeton reste
+     * valide quelques minutes apres une revocation ou un transfert.
+     *
+     * @throws StoreNotFoundException si la requete est anonyme, si le compte n'est
+     *         rattache a aucune boutique, ou si le jeton designe une boutique qui
+     *         ne lui appartient plus. L'absence de perimetre est une erreur,
+     *         jamais une invitation a en choisir un par defaut.
      */
     public Store requireOwnedStore(Authentication authentication) {
         if (authentication == null
@@ -34,6 +40,12 @@ public class StoreContext {
                 || ANONYMOUS.equals(authentication.getName())) {
             throw new StoreNotFoundException("aucun utilisateur authentifie");
         }
+
+        if (authentication.getPrincipal() instanceof AuthenticatedUser user && user.storeId() != null) {
+            return storeService.getStoreOwnedBy(user.storeId(), user.username());
+        }
+
+        // Jeton sans boutique : compte cree avant sa boutique, ou role plateforme.
         return storeService.getStoreOwnedBy(authentication.getName());
     }
 }

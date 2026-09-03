@@ -59,6 +59,18 @@ public class StoreService {
                 .orElseThrow(() -> new StoreNotFoundException("aucune boutique rattachee a " + username));
     }
 
+    /**
+     * Boutique designee par le jeton, relue en verifiant qu'elle appartient
+     * toujours a l'appelant. Une seule requete, sur la cle primaire.
+     */
+    public Store getStoreOwnedBy(Long storeId, String username) {
+        if (storeId == null || username == null || username.isBlank()) {
+            throw new StoreNotFoundException("perimetre de boutique absent du jeton");
+        }
+        return storeRepository.findByIdAndOwnerUsernameIgnoreCase(storeId, username.trim())
+                .orElseThrow(() -> new StoreNotFoundException("boutique " + storeId + " non rattachee a " + username));
+    }
+
     public StorePublicResponse getPublicStoreBySlug(String slug) {
         return storeMapper.toPublicResponse(getStoreEntityBySlug(slug));
     }

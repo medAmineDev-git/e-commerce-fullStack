@@ -15,6 +15,8 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
 
     Optional<Store> findFirstByOwnerUsernameIgnoreCase(String username);
 
+    Optional<Store> findByIdAndOwnerUsernameIgnoreCase(Long id, String username);
+
 
     boolean existsBySlugIgnoreCase(String slug);
 

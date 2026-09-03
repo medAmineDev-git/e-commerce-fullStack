@@ -1,6 +1,7 @@
 package com.ecommerce.backend.common.exception;
 
 import com.ecommerce.backend.common.api.ApiErrorResponse;
+import com.ecommerce.backend.auth.InvalidCredentialsException;
 import com.ecommerce.backend.category.CategoryNotFoundException;
 import com.ecommerce.backend.order.OrderNotFoundException;
 import com.ecommerce.backend.store.StoreNotFoundException;
@@ -51,6 +52,19 @@ public class GlobalExceptionHandler {
      * Une boutique inconnue, inactive, ou non rattachee au compte appelant est un 404 :
      * une erreur serveur laisserait croire a une panne.
      */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(StoreNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleStoreNotFound(
             StoreNotFoundException exception,

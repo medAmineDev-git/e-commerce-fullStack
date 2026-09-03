@@ -3,6 +3,7 @@ package com.ecommerce.backend.isolation;
 import com.ecommerce.backend.auth.AdminUser;
 import com.ecommerce.backend.auth.AdminUserRepository;
 import com.ecommerce.backend.auth.JwtService;
+import com.ecommerce.backend.auth.Role;
 import com.ecommerce.backend.category.Category;
 import com.ecommerce.backend.category.CategoryRepository;
 import com.ecommerce.backend.category.dto.CategoryRequest;
@@ -98,14 +99,14 @@ class StoreIsolationTest {
     private String novaToken;
     private String atelierToken;
     private String orphanToken;
-    private String legacyAdminToken;
+    private String platformToken;
 
     @BeforeEach
     void seedTwoStores() {
-        AdminUser novaOwner = adminUser("nova-owner", "ROLE_STORE_OWNER");
-        AdminUser atelierOwner = adminUser("atelier-owner", "ROLE_STORE_OWNER");
-        AdminUser orphanOwner = adminUser("orphan-owner", "ROLE_STORE_OWNER");
-        AdminUser legacyAdmin = adminUser("legacy-admin", "ROLE_ADMIN");
+        AdminUser novaOwner = adminUser("nova-owner", Role.STORE_OWNER);
+        AdminUser atelierOwner = adminUser("atelier-owner", Role.STORE_OWNER);
+        AdminUser orphanOwner = adminUser("orphan-owner", Role.STORE_OWNER);
+        AdminUser platformOperator = adminUser("platform-operator", Role.SUPER_ADMIN);
 
         nova = store(NOVA, "NOVA Boutique Urbaine", novaOwner, true);
         atelier = store(ATELIER, "Atelier Rive Gauche", atelierOwner, true);
@@ -119,10 +120,41 @@ class StoreIsolationTest {
         novaOrder = order(nova, "CMD-NOVA0001");
         atelierOrder = order(atelier, "CMD-ATEL0001");
 
-        novaToken = jwtService.createToken(novaOwner);
-        atelierToken = jwtService.createToken(atelierOwner);
-        orphanToken = jwtService.createToken(orphanOwner);
-        legacyAdminToken = jwtService.createToken(legacyAdmin);
+        novaToken = jwtService.createAccessToken(novaOwner, nova);
+        atelierToken = jwtService.createAccessToken(atelierOwner, atelier);
+        orphanToken = jwtService.createAccessToken(orphanOwner, null);
+        platformToken = jwtService.createAccessToken(platformOperator, null);
+    }
+
+    /**
+     * Le perimetre vient du jeton signe. Un jeton fabrique avec la boutique
+     * d'autrui ne doit pas suffire : la boutique est relue en verifiant
+     * l'appartenance.
+     */
+    @Test
+    void aForgedScopeInTheTokenShouldNotGrantAccess() throws Exception {
+        AdminUser novaOwner = adminUserRepository
+                .findByUsernameIgnoreCaseOrEmailIgnoreCase("nova-owner", "nova-owner").orElseThrow();
+        String tokenClaimingAnotherStore = jwtService.createAccessToken(novaOwner, atelier);
+
+        mockMvc.perform(get("/api/admin/products").header("Authorization", bearer(tokenClaimingAnotherStore)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void anonymousCallerShouldReceive401NotForbidden() throws Exception {
+        mockMvc.perform(get("/api/admin/products"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refreshTokenShouldNotBeAcceptedAsAnAccessToken() throws Exception {
+        AdminUser novaOwner = adminUserRepository
+                .findByUsernameIgnoreCaseOrEmailIgnoreCase("nova-owner", "nova-owner").orElseThrow();
+
+        mockMvc.perform(get("/api/admin/products")
+                        .header("Authorization", bearer(jwtService.createRefreshToken(novaOwner))))
+                .andExpect(status().isUnauthorized());
     }
 
     // ---------------------------------------------------------------
@@ -314,9 +346,10 @@ class StoreIsolationTest {
         }
 
         @Test
-        void storeAdminCannotListEveryStore() throws Exception {
-            mockMvc.perform(get("/api/platform/stores").header("Authorization", bearer(legacyAdminToken)))
-                    .andExpect(status().isForbidden());
+        void platformOperatorCanListEveryStore() throws Exception {
+            mockMvc.perform(get("/api/platform/stores").header("Authorization", bearer(platformToken)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(2));
         }
 
         @Test
@@ -400,12 +433,12 @@ class StoreIsolationTest {
         );
     }
 
-    private AdminUser adminUser(String username, String role) {
+    private AdminUser adminUser(String username, Role role) {
         AdminUser user = new AdminUser();
         user.setUsername(username);
         user.setEmail(username + "@test.local");
         user.setPasswordHash("{noop}not-used");
-        user.setRole(role);
+        user.setRole(role.authority());
         return adminUserRepository.saveAndFlush(user);
     }
 

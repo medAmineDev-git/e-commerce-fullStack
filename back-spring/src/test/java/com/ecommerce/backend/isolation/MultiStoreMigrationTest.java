@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * echoue en production sur des donnees existantes ne se rattrape pas.
  */
 @Testcontainers
-@DisplayName("La migration V109 rattache les donnees existantes a la boutique par defaut")
+@DisplayName("Les migrations multi-boutique se rejouent sur des donnees existantes")
 class MultiStoreMigrationTest {
 
     private static final String LEGACY_SCHEMA_VERSION = "108";
@@ -113,6 +113,59 @@ class MultiStoreMigrationTest {
 
         assertEquals(2L, queryLong("SELECT COUNT(*) FROM categories WHERE name = 'Sneakers'"));
         assertEquals(2L, queryLong("SELECT COUNT(*) FROM products WHERE sku = 'SKU-1'"));
+    }
+
+    /** V110 : le compte historique etait un ROLE_ADMIN, il devient proprietaire. */
+    @Test
+    void shouldConvertTheLegacyAdminRoleToStoreOwner() throws SQLException {
+        assertEquals(
+                "ROLE_STORE_OWNER",
+                queryString("SELECT role FROM admin_users WHERE username = 'admin'")
+        );
+        assertEquals(
+                0L,
+                queryLong("SELECT COUNT(*) FROM admin_users WHERE role = 'ROLE_ADMIN'")
+        );
+    }
+
+    @Test
+    void shouldRejectAnUnknownRole() throws SQLException {
+        try {
+            execute("""
+                    INSERT INTO admin_users (username, email, password_hash, role)
+                    VALUES ('pirate', 'pirate@test.local', 'hash', 'ROLE_ROOT')
+                    """);
+            fail("Un role hors de l'enumeration doit etre refuse par la base");
+        } catch (SQLException expected) {
+            assertNotNull(expected.getMessage());
+        }
+    }
+
+    /** Decision : un compte, une boutique. Garantie par la base, pas par convention. */
+    @Test
+    void shouldRejectASecondStoreForTheSameOwner() throws SQLException {
+        long ownerId = queryLong("SELECT id FROM admin_users WHERE username = 'admin'");
+
+        try {
+            execute("""
+                    INSERT INTO stores (name, slug, is_active, owner_id)
+                    VALUES ('Seconde boutique', 'seconde-boutique', TRUE, %d)
+                    """.formatted(ownerId));
+            fail("Un proprietaire ne doit pas pouvoir detenir deux boutiques");
+        } catch (SQLException expected) {
+            assertNotNull(expected.getMessage());
+        }
+    }
+
+    /** Une boutique sans proprietaire n'est administrable par personne. */
+    @Test
+    void shouldRefuseToDeleteAnOwnerWhoStillHasAStore() throws SQLException {
+        try {
+            execute("DELETE FROM admin_users WHERE username = 'admin'");
+            fail("Supprimer un proprietaire laisserait sa boutique orpheline");
+        } catch (SQLException expected) {
+            assertNotNull(expected.getMessage());
+        }
     }
 
     @Test

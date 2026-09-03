@@ -4,6 +4,7 @@ import com.ecommerce.backend.auth.JwtAuthenticationFilter;
 import com.ecommerce.backend.auth.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -51,12 +52,19 @@ public class SecurityConfig {
                                 "/openapi.yaml",
                                 "/uploads/**"
                         ).permitAll()
-                        // La console plateforme n'est pas accessible aux boutiques :
-                        // ROLE_ADMIN est un role de boutique, pas un role de plateforme.
+                        // Deux roles seulement depuis V110. ROLE_ADMIN a disparu :
+                        // c'etait un role de boutique qui ouvrait la console plateforme.
                         .requestMatchers("/api/platform/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
-                        .requestMatchers("/api/dev/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/api/dev/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyRole("STORE_OWNER", "SUPER_ADMIN")
                         .anyRequest().denyAll()
+                )
+                // Sans ceci, une requete anonyme recoit 403 : le client ne peut pas
+                // distinguer "connecte-toi" de "tu n'as pas le droit", et ne sait donc
+                // pas s'il doit rafraichir son jeton.
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint((request, response, exception) ->
+                                response.sendError(HttpStatus.UNAUTHORIZED.value(), "Authentication required"))
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();

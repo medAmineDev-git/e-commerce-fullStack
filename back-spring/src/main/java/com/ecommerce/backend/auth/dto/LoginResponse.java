@@ -2,11 +2,11 @@ package com.ecommerce.backend.auth.dto;
 
 public record LoginResponse(
         String accessToken,
+        String refreshToken,
+        long expiresInSeconds,
         String username,
         String role,
+        Long storeId,
         String storeSlug
 ) {
-    public LoginResponse(String accessToken, String username, String role) {
-        this(accessToken, username, role, null);
-    }
 }
