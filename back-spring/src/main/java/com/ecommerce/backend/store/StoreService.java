@@ -141,6 +141,27 @@ public class StoreService {
         return storeRepository.save(store);
     }
 
+    /**
+     * Un domaine ne peut servir qu'une boutique : sinon la resolution par domaine
+     * deviendrait ambigue et servirait la mauvaise vitrine.
+     */
+    @Transactional
+    public Store attachDomain(Long storeId, String domain) {
+        Store store = getStoreEntityById(storeId);
+        String normalized = normalizeDomain(domain);
+
+        if (normalized != null) {
+            storeRepository.findByDomainIgnoreCase(normalized)
+                    .filter(existing -> !existing.getId().equals(storeId))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Domain already attached to store: " + existing.getSlug());
+                    });
+        }
+
+        store.setDomain(normalized);
+        return storeRepository.save(store);
+    }
+
     @Transactional
     public Store toggleActive(Long storeId) {
         Store store = getStoreEntityById(storeId);
