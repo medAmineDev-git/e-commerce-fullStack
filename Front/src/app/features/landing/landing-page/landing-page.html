@@ -1,0 +1,76 @@
+<header class="site-header">
+  <a class="brand" routerLink="/">Boutique<span>.</span></a>
+  <nav class="site-nav" aria-label="Navigation principale">
+    <a href="#fonctionnement">Comment ça marche</a>
+    <a href="#atouts">Atouts</a>
+    <a href="#questions">Questions</a>
+    <a class="nav-cta" routerLink="/inscription">Créer ma boutique</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">Boutiques de vêtements en ligne</p>
+    <h1>Votre boutique en ligne, ouverte en quelques minutes.</h1>
+    <p class="lede">
+      Publiez votre catalogue, recevez vos commandes, encaissez à la livraison.
+      Sans installation, sans carte bancaire, sans compétence technique.
+    </p>
+    <div class="hero-actions">
+      <a class="button primary" routerLink="/inscription">Créer ma boutique gratuitement</a>
+      <a class="button ghost" href="#fonctionnement">Voir comment ça marche</a>
+    </div>
+    <p class="hero-note">Gratuit pour démarrer &middot; Aucune carte bancaire demandée</p>
+  </section>
+
+  <section id="fonctionnement" class="steps" aria-labelledby="steps-title">
+    <h2 id="steps-title">Trois étapes, et vous vendez</h2>
+    <ol class="step-list">
+      @for (step of steps; track step.number) {
+        <li class="step">
+          <span class="step-number" aria-hidden="true">{{ step.number }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <section id="atouts" class="features" aria-labelledby="features-title">
+    <h2 id="features-title">Ce qui est prévu dès le premier jour</h2>
+    <div class="feature-grid">
+      @for (feature of features; track feature.title) {
+        <article class="feature">
+          <h3>{{ feature.title }}</h3>
+          <p>{{ feature.text }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section id="questions" class="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title">Questions fréquentes</h2>
+    <div class="faq-list">
+      @for (faq of faqs; track faq.question) {
+        <details class="faq-item">
+          <summary>{{ faq.question }}</summary>
+          <p>{{ faq.answer }}</p>
+        </details>
+      }
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Prêt à ouvrir&nbsp;?</h2>
+    <p>La création de votre boutique prend moins de temps que la lecture de cette page.</p>
+    <a class="button primary" routerLink="/inscription">Créer ma boutique</a>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>&copy; {{ 2026 }} Boutique. Créez et gérez votre boutique de vêtements en ligne.</p>
+  <nav aria-label="Liens de pied de page">
+    <a routerLink="/connexion">Se connecter</a>
+    <a routerLink="/inscription">Créer une boutique</a>
+  </nav>
+</footer>

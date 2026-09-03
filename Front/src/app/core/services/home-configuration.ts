@@ -7,7 +7,7 @@ import { HomeConfiguration, HomeConfigurationInput } from '../models/home-config
 @Service()
 export class HomeConfigurationService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.apiBaseUrl}/home/configuration`;
+  private readonly url = `${environment.apiBaseUrl}/admin/home/configuration`;
 
   get(): Promise<HomeConfiguration> {
     return firstValueFrom(this.http.get<HomeConfiguration>(this.url));

@@ -1,0 +1,95 @@
+<div class="auth-shell">
+  <a class="brand" routerLink="/">Boutique<span>.</span></a>
+
+  <div class="auth-card">
+    <h1>Créez votre boutique</h1>
+    <p class="subtitle">Quelques informations, et votre vitrine est en ligne.</p>
+
+    <form (ngSubmit)="submit()">
+      <label class="field">
+        <span class="label">Nom de la boutique</span>
+        <input
+          type="text"
+          name="storeName"
+          autocomplete="organization"
+          required
+          [ngModel]="storeName()"
+          (ngModelChange)="onStoreNameChange($event)"
+          placeholder="Atelier Rive Gauche"
+        />
+        @if (checkingSlug()) {
+          <span class="hint">Vérification de l'adresse…</span>
+        } @else if (slugPreview()) {
+          <span class="hint" [class.hint-warning]="slugAvailable() === false">
+            Adresse de votre boutique : <code>/boutique/{{ slugPreview() }}</code>
+            @if (slugAvailable() === false) {
+              — le nom exact est déjà pris, celui-ci vous sera attribué.
+            }
+          </span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="label">Nom d'utilisateur</span>
+        <input
+          type="text"
+          name="username"
+          autocomplete="username"
+          required
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+          placeholder="alice"
+        />
+      </label>
+
+      <label class="field">
+        <span class="label">Adresse e-mail</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          placeholder="alice@exemple.fr"
+        />
+      </label>
+
+      <label class="field">
+        <span class="label">Mot de passe</span>
+        <input
+          type="password"
+          name="password"
+          autocomplete="new-password"
+          required
+          minlength="4"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+        />
+      </label>
+
+      <label class="field">
+        <span class="label">Description <span class="optional">(facultatif)</span></span>
+        <textarea
+          name="description"
+          rows="3"
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+          placeholder="Prêt-à-porter féminin, sélection de créateurs."
+        ></textarea>
+      </label>
+
+      @if (errorMessage()) {
+        <p class="error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" class="submit" [disabled]="!canSubmit()">
+        {{ submitting() ? 'Création en cours…' : 'Créer ma boutique' }}
+      </button>
+    </form>
+
+    <p class="alt-action">
+      Vous avez déjà une boutique ? <a routerLink="/connexion">Se connecter</a>
+    </p>
+  </div>
+</div>

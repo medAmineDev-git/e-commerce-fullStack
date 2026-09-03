@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Le site vitrine tient en une page. Les vitrines des boutiques ne figurent pas
+  ici : elles naissent apres le deploiement, et leur inventaire devra venir d'un
+  endpoint du serveur plutot que d'un fichier statique.
+
+  Les <loc> doivent etre des URL absolues : remplacer VOTRE-DOMAINE a la mise en
+  ligne, le domaine n'etant pas connu a la compilation.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://VOTRE-DOMAINE/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

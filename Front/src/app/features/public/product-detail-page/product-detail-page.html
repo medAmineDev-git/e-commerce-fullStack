@@ -3,18 +3,18 @@
 } @else if (error()) {
   <section class="state-card">
     <h2>{{ error() }}</h2>
-    <a routerLink="/shop">Retour au shop</a>
+    <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
   </section>
 } @else if (!product()) {
   <section class="state-card">
     <h2>Produit introuvable</h2>
-    <a routerLink="/shop">Retour au shop</a>
+    <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
   </section>
 } @else {
   <section class="product-wrap">
     <div class="top-actions">
       <button type="button" class="back-link" (click)="goBack()">Retour</button>
-      <a routerLink="/shop">Voir le shop</a>
+      <a [routerLink]="storeContext.link('shop')">Voir le shop</a>
     </div>
 
     <div class="gallery">

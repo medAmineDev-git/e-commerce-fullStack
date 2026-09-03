@@ -1,0 +1,80 @@
+<section class="settings">
+  <header>
+    <h1>Ma boutique</h1>
+    @if (store(); as currentStore) {
+      <p class="address">
+        Vitrine publique :
+        <a [href]="'/boutique/' + currentStore.slug" target="_blank" rel="noopener">
+          /boutique/{{ currentStore.slug }}
+        </a>
+        @if (currentStore.domain) {
+          <span class="domain">&middot; {{ currentStore.domain }}</span>
+        }
+      </p>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Chargement…</p>
+  } @else {
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    <form (ngSubmit)="save()">
+      <label class="field">
+        <span class="label">Nom de la boutique</span>
+        <input type="text" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
+      </label>
+
+      <label class="field">
+        <span class="label">Description</span>
+        <textarea
+          name="description"
+          rows="3"
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+        ></textarea>
+        <span class="hint">Affichée sur la page d'accueil de votre vitrine.</span>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Téléphone</span>
+          <input type="tel" name="phone" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+        </label>
+
+        <label class="field">
+          <span class="label">E-mail de contact</span>
+          <input type="email" name="email" [ngModel]="email()" (ngModelChange)="email.set($event)" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="label">Adresse</span>
+        <input type="text" name="address" [ngModel]="address()" (ngModelChange)="address.set($event)" />
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">URL du logo</span>
+          <input type="url" name="logoUrl" [ngModel]="logoUrl()" (ngModelChange)="logoUrl.set($event)" />
+        </label>
+
+        <label class="field">
+          <span class="label">URL de la bannière</span>
+          <input type="url" name="bannerUrl" [ngModel]="bannerUrl()" (ngModelChange)="bannerUrl.set($event)" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="submit" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        @if (savedAt()) {
+          <span class="saved" role="status">Enregistré.</span>
+        }
+      </div>
+    </form>
+  }
+</section>

@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ProductSizeOption, PublicCategory, PublicProduct } from '../models/public-product.model';
 import { Category } from '../models/category.model';
 import { SortDirection } from '../stores/crud-list.helpers';
+import { StoreContextService } from './store-context.service';
 
 type BackendProduct = {
   id: number;
@@ -74,9 +75,20 @@ const FALLBACK_SIZES = ['S', 'M', 'L'] as const;
 @Service()
 export class PublicCatalogService {
   private readonly http = inject(HttpClient);
+  private readonly storeContext = inject(StoreContextService);
   private readonly apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '');
-  private readonly baseUrl = `${environment.apiBaseUrl}/products`;
-  private readonly categoriesUrl = `${environment.apiBaseUrl}/categories`;
+
+  /**
+   * Toutes les lectures passent par le slug de la boutique courante.
+   * Il n'existe plus de route catalogue non rattachée à une boutique.
+   */
+  private get baseUrl(): string {
+    return `${this.storeContext.requireStoreApiUrl()}/products`;
+  }
+
+  private get categoriesUrl(): string {
+    return `${this.storeContext.requireStoreApiUrl()}/categories`;
+  }
 
   async listCategories(): Promise<Category[]> {
     return firstValueFrom(this.http.get<Category[]>(this.categoriesUrl));
@@ -111,6 +123,14 @@ export class PublicCatalogService {
       totalPages: backendPage.totalPages,
       last: backendPage.last,
     };
+  }
+
+  async getHomeConfiguration(): Promise<{ title: string; text: string; featuredProductId: number | null }> {
+    return firstValueFrom(
+      this.http.get<{ title: string; text: string; featuredProductId: number | null }>(
+        `${this.storeContext.requireStoreApiUrl()}/home`,
+      ),
+    );
   }
 
   async getProductById(id: number): Promise<PublicProduct> {

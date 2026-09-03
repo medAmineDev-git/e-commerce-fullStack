@@ -1,11 +1,52 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './core/auth/auth.guard';
+import { anonymousOnlyGuard, platformGuard, storeOwnerGuard } from './core/auth/auth.guard';
+import { storeResolverGuard } from './core/services/store.resolver';
 
+/**
+ * Quatre espaces distincts :
+ *
+ *   /                    site vitrine du service, prérendu pour le référencement
+ *   /boutique/:slug/**   vitrine d'une boutique, périmètre donné par le slug
+ *   /admin/**            back-office du propriétaire
+ *   /plateforme          exploitation de la plateforme
+ *
+ * La racine appartient au site vitrine : c'est le choix du routage par
+ * sous-chemin qui la libère, les boutiques vivant sous /boutique/:slug.
+ */
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/landing/landing-page/landing-page').then((m) => m.LandingPage),
+  },
+  {
+    path: 'inscription',
+    canActivate: [anonymousOnlyGuard],
+    loadComponent: () =>
+      import('./features/auth/register-page/register-page').then((m) => m.RegisterPage),
+  },
+  {
+    path: 'connexion',
+    canActivate: [anonymousOnlyGuard],
+    loadComponent: () => import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'boutique-introuvable',
+    loadComponent: () =>
+      import('./features/public/store-not-found/store-not-found').then((m) => m.StoreNotFound),
+  },
+  {
+    path: 'plateforme',
+    canActivate: [platformGuard],
+    loadComponent: () =>
+      import('./features/platform/platform-console/platform-console').then((m) => m.PlatformConsole),
+  },
+  {
     path: 'admin',
-    canActivate: [adminGuard],
-    loadComponent: () => import('./features/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
+    canActivate: [storeOwnerGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -13,16 +54,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
+        path: 'boutique',
+        loadComponent: () =>
+          import('./features/admin/store-settings/store-settings').then((m) => m.StoreSettings),
+      },
+      {
         path: 'products',
-        loadComponent: () => import('./features/admin/product-list/product-list').then((m) => m.ProductList),
+        loadComponent: () =>
+          import('./features/admin/product-list/product-list').then((m) => m.ProductList),
       },
       {
         path: 'products/new',
-        loadComponent: () => import('./features/admin/product-form/product-form').then((m) => m.ProductForm),
+        loadComponent: () =>
+          import('./features/admin/product-form/product-form').then((m) => m.ProductForm),
       },
       {
         path: 'products/:id',
-        loadComponent: () => import('./features/admin/product-form/product-form').then((m) => m.ProductForm),
+        loadComponent: () =>
+          import('./features/admin/product-form/product-form').then((m) => m.ProductForm),
       },
       {
         path: 'categories',
@@ -53,11 +102,8 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'login',
-    loadComponent: () => import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
-  },
-  {
-    path: '',
+    path: 'boutique/:slug',
+    canActivate: [storeResolverGuard],
     loadComponent: () =>
       import('./features/public/public-layout/public-layout').then((m) => m.PublicLayout),
     children: [
@@ -98,5 +144,7 @@ export const routes: Routes = [
       },
     ],
   },
+  // Anciennes adresses de connexion, conservées le temps que les signets suivent.
+  { path: 'login', redirectTo: 'connexion' },
   { path: '**', redirectTo: '' },
 ];

@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
@@ -9,6 +10,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
   styleUrl: './order-success-page.scss',
 })
 export class OrderSuccessPage {
+  readonly storeContext = inject(StoreContextService);
   private readonly route = inject(ActivatedRoute);
 
   readonly orderId = signal('');

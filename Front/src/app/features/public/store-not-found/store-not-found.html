@@ -1,0 +1,16 @@
+<main class="not-found">
+  <p class="eyebrow">Erreur 404</p>
+  <h1>Cette boutique est introuvable</h1>
+  <p class="lede">
+    @if (slug()) {
+      L'adresse <code>/boutique/{{ slug() }}</code> ne correspond à aucune boutique accessible.
+    } @else {
+      L'adresse demandée ne correspond à aucune boutique accessible.
+    }
+    Vérifiez le lien, ou demandez-en un nouveau au vendeur.
+  </p>
+  <div class="actions">
+    <a class="button primary" routerLink="/">Retour à l'accueil</a>
+    <a class="button ghost" routerLink="/inscription">Créer ma boutique</a>
+  </div>
+</main>

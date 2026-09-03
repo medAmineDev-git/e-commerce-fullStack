@@ -1,5 +1,6 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../../core/stores/cart.store';
@@ -17,6 +18,7 @@ import { PublicCatalogService } from '../../../core/services/public-catalog.serv
   styleUrl: './product-detail-page.scss',
 })
 export class ProductDetailPage {
+  readonly storeContext = inject(StoreContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -129,11 +131,11 @@ export class ProductDetailPage {
   }
 
   goToCheckout(): void {
-    void this.router.navigate(['/checkout']);
+    void this.router.navigate(this.storeContext.link('checkout'));
   }
 
   openProduct(productId: number): void {
-    void this.router.navigate(['/product', productId]);
+    void this.router.navigate(this.storeContext.link('product', productId));
   }
 
   canAddToCart(): boolean {

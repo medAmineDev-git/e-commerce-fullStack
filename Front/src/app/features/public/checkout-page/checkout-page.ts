@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Location } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +16,7 @@ import { OrderService } from '../../../core/services/order';
   styleUrl: './checkout-page.scss',
 })
 export class CheckoutPage {
+  readonly storeContext = inject(StoreContextService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -87,7 +89,7 @@ export class CheckoutPage {
       );
 
       this.cartStore.clearCart();
-      await this.router.navigate(['/order-success'], {
+      await this.router.navigate(this.storeContext.link('order-success'), {
         queryParams: {
           orderId: confirmation.orderId,
           eta: confirmation.estimatedDelivery,

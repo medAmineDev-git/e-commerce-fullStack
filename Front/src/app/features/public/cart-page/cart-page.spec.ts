@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { CartStore } from '../../../core/stores/cart.store';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { CartPage } from './cart-page';
 
 describe('CartPage', () => {
@@ -48,6 +49,14 @@ describe('CartPage', () => {
       imports: [CartPage],
       providers: [
         provideRouter([]),
+        // La vitrine est toujours rendue dans le contexte d'une boutique resolue.
+        {
+          provide: StoreContextService,
+          useValue: {
+            slug: () => 'nova',
+            link: (...segments: (string | number)[]) => ['/boutique', 'nova', ...segments],
+          },
+        },
         { provide: CartStore, useValue: mockStore },
       ],
     }).compileComponents();
@@ -76,6 +85,6 @@ describe('CartPage', () => {
 
   it('should navigate to checkout', () => {
     component.proceedToCheckout();
-    expect(navigateSpy).toHaveBeenCalledWith(['/checkout']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'checkout']);
   });
 });

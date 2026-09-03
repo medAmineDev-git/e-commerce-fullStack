@@ -4,8 +4,8 @@
     <h1>{{ heroTitle() }}</h1>
     <p>{{ heroText() }}</p>
     <div class="hero-actions">
-      <a routerLink="/shop" class="primary-btn">Explorer le shop</a>
-      <a routerLink="/cart" class="ghost-btn">Voir le panier</a>
+      <a [routerLink]="storeContext.link('shop')" class="primary-btn">Explorer le shop</a>
+      <a [routerLink]="storeContext.link('cart')" class="ghost-btn">Voir le panier</a>
     </div>
   </div>
 
@@ -30,7 +30,7 @@
 
 <section class="section-head">
   <h2>Produits en tendance</h2>
-  <a routerLink="/shop">Tout voir</a>
+  <a [routerLink]="storeContext.link('shop')">Tout voir</a>
 </section>
 
 <div class="cards-grid">

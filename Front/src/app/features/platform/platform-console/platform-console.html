@@ -1,0 +1,80 @@
+<header class="console-header">
+  <div>
+    <p class="eyebrow">Plateforme</p>
+    <h1>Boutiques</h1>
+  </div>
+  <button type="button" class="ghost" (click)="logout()">Se déconnecter</button>
+</header>
+
+<main class="console-body">
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Chargement…</p>
+  } @else if (stores().length === 0) {
+    <p class="muted">Aucune boutique n'a encore été créée.</p>
+  } @else {
+    <div class="table-scroll">
+      <table>
+        <caption class="sr-only">Inventaire des boutiques de la plateforme</caption>
+        <thead>
+          <tr>
+            <th scope="col">Boutique</th>
+            <th scope="col">Adresse</th>
+            <th scope="col">Propriétaire</th>
+            <th scope="col">Créée le</th>
+            <th scope="col">Domaine</th>
+            <th scope="col">État</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (store of stores(); track store.id) {
+            <tr [class.inactive]="!store.active">
+              <td class="store-name">{{ store.name }}</td>
+              <td class="mono">/boutique/{{ store.slug }}</td>
+              <td>{{ store.ownerUsername ?? '—' }}</td>
+              <td>{{ store.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                @if (editingDomainFor() === store.id) {
+                  <div class="domain-edit">
+                    <input
+                      type="text"
+                      name="domain"
+                      placeholder="boutique.fr"
+                      [ngModel]="domainDraft()"
+                      (ngModelChange)="domainDraft.set($event)"
+                    />
+                    <button type="button" class="link" (click)="saveDomain(store)">Enregistrer</button>
+                    <button type="button" class="link muted-link" (click)="cancelDomainEdit()">Annuler</button>
+                  </div>
+                } @else {
+                  <button type="button" class="link" (click)="startDomainEdit(store)">
+                    {{ store.domain ?? 'Rattacher' }}
+                  </button>
+                }
+              </td>
+              <td>
+                <span class="badge" [class.badge-off]="!store.active">
+                  {{ store.active ? 'Active' : 'Désactivée' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="link" (click)="toggleActive(store)">
+                  {{ store.active ? 'Désactiver' : 'Réactiver' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="footnote">
+      Désactiver une boutique ferme sa vitrine et empêche son propriétaire de se connecter.
+      Les commandes déjà passées sont conservées.
+    </p>
+  }
+</main>

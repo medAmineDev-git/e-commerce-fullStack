@@ -5,7 +5,7 @@
   @if (cartStore.isEmpty()) {
     <div class="state-card">
       <p>Panier vide. Ajoute des produits avant de continuer.</p>
-      <a routerLink="/shop">Retour au shop</a>
+      <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
     </div>
   } @else {
     <div class="pay-chip">Paiement a la livraison (COD)</div>
@@ -93,7 +93,7 @@
             </article>
           }
         </div>
-        <a class="edit-cart-button" routerLink="/cart">Modifier panier</a>
+        <a class="edit-cart-button" [routerLink]="storeContext.link('cart')">Modifier panier</a>
       </section>
     }
   }

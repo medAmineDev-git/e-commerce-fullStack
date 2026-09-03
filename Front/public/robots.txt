@@ -1,0 +1,11 @@
+# Le site vitrine est indexable. Les espaces d'administration et les pages
+# sans contenu propre ne le sont pas.
+User-agent: *
+Disallow: /admin
+Disallow: /plateforme
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /boutique-introuvable
+
+# A completer avec le domaine reel au moment de la mise en ligne.
+# Sitemap: https://VOTRE-DOMAINE/sitemap.xml

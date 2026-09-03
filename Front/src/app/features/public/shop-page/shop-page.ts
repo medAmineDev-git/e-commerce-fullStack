@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
@@ -14,6 +15,7 @@ import { SortDirection } from '../../../core/stores/crud-list.helpers';
   styleUrl: './shop-page.scss',
 })
 export class ShopPage {
+  readonly storeContext = inject(StoreContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -117,7 +119,7 @@ export class ShopPage {
   }
 
   openProduct(product: PublicProduct): void {
-    void this.router.navigate(['/product', product.id]);
+    void this.router.navigate(this.storeContext.link('product', product.id));
   }
 
   previousPage(): void {

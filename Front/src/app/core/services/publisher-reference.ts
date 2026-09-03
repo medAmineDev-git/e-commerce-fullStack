@@ -1,10 +1,12 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from "@angular/core";
+import { BROWSER_STORAGE } from "../platform/browser-storage";
 
 const STORAGE_KEY = 'ecommerce.publisher-reference';
 const ALLOWED_REFERENCES = new Set(['am', 'wa']);
 
 @Injectable({ providedIn: 'root' })
 export class PublisherReferenceService {
+  private readonly storage = inject(BROWSER_STORAGE);
   readonly reference = signal<string | null>(this.read());
 
   capture(reference: string | null): void {
@@ -13,12 +15,12 @@ export class PublisherReferenceService {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, normalized);
+    this.storage.write("local", STORAGE_KEY, normalized);
     this.reference.set(normalized);
   }
 
   private read(): string | null {
-    const reference = localStorage.getItem(STORAGE_KEY);
+    const reference = this.storage.read("local", STORAGE_KEY);
     return reference && ALLOWED_REFERENCES.has(reference) ? reference : null;
   }
 }

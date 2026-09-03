@@ -1,19 +1,18 @@
 <header class="public-header">
-  <a class="brand" routerLink="/">
+  <a class="brand" [routerLink]="storeContext.link()">
     <span class="brand-mark">NOVA</span>
     <span class="brand-subtitle">Boutique urbaine</span>
   </a>
 
   <nav class="desktop-nav" aria-label="Navigation principale">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-    <a routerLink="/shop" routerLinkActive="active">Shop</a>
-    <a routerLink="/cart" routerLinkActive="active">Panier ({{ cartStore.totalItems() }})</a>
+    <a [routerLink]="storeContext.link()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Shop</a>
+    <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">Panier ({{ cartStore.totalItems() }})</a>
     <button type="button" class="mini-cart-trigger" (click)="toggleCartDrawer()">
       Mini panier
       <span>{{ cartStore.totalItems() }}</span>
     </button>
     <a href="http://localhost:8080/swagger.html" target="_blank" rel="noopener noreferrer" class="admin-link">API Docs</a>
-    <a routerLink="/admin/products" class="admin-link">Admin</a>
   </nav>
 </header>
 
@@ -67,15 +66,15 @@
           <span>Total</span>
           <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
         </div>
-        <a routerLink="/cart" (click)="closeCartDrawer()">Voir le panier</a>
-        <a routerLink="/checkout" (click)="closeCartDrawer()">Passer la commande</a>
+        <a [routerLink]="storeContext.link('cart')" (click)="closeCartDrawer()">Voir le panier</a>
+        <a [routerLink]="storeContext.link('checkout')" (click)="closeCartDrawer()">Passer la commande</a>
       </div>
     }
   </aside>
 }
 
 <nav class="mobile-bottom-nav" aria-label="Navigation mobile">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-  <a routerLink="/shop" routerLinkActive="active">Shop</a>
-  <a routerLink="/cart" routerLinkActive="active">Panier <span>{{ cartStore.totalItems() }}</span></a>
+  <a [routerLink]="storeContext.link()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+  <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Shop</a>
+  <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">Panier <span>{{ cartStore.totalItems() }}</span></a>
 </nav>

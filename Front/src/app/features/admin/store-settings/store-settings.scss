@@ -1,0 +1,134 @@
+:host {
+  --ink: #16191c;
+  --ink-soft: #545d63;
+  --surface: #ffffff;
+  --line: #dde3e1;
+  --accent: #0f6e66;
+  --danger: #a93321;
+  --ok: #266f45;
+
+  display: block;
+}
+
+.settings {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.address {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+
+  a {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: 0.92em;
+  }
+}
+
+.domain {
+  font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.muted {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--danger);
+  background: #f7e6e2;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-row {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.label {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+input,
+textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.submit {
+  font: inherit;
+  font-weight: 500;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.saved {
+  font-size: 0.88rem;
+  color: var(--ok);
+}

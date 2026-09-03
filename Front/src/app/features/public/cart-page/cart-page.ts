@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { Router, RouterLink } from '@angular/router';
 import { CartItem } from '../../../core/models/order.model';
 import { CartStore } from '../../../core/stores/cart.store';
@@ -11,6 +12,7 @@ import { CartStore } from '../../../core/stores/cart.store';
   styleUrl: './cart-page.scss',
 })
 export class CartPage {
+  readonly storeContext = inject(StoreContextService);
   private readonly router = inject(Router);
   readonly cartStore = inject(CartStore);
 
@@ -31,6 +33,6 @@ export class CartPage {
       return;
     }
 
-    void this.router.navigate(['/checkout']);
+    void this.router.navigate(this.storeContext.link('checkout'));
   }
 }

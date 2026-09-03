@@ -7,7 +7,7 @@ import { Category, CategoryInput } from '../models/category.model';
 @Service()
 export class CategoryService {
 	private readonly http = inject(HttpClient);
-	private readonly baseUrl = `${environment.apiBaseUrl}/categories`;
+	private readonly baseUrl = `${environment.apiBaseUrl}/admin/categories`;
 
 	getAll(): Observable<Category[]> {
 		return this.http.get<Category[]>(this.baseUrl);

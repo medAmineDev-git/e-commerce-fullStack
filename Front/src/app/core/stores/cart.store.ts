@@ -1,43 +1,29 @@
-import { computed } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { CartItem } from '../models/order.model';
 import { PublicProduct } from '../models/public-product.model';
+import { BROWSER_STORAGE } from '../platform/browser-storage';
 
 type CartState = {
   items: CartItem[];
+  storeSlug: string | null;
 };
 
-const STORAGE_KEY = 'ecommerce_cart_v1';
+/**
+ * Une clé par boutique. Sans cela, ouvrir deux vitrines dans le même navigateur
+ * mélange les paniers, et l'utilisateur commande sur une boutique des articles
+ * ajoutés sur une autre — que le serveur rejettera en 404, sans explication utile.
+ */
+const STORAGE_KEY_PREFIX = 'ecommerce_cart_v2';
+
+function storageKey(storeSlug: string | null): string {
+  return storeSlug ? `${STORAGE_KEY_PREFIX}.${storeSlug}` : STORAGE_KEY_PREFIX;
+}
 
 const initialState: CartState = {
   items: [],
+  storeSlug: null,
 };
-
-function persist(items: CartItem[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // Ignore storage write errors in test or private browsing context.
-  }
-}
-
-function loadFromStorage(): CartItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw) as CartItem[];
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.filter((item) => item.product && item.quantity > 0);
-  } catch {
-    return [];
-  }
-}
 
 export const CartStore = signalStore(
   { providedIn: 'root' },
@@ -61,10 +47,25 @@ export const CartStore = signalStore(
     }),
     isEmpty: computed(() => items().length === 0),
   })),
-  withMethods((store) => ({
-    hydrate(): void {
-      const stored = loadFromStorage();
-      patchState(store, { items: stored });
+  withMethods((store) => {
+    const storage = inject(BROWSER_STORAGE);
+
+    const persist = (items: CartItem[], storeSlug: string | null): void => {
+      storage.writeJson('local', storageKey(storeSlug), items);
+    };
+
+    const load = (storeSlug: string | null): CartItem[] => {
+      const parsed = storage.readJson<CartItem[]>('local', storageKey(storeSlug), []);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter((item) => item?.product && item.quantity > 0);
+    };
+
+    return {
+    /** Charge le panier de cette boutique. Appelé à chaque entrée sur une vitrine. */
+    hydrate(storeSlug: string | null = null): void {
+      patchState(store, { items: load(storeSlug), storeSlug });
     },
 
     addItem(product: PublicProduct, quantity = 1): void {
@@ -78,12 +79,12 @@ export const CartStore = signalStore(
             }
             return { ...item, quantity: item.quantity + quantity };
           });
-          persist(nextItems);
+          persist(nextItems, state.storeSlug);
           return { items: nextItems };
         }
 
         const nextItems = [...state.items, { product, quantity }];
-        persist(nextItems);
+        persist(nextItems, state.storeSlug);
         return { items: nextItems };
       });
     },
@@ -91,7 +92,7 @@ export const CartStore = signalStore(
     removeItem(productId: number): void {
       patchState(store, (state) => {
         const nextItems = state.items.filter((item) => item.product.id !== productId);
-        persist(nextItems);
+        persist(nextItems, state.storeSlug);
         return { items: nextItems };
       });
     },
@@ -109,14 +110,15 @@ export const CartStore = signalStore(
           }
           return { ...item, quantity };
         });
-        persist(nextItems);
+        persist(nextItems, state.storeSlug);
         return { items: nextItems };
       });
     },
 
     clearCart(): void {
+      persist([], store.storeSlug());
       patchState(store, { items: [] });
-      persist([]);
     },
-  })),
+    };
+  }),
 );

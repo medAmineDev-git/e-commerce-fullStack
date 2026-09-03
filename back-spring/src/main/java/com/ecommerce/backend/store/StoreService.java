@@ -169,6 +169,19 @@ public class StoreService {
         return storeRepository.save(store);
     }
 
+    /**
+     * Slug propose pour un nom de boutique, et sa disponibilite.
+     *
+     * Le slug renvoye est celui qui serait effectivement attribue : un nom
+     * reserve ou deja pris donne un slug suffixe, et le formulaire l affiche
+     * plutot que de laisser l utilisateur decouvrir la substitution apres coup.
+     */
+    public SlugCheckResponse checkSlugAvailability(String name) {
+        String base = slugify(name);
+        String attributed = generateUniqueSlug(base);
+        return new SlugCheckResponse(attributed, attributed.equals(base));
+    }
+
     public String slugify(String input) {
         if (input == null || input.isBlank()) {
             return "boutique";

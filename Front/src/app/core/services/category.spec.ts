@@ -31,7 +31,7 @@ describe('CategoryService', () => {
       expect(categories).toEqual(mockCategories);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/categories');
+    const req = httpMock.expectOne('http://localhost:8080/api/admin/categories');
     expect(req.request.method).toBe('GET');
     req.flush(mockCategories);
   });
@@ -44,7 +44,7 @@ describe('CategoryService', () => {
       expect(category).toEqual(response);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/categories');
+    const req = httpMock.expectOne('http://localhost:8080/api/admin/categories');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(payload);
     req.flush(response);
@@ -57,7 +57,7 @@ describe('CategoryService', () => {
       expect(category).toEqual(response);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/categories/3');
+    const req = httpMock.expectOne('http://localhost:8080/api/admin/categories/3');
     expect(req.request.method).toBe('GET');
     req.flush(response);
   });
@@ -70,7 +70,7 @@ describe('CategoryService', () => {
       expect(category).toEqual(response);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/categories/3');
+    const req = httpMock.expectOne('http://localhost:8080/api/admin/categories/3');
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual(payload);
     req.flush(response);
@@ -81,7 +81,7 @@ describe('CategoryService', () => {
       expect(result).toBeNull();
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/categories/3');
+    const req = httpMock.expectOne('http://localhost:8080/api/admin/categories/3');
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });

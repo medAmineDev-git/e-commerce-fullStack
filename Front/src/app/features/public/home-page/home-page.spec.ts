@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { CartStore } from '../../../core/stores/cart.store';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
 import { HomePage } from './home-page';
 
@@ -46,6 +47,14 @@ describe('HomePage', () => {
       imports: [HomePage],
       providers: [
         provideRouter([]),
+        // La vitrine est toujours rendue dans le contexte d'une boutique resolue.
+        {
+          provide: StoreContextService,
+          useValue: {
+            slug: () => 'nova',
+            link: (...segments: (string | number)[]) => ['/boutique', 'nova', ...segments],
+          },
+        },
         { provide: PublicCatalogStore, useValue: mockCatalogStore },
         { provide: CartStore, useValue: mockCartStore },
       ],
@@ -71,7 +80,9 @@ describe('HomePage', () => {
     component.openCategory('Homme');
 
     expect(mockCatalogStore.setCategory).toHaveBeenCalledWith('Homme');
-    expect(navigateSpy).toHaveBeenCalledWith(['/shop'], { queryParams: { category: 'Homme' } });
+    expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'shop'], {
+      queryParams: { category: 'Homme' },
+    });
   });
 
   it('should add product to cart', () => {

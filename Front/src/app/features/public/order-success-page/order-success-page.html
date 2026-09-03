@@ -16,7 +16,7 @@
   </div>
 
   <div class="actions">
-    <a routerLink="/shop">Continuer mes achats</a>
-    <a routerLink="/">Retour home</a>
+    <a [routerLink]="storeContext.link('shop')">Continuer mes achats</a>
+    <a [routerLink]="storeContext.link()">Retour à la boutique</a>
   </div>
 </section>

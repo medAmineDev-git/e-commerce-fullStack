@@ -7,7 +7,7 @@
   @if (cartStore.isEmpty()) {
     <div class="empty">
       <p>Le panier est vide pour le moment.</p>
-      <a routerLink="/shop">Explorer le shop</a>
+      <a [routerLink]="storeContext.link('shop')">Explorer le shop</a>
     </div>
   } @else {
     <div class="items">

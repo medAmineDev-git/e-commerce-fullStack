@@ -1,7 +1,7 @@
 <mat-toolbar color="primary">
   <a class="brand" routerLink="/admin/dashboard">Atelier Commerce</a>
   <span class="toolbar-spacer"></span>
-  <a class="shop-link" routerLink="/">Voir la boutique</a>
+  <a class="shop-link" [routerLink]="storefrontLink()">Voir ma vitrine</a>
   <button type="button" class="logout-button" (click)="logout()">Déconnexion</button>
 </mat-toolbar>
 
@@ -11,6 +11,9 @@
       <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active-link">
         <mat-icon matListItemIcon>space_dashboard</mat-icon>
         <span matListItemTitle>Vue d'ensemble</span>
+      </a>
+      <a mat-list-item routerLink="/admin/boutique" routerLinkActive="active-link">
+        <span>Ma boutique</span>
       </a>
       <a mat-list-item routerLink="/admin/products" routerLinkActive="active-link">
         <mat-icon matListItemIcon>inventory_2</mat-icon>

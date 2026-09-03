@@ -10,6 +10,7 @@ import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.product.ProductService;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductResponse;
+import com.ecommerce.backend.store.dto.SlugCheckResponse;
 import com.ecommerce.backend.store.dto.StorePublicResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,15 @@ public class PublicStoreController {
     @GetMapping("/{slug}")
     public StorePublicResponse getStore(@PathVariable String slug) {
         return storeService.getPublicStoreBySlug(slug);
+    }
+
+    /**
+     * Disponibilite du slug pendant la saisie du nom de boutique.
+     * Route anonyme : elle sert le formulaire d inscription.
+     */
+    @GetMapping("/slug-check")
+    public SlugCheckResponse checkSlug(@RequestParam("name") String name) {
+        return storeService.checkSlugAvailability(name);
     }
 
     @GetMapping("/resolve")

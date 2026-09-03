@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CartItem, CheckoutPayload, OrderConfirmation } from '../models/order.model';
 import { PublisherReferenceService } from './publisher-reference';
+import { StoreContextService } from './store-context.service';
 
 type BackendOrderItemRequest = {
   productId: number;
@@ -77,7 +78,10 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly publisherReferenceService = inject(PublisherReferenceService);
-  private readonly baseUrl = `${environment.apiBaseUrl}/orders`;
+  private readonly storeContext = inject(StoreContextService);
+
+  // Suivi des commandes : périmètre donné par le jeton du propriétaire.
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/orders`;
 
   async listOrders(): Promise<AdminOrder[]> {
     return firstValueFrom(this.http.get<AdminOrder[]>(this.baseUrl));
@@ -104,7 +108,11 @@ export class OrderService {
       publisherRef: this.publisherReferenceService.reference(),
     };
 
-    const response = await firstValueFrom(this.http.post<BackendOrderResponse>(this.baseUrl, body));
+    // La commande part sur la vitrine de la boutique courante, pas sur la
+    // surface d'administration : le client n'est pas authentifié.
+    const response = await firstValueFrom(
+      this.http.post<BackendOrderResponse>(`${this.storeContext.requireStoreApiUrl()}/orders`, body),
+    );
 
     return {
       orderId: response.orderId,

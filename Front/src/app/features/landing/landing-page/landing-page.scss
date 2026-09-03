@@ -1,0 +1,284 @@
+:host {
+  --ink: #16191c;
+  --ink-soft: #545d63;
+  --ground: #ffffff;
+  --ground-alt: #f4f6f5;
+  --line: #dde3e1;
+  --accent: #0f6e66;
+  --accent-ink: #ffffff;
+
+  display: block;
+  color: var(--ink);
+  background: var(--ground);
+  font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 20px clamp(20px, 5vw, 64px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  color: var(--ink);
+
+  span {
+    color: var(--accent);
+  }
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+  flex-wrap: wrap;
+
+  a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 0.95rem;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--accent);
+    }
+  }
+}
+
+.nav-cta {
+  padding: 9px 16px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-ink) !important;
+  font-weight: 500;
+}
+
+main {
+  display: block;
+}
+
+section {
+  padding: clamp(48px, 8vw, 96px) clamp(20px, 5vw, 64px);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.hero {
+  text-align: center;
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+h1 {
+  margin: 0 auto 20px;
+  max-width: 18ch;
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 0 auto;
+  max-width: 60ch;
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
+  color: var(--ink-soft);
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+.button {
+  display: inline-block;
+  padding: 13px 26px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  border: 1px solid transparent;
+
+  &.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  &.ghost {
+    border-color: var(--line);
+    color: var(--ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.hero-note {
+  margin: 18px 0 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+h2 {
+  margin: 0 0 32px;
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+h3 {
+  margin: 0 0 8px;
+  font-size: 1.08rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+.steps {
+  background: var(--ground-alt);
+  max-width: none;
+
+  > * {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+}
+
+.step-list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.feature-grid {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.feature {
+  border-top: 2px solid var(--accent);
+  padding-top: 16px;
+
+  p {
+    color: var(--ink-soft);
+    font-size: 0.96rem;
+  }
+}
+
+.faq {
+  background: var(--ground-alt);
+  max-width: none;
+
+  > * {
+    max-width: 800px;
+    margin-inline: auto;
+  }
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.02rem;
+    list-style-position: outside;
+  }
+
+  p {
+    margin-top: 10px;
+    color: var(--ink-soft);
+  }
+}
+
+.closing {
+  text-align: center;
+
+  p {
+    margin: 0 auto 28px;
+    max-width: 52ch;
+    color: var(--ink-soft);
+  }
+}
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 28px clamp(20px, 5vw, 64px);
+  border-top: 1px solid var(--line);
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+
+  nav {
+    display: flex;
+    gap: 20px;
+  }
+
+  a {
+    color: var(--ink-soft);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--accent);
+    }
+  }
+}

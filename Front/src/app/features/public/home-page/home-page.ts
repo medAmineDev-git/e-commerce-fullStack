@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../../core/stores/cart.store';
 import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
@@ -14,6 +15,7 @@ import { HomeConfiguration } from '../../../core/models/home-configuration.model
   styleUrl: './home-page.scss',
 })
 export class HomePage {
+  readonly storeContext = inject(StoreContextService);
   private readonly router = inject(Router);
   private readonly homeConfigurationService = inject(HomeConfigurationService);
   readonly catalogStore = inject(PublicCatalogStore);
@@ -48,11 +50,11 @@ export class HomePage {
 
   openCategory(category: PublicCategory): void {
     this.catalogStore.setCategory(category);
-    void this.router.navigate(['/shop'], { queryParams: { category } });
+    void this.router.navigate(this.storeContext.link('shop'), { queryParams: { category } });
   }
 
   openProduct(product: PublicProduct): void {
-    void this.router.navigate(['/product', product.id]);
+    void this.router.navigate(this.storeContext.link('product', product.id));
   }
 
   addToCart(product: PublicProduct): void {

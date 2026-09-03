@@ -23,6 +23,7 @@ describe('CartStore', () => {
     localStorage.clear();
     TestBed.configureTestingModule({});
     store = TestBed.inject(CartStore);
+    store.hydrate('nova');
     store.clearCart();
   });
 
@@ -49,8 +50,23 @@ describe('CartStore', () => {
     store.addItem(product, 1);
 
     const anotherStore = TestBed.inject(CartStore);
-    anotherStore.hydrate();
+    anotherStore.hydrate('nova');
 
     expect(anotherStore.totalItems()).toBeGreaterThan(0);
+  });
+
+  /**
+   * Le point du cloisonnement : deux vitrines ouvertes dans le même navigateur
+   * ne doivent pas partager leur panier.
+   */
+  it('should keep carts separate between stores', () => {
+    store.addItem(product, 2);
+    expect(store.totalItems()).toBe(2);
+
+    store.hydrate('atelier');
+    expect(store.isEmpty()).toBe(true);
+
+    store.hydrate('nova');
+    expect(store.totalItems()).toBe(2);
   });
 });
