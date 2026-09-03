@@ -146,7 +146,7 @@ class StoreIsolationTest {
 
         @Test
         void productListShouldOnlyContainOwnProducts() throws Exception {
-            mockMvc.perform(get("/api/products").header("Authorization", bearer(novaToken)))
+            mockMvc.perform(get("/api/admin/products").header("Authorization", bearer(novaToken)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].id").value(novaProduct.getId()));
@@ -154,7 +154,7 @@ class StoreIsolationTest {
 
         @Test
         void categoryListShouldOnlyContainOwnCategories() throws Exception {
-            mockMvc.perform(get("/api/categories").header("Authorization", bearer(novaToken)))
+            mockMvc.perform(get("/api/admin/categories").header("Authorization", bearer(novaToken)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].id").value(novaCategory.getId()));
@@ -162,7 +162,7 @@ class StoreIsolationTest {
 
         @Test
         void orderListShouldOnlyContainOwnOrders() throws Exception {
-            mockMvc.perform(get("/api/orders").header("Authorization", bearer(novaToken)))
+            mockMvc.perform(get("/api/admin/orders").header("Authorization", bearer(novaToken)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].orderId").value(novaOrder.getOrderNumber()));
@@ -179,7 +179,7 @@ class StoreIsolationTest {
 
         @Test
         void readingAnotherStoreProductShouldReturn404() throws Exception {
-            mockMvc.perform(get("/api/products/" + atelierProduct.getId())
+            mockMvc.perform(get("/api/admin/products/" + atelierProduct.getId())
                             .header("Authorization", bearer(novaToken)))
                     .andExpect(status().isNotFound());
         }
@@ -189,7 +189,7 @@ class StoreIsolationTest {
             ProductRequest payload = new ProductRequest(
                     "Detourne", "Sneakers", "Tentative de prise de controle", new BigDecimal("1.00"), 1);
 
-            mockMvc.perform(put("/api/products/" + atelierProduct.getId())
+            mockMvc.perform(put("/api/admin/products/" + atelierProduct.getId())
                             .header("Authorization", bearer(novaToken))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(payload)))
@@ -198,14 +198,14 @@ class StoreIsolationTest {
 
         @Test
         void deletingAnotherStoreProductShouldReturn404() throws Exception {
-            mockMvc.perform(delete("/api/products/" + atelierProduct.getId())
+            mockMvc.perform(delete("/api/admin/products/" + atelierProduct.getId())
                             .header("Authorization", bearer(novaToken)))
                     .andExpect(status().isNotFound());
         }
 
         @Test
         void readingAnotherStoreCategoryShouldReturn404() throws Exception {
-            mockMvc.perform(get("/api/categories/" + atelierCategory.getId())
+            mockMvc.perform(get("/api/admin/categories/" + atelierCategory.getId())
                             .header("Authorization", bearer(novaToken)))
                     .andExpect(status().isNotFound());
         }
@@ -214,7 +214,7 @@ class StoreIsolationTest {
         void updatingAnotherStoreCategoryShouldReturn404() throws Exception {
             CategoryRequest payload = new CategoryRequest("Detournee", "Tentative de prise de controle");
 
-            mockMvc.perform(put("/api/categories/" + atelierCategory.getId())
+            mockMvc.perform(put("/api/admin/categories/" + atelierCategory.getId())
                             .header("Authorization", bearer(novaToken))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(payload)))
@@ -223,14 +223,14 @@ class StoreIsolationTest {
 
         @Test
         void deletingAnotherStoreCategoryShouldReturn404() throws Exception {
-            mockMvc.perform(delete("/api/categories/" + atelierCategory.getId())
+            mockMvc.perform(delete("/api/admin/categories/" + atelierCategory.getId())
                             .header("Authorization", bearer(novaToken)))
                     .andExpect(status().isNotFound());
         }
 
         @Test
         void readingAnotherStoreOrderShouldReturn404() throws Exception {
-            mockMvc.perform(get("/api/orders/" + atelierOrder.getOrderNumber())
+            mockMvc.perform(get("/api/admin/orders/" + atelierOrder.getOrderNumber())
                             .header("Authorization", bearer(novaToken)))
                     .andExpect(status().isNotFound());
         }
@@ -239,7 +239,7 @@ class StoreIsolationTest {
         void updatingAnotherStoreOrderShouldReturn404() throws Exception {
             OrderUpdateRequest payload = new OrderUpdateRequest("ANNULEE", "Annulation par une autre boutique");
 
-            mockMvc.perform(put("/api/orders/" + atelierOrder.getOrderNumber())
+            mockMvc.perform(put("/api/admin/orders/" + atelierOrder.getOrderNumber())
                             .header("Authorization", bearer(novaToken))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(payload)))
@@ -256,25 +256,34 @@ class StoreIsolationTest {
     class MissingStoreContext {
 
         @Test
-        void anonymousProductListShouldNotExposeTheWholePlatform() throws Exception {
+        void adminRoutesShouldRejectAnonymousCallers() throws Exception {
+            mockMvc.perform(get("/api/admin/products"))
+                    .andExpect(status().is4xxClientError());
+            mockMvc.perform(get("/api/admin/categories"))
+                    .andExpect(status().is4xxClientError());
+            mockMvc.perform(get("/api/admin/orders"))
+                    .andExpect(status().is4xxClientError());
+            mockMvc.perform(get("/api/admin/home/configuration"))
+                    .andExpect(status().is4xxClientError());
+        }
+
+        /**
+         * Garde-fou de regression. Ces routes servaient le catalogue de toutes les
+         * boutiques confondues des que l'appelant etait anonyme. Elles ont ete
+         * retirees ; ce test veille a ce qu'elles ne reviennent pas.
+         */
+        @Test
+        void legacyUnscopedRoutesShouldNoLongerAnswer() throws Exception {
             mockMvc.perform(get("/api/products"))
                     .andExpect(status().is4xxClientError());
-        }
-
-        @Test
-        void anonymousCategoryListShouldNotExposeTheWholePlatform() throws Exception {
             mockMvc.perform(get("/api/categories"))
                     .andExpect(status().is4xxClientError());
-        }
-
-        @Test
-        void anonymousHomeConfigurationShouldNotFallBackToADefaultStore() throws Exception {
             mockMvc.perform(get("/api/home/configuration"))
                     .andExpect(status().is4xxClientError());
         }
 
         @Test
-        void anonymousOrderShouldNotBeAttachedToADefaultStore() throws Exception {
+        void legacyAnonymousOrderRouteShouldNoLongerAttachToADefaultStore() throws Exception {
             OrderRequest payload = orderRequest(novaProduct.getId());
 
             mockMvc.perform(post("/api/orders")
@@ -285,8 +294,8 @@ class StoreIsolationTest {
 
         @Test
         void ownerWithoutStoreShouldNotAdministerTheFirstStore() throws Exception {
-            mockMvc.perform(get("/api/products").header("Authorization", bearer(orphanToken)))
-                    .andExpect(status().is4xxClientError());
+            mockMvc.perform(get("/api/admin/products").header("Authorization", bearer(orphanToken)))
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -355,6 +364,10 @@ class StoreIsolationTest {
                     .andExpect(status().isNotFound());
         }
 
+        /**
+         * Le produit d'une autre boutique est introuvable depuis cette vitrine, et
+         * non refuse : la reponse ne dit pas qu'il existe ailleurs.
+         */
         @Test
         void orderingAProductFromAnotherStoreShouldBeRejected() throws Exception {
             OrderRequest payload = orderRequest(atelierProduct.getId());
@@ -362,7 +375,7 @@ class StoreIsolationTest {
             mockMvc.perform(post("/api/public/stores/" + NOVA + "/orders")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(payload)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
     }
 

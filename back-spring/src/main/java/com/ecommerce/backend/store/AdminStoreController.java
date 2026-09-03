@@ -12,15 +12,17 @@ public class AdminStoreController {
 
     private final StoreService storeService;
     private final StoreMapper storeMapper;
+    private final StoreContext storeContext;
 
-    public AdminStoreController(StoreService storeService, StoreMapper storeMapper) {
+    public AdminStoreController(StoreService storeService, StoreMapper storeMapper, StoreContext storeContext) {
+        this.storeContext = storeContext;
         this.storeService = storeService;
         this.storeMapper = storeMapper;
     }
 
     @GetMapping
     public StoreResponse getMyStore(Authentication authentication) {
-        Store store = storeService.getStoreForUsername(authentication.getName());
+        Store store = storeContext.requireOwnedStore(authentication);
         return storeMapper.toResponse(store);
     }
 
@@ -29,7 +31,7 @@ public class AdminStoreController {
             Authentication authentication,
             @Valid @RequestBody StoreUpdateRequest request
     ) {
-        Store store = storeService.getStoreForUsername(authentication.getName());
+        Store store = storeContext.requireOwnedStore(authentication);
         Store updated = storeService.updateStore(store.getId(), request);
         return storeMapper.toResponse(updated);
     }

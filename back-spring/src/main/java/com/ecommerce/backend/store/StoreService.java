@@ -44,16 +44,19 @@ public class StoreService {
                 .orElseThrow(() -> new StoreNotFoundException(id));
     }
 
-    public Store getStoreForUser(AdminUser user) {
-        return storeRepository.findFirstByOwner(user)
-                .orElseGet(() -> storeRepository.findById(1L)
-                        .orElseThrow(() -> new StoreNotFoundException("Default store not found")));
-    }
 
-    public Store getStoreForUsername(String username) {
-        return storeRepository.findFirstByOwnerUsernameIgnoreCase(username)
-                .orElseGet(() -> storeRepository.findById(1L)
-                        .orElseThrow(() -> new StoreNotFoundException("Default store not found")));
+
+    /**
+     * Resout la boutique administree par le compte authentifie.
+     * Aucun repli sur une boutique par defaut : un compte sans boutique est une
+     * situation anormale, pas une invitation a administrer celle des autres.
+     */
+    public Store getStoreOwnedBy(String username) {
+        if (username == null || username.isBlank()) {
+            throw new StoreNotFoundException("aucun utilisateur authentifie");
+        }
+        return storeRepository.findFirstByOwnerUsernameIgnoreCase(username.trim())
+                .orElseThrow(() -> new StoreNotFoundException("aucune boutique rattachee a " + username));
     }
 
     public StorePublicResponse getPublicStoreBySlug(String slug) {

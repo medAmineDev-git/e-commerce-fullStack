@@ -3,8 +3,7 @@ package com.ecommerce.backend.category;
 import com.ecommerce.backend.category.dto.CategoryRequest;
 import com.ecommerce.backend.category.dto.CategoryResponse;
 import com.ecommerce.backend.store.Store;
-import com.ecommerce.backend.store.StoreService;
-import tools.jackson.databind.ObjectMapper;
+import com.ecommerce.backend.store.StoreContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -29,11 +30,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CategoryController.class)
+@WebMvcTest(AdminCategoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(com.ecommerce.backend.common.exception.GlobalExceptionHandler.class)
 @ActiveProfiles("test")
-class CategoryControllerTest {
+class AdminCategoryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -45,7 +46,7 @@ class CategoryControllerTest {
     private CategoryService categoryService;
 
     @MockitoBean
-    private StoreService storeService;
+    private StoreContext storeContext;
 
     private Store store;
 
@@ -55,17 +56,17 @@ class CategoryControllerTest {
         store.setId(1L);
         store.setName("NOVA Boutique Urbaine");
         store.setSlug("nova");
-        when(storeService.getStoreEntityById(1L)).thenReturn(store);
+        when(storeContext.requireOwnedStore(any())).thenReturn(store);
     }
 
     @Test
     void getAllShouldReturn200AndList() throws Exception {
-        when(categoryService.getAllCategories()).thenReturn(List.of(
+        when(categoryService.getAllCategories(store)).thenReturn(List.of(
                 response(1L, "Homme"),
                 response(2L, "Femme")
         ));
 
-        mockMvc.perform(get("/api/categories"))
+        mockMvc.perform(get("/api/admin/categories"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Homme"))
@@ -73,20 +74,10 @@ class CategoryControllerTest {
     }
 
     @Test
-    void getByIdShouldReturn200() throws Exception {
-        when(categoryService.getCategoryById(1L)).thenReturn(response(1L, "Homme"));
+    void getByIdShouldReturn404WhenNotFoundInThisStore() throws Exception {
+        when(categoryService.getCategoryById(store, 99L)).thenThrow(new CategoryNotFoundException(99L));
 
-        mockMvc.perform(get("/api/categories/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Homme"));
-    }
-
-    @Test
-    void getByIdShouldReturn404WhenNotFound() throws Exception {
-        when(categoryService.getCategoryById(99L)).thenThrow(new CategoryNotFoundException(99L));
-
-        mockMvc.perform(get("/api/categories/99"))
+        mockMvc.perform(get("/api/admin/categories/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Categorie introuvable avec l'id 99"));
@@ -97,7 +88,7 @@ class CategoryControllerTest {
         CategoryRequest request = request("Sneakers");
         when(categoryService.createCategory(store, request)).thenReturn(response(10L, "Sneakers"));
 
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/admin/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -109,7 +100,7 @@ class CategoryControllerTest {
     void createShouldReturn400WhenPayloadIsInvalid() throws Exception {
         CategoryRequest invalid = new CategoryRequest("", "");
 
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/admin/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
                 .andExpect(status().isBadRequest())
@@ -119,11 +110,24 @@ class CategoryControllerTest {
     }
 
     @Test
+    void createShouldReturn400WhenNameAlreadyExistsInTheStore() throws Exception {
+        CategoryRequest request = request("Sneakers");
+        when(categoryService.createCategory(store, request))
+                .thenThrow(new IllegalArgumentException("Category name already exists in this store: Sneakers"));
+
+        mockMvc.perform(post("/api/admin/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Category name already exists in this store: Sneakers"));
+    }
+
+    @Test
     void updateShouldReturn200WhenPayloadIsValid() throws Exception {
         CategoryRequest request = request("Accessoires");
         when(categoryService.updateCategory(store, 1L, request)).thenReturn(response(1L, "Accessoires"));
 
-        mockMvc.perform(put("/api/categories/1")
+        mockMvc.perform(put("/api/admin/categories/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -135,17 +139,17 @@ class CategoryControllerTest {
     void deleteShouldReturn204() throws Exception {
         doNothing().when(categoryService).deleteCategory(store, 1L);
 
-        mockMvc.perform(delete("/api/categories/1"))
+        mockMvc.perform(delete("/api/admin/categories/1"))
                 .andExpect(status().isNoContent());
 
         verify(categoryService).deleteCategory(store, 1L);
     }
 
     @Test
-    void deleteShouldReturn404WhenNotFound() throws Exception {
+    void deleteShouldReturn404WhenCategoryBelongsToAnotherStore() throws Exception {
         doThrow(new CategoryNotFoundException(404L)).when(categoryService).deleteCategory(store, 404L);
 
-        mockMvc.perform(delete("/api/categories/404"))
+        mockMvc.perform(delete("/api/admin/categories/404"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Categorie introuvable avec l'id 404"));
     }

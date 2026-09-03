@@ -2,6 +2,8 @@ package com.ecommerce.backend.common.exception;
 
 import com.ecommerce.backend.common.api.ApiErrorResponse;
 import com.ecommerce.backend.category.CategoryNotFoundException;
+import com.ecommerce.backend.order.OrderNotFoundException;
+import com.ecommerce.backend.store.StoreNotFoundException;
 import com.ecommerce.backend.product.ProductNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,36 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CategoryNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleCategoryNotFound(
             CategoryNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    /**
+     * Une boutique inconnue, inactive, ou non rattachee au compte appelant est un 404 :
+     * une erreur serveur laisserait croire a une panne.
+     */
+    @ExceptionHandler(StoreNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleStoreNotFound(
+            StoreNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleOrderNotFound(
+            OrderNotFoundException exception,
             HttpServletRequest request
     ) {
         return buildErrorResponse(

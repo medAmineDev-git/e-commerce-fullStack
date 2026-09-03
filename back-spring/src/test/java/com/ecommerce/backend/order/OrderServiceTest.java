@@ -4,9 +4,10 @@ import com.ecommerce.backend.order.dto.OrderItemRequest;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.product.Product;
+import com.ecommerce.backend.product.ProductNotFoundException;
 import com.ecommerce.backend.product.ProductRepository;
 import com.ecommerce.backend.store.Store;
-import com.ecommerce.backend.store.StoreRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,17 +33,20 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    @Mock
-    private StoreRepository storeRepository;
-
     @InjectMocks
     private OrderService orderService;
 
+    private Store store;
+
+    @BeforeEach
+    void setUp() {
+        store = store(1L, "nova");
+    }
+
     @Test
     void placeOrderShouldPersistItemsCalculateTotalAndDecreaseStock() {
-        Store store = store(1L, "nova");
-        Product product = product(1L, "49.90", 3, store);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        Product product = product(1L, "49.90", 3);
+        when(productRepository.findByIdAndStore(1L, store)).thenReturn(Optional.of(product));
 
         OrderResponse response = orderService.placeOrder(store, request(1L, 2, "0.01"));
 
@@ -60,8 +64,7 @@ class OrderServiceTest {
 
     @Test
     void placeOrderShouldRejectQuantityAboveAvailableStock() {
-        Store store = store(1L, "nova");
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product(1L, "49.90", 1, store)));
+        when(productRepository.findByIdAndStore(1L, store)).thenReturn(Optional.of(product(1L, "49.90", 1)));
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -71,18 +74,28 @@ class OrderServiceTest {
         assertEquals("Insufficient stock for product: 1", exception.getMessage());
     }
 
+    /**
+     * Le produit d'une autre boutique n'est plus rejete apres coup : il est
+     * introuvable, parce que la recherche elle-meme est bornee a la boutique.
+     */
     @Test
-    void placeOrderShouldRejectProductFromAnotherStore() {
-        Store store = store(1L, "nova");
-        Store otherStore = store(2L, "atelier");
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product(1L, "49.90", 10, otherStore)));
+    void placeOrderShouldNotSeeProductsOfAnotherStore() {
+        when(productRepository.findByIdAndStore(1L, store)).thenReturn(Optional.empty());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        assertThrows(
+                ProductNotFoundException.class,
                 () -> orderService.placeOrder(store, request(1L, 1, "49.90"))
         );
+    }
 
-        assertEquals("Product 1 does not belong to store: nova", exception.getMessage());
+    @Test
+    void getOrderShouldReportAnotherStoreOrderAsNotFound() {
+        when(orderRepository.findByOrderNumberAndStore("CMD-ATEL0001", store)).thenReturn(Optional.empty());
+
+        assertThrows(
+                OrderNotFoundException.class,
+                () -> orderService.getOrder(store, "CMD-ATEL0001")
+        );
     }
 
     private OrderRequest request(Long productId, int quantity, String total) {
@@ -106,7 +119,7 @@ class OrderServiceTest {
         return store;
     }
 
-    private Product product(Long id, String price, int stock, Store store) {
+    private Product product(Long id, String price, int stock) {
         Product product = new Product();
         product.setId(id);
         product.setName("Sneaker Urban Pulse");

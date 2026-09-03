@@ -11,13 +11,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Trois surfaces, et rien entre elles :
+ *
+ *   /api/public/stores/{slug}/**  vitrine, anonyme, perimetre donne par le slug
+ *   /api/admin/**                 back-office, perimetre donne par le compte
+ *   /api/platform/**              exploitation de la plateforme
+ *
+ * Les anciennes routes /api/products, /api/categories, /api/orders et
+ * /api/home/configuration ont ete retirees : elles servaient le catalogue de
+ * toutes les boutiques confondues des lors que l'appelant etait anonyme.
+ */
 @Configuration
 public class SecurityConfig {
 
@@ -34,16 +44,18 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/public/**", "/swagger.html", "/openapi.yaml", "/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/home/configuration").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
-                        .requestMatchers("/api/platform/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/swagger.html",
+                                "/openapi.yaml",
+                                "/uploads/**"
+                        ).permitAll()
+                        // La console plateforme n'est pas accessible aux boutiques :
+                        // ROLE_ADMIN est un role de boutique, pas un role de plateforme.
+                        .requestMatchers("/api/platform/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
                         .requestMatchers("/api/dev/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/api/orders/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**", "/api/home/configuration").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);

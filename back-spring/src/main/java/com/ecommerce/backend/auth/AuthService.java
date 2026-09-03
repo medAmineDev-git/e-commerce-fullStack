@@ -46,7 +46,7 @@ public class AuthService {
 
         String storeSlug = storeRepository.findFirstByOwner(user)
                 .map(Store::getSlug)
-                .orElse("nova");
+                .orElse(null);
 
         return new LoginResponse(jwtService.createToken(user), user.getUsername(), user.getRole(), storeSlug);
     }

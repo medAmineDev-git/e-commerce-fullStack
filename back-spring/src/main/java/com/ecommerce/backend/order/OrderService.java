@@ -1,10 +1,16 @@
 package com.ecommerce.backend.order;
 
-import com.ecommerce.backend.order.dto.*;
+import com.ecommerce.backend.order.dto.OrderDetailResponse;
+import com.ecommerce.backend.order.dto.OrderItemRequest;
+import com.ecommerce.backend.order.dto.OrderItemResponse;
+import com.ecommerce.backend.order.dto.OrderRequest;
+import com.ecommerce.backend.order.dto.OrderResponse;
+import com.ecommerce.backend.order.dto.OrderSummaryResponse;
+import com.ecommerce.backend.order.dto.OrderUpdateRequest;
 import com.ecommerce.backend.product.Product;
+import com.ecommerce.backend.product.ProductNotFoundException;
 import com.ecommerce.backend.product.ProductRepository;
 import com.ecommerce.backend.store.Store;
-import com.ecommerce.backend.store.StoreRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +23,11 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Toutes les operations sont bornees a une boutique, y compris la lecture des
+ * produits commandes : une commande ne peut contenir que des articles de la
+ * boutique qui la recoit.
+ */
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
@@ -37,12 +48,10 @@ public class OrderService {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final StoreRepository storeRepository;
 
-    public OrderService(ProductRepository productRepository, OrderRepository orderRepository, StoreRepository storeRepository) {
+    public OrderService(ProductRepository productRepository, OrderRepository orderRepository) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
-        this.storeRepository = storeRepository;
     }
 
     public List<OrderSummaryResponse> getOrders(Store store, String publisherRef) {
@@ -55,50 +64,20 @@ public class OrderService {
         return orders.stream().map(this::toSummary).toList();
     }
 
-    public List<OrderSummaryResponse> getOrders(String publisherRef) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "id");
-        String safePublisherRef = normalizePublisherRef(publisherRef);
-        List<CustomerOrder> orders = safePublisherRef == null
-                ? orderRepository.findAll(sort)
-                : orderRepository.findByPublisherRef(safePublisherRef, sort);
-
-        return orders.stream().map(this::toSummary).toList();
-    }
-
-    public List<OrderSummaryResponse> getOrders() {
-        return getOrders(null);
-    }
-
     public OrderDetailResponse getOrder(Store store, String orderNumber) {
-        CustomerOrder order = orderRepository.findByOrderNumberAndStore(orderNumber, store)
-                .orElseThrow(() -> new IllegalArgumentException("Order does not exist: " + orderNumber));
-        return toDetail(order);
-    }
-
-    public OrderDetailResponse getOrder(String orderNumber) {
-        return toDetail(findByOrderNumber(orderNumber));
+        return toDetail(findByOrderNumberAndStoreOrThrow(orderNumber, store));
     }
 
     @Transactional
     public OrderDetailResponse updateOrder(Store store, String orderNumber, OrderUpdateRequest request) {
+        // L'appartenance est verifiee avant la validation du statut : sinon un statut
+        // invalide repondrait 400 sur une commande qui, pour cet appelant, n'existe pas.
+        CustomerOrder order = findByOrderNumberAndStoreOrThrow(orderNumber, store);
+
         if (!ALLOWED_STATUSES.contains(request.status())) {
             throw new IllegalArgumentException("Invalid order status: " + request.status());
         }
 
-        CustomerOrder order = orderRepository.findByOrderNumberAndStore(orderNumber, store)
-                .orElseThrow(() -> new IllegalArgumentException("Order does not exist: " + orderNumber));
-        order.setStatus(request.status());
-        order.setNote(request.note());
-        return toDetail(orderRepository.save(order));
-    }
-
-    @Transactional
-    public OrderDetailResponse updateOrder(String orderNumber, OrderUpdateRequest request) {
-        if (!ALLOWED_STATUSES.contains(request.status())) {
-            throw new IllegalArgumentException("Invalid order status: " + request.status());
-        }
-
-        CustomerOrder order = findByOrderNumber(orderNumber);
         order.setStatus(request.status());
         order.setNote(request.note());
         return toDetail(orderRepository.save(order));
@@ -138,19 +117,13 @@ public class OrderService {
         );
     }
 
-    @Transactional
-    public OrderResponse placeOrder(OrderRequest request) {
-        Store defaultStore = getDefaultStore();
-        return placeOrder(defaultStore, request);
-    }
-
+    /**
+     * Le produit est cherche directement dans la boutique, plutot que charge puis
+     * compare : un produit d'une autre boutique est simplement introuvable.
+     */
     private OrderItemResponse addItem(CustomerOrder order, OrderItemRequest item, Store store) {
-        Product product = productRepository.findById(item.productId())
-                .orElseThrow(() -> new IllegalArgumentException("Product does not exist: " + item.productId()));
-
-        if (store != null && product.getStore() != null && !product.getStore().getId().equals(store.getId())) {
-            throw new IllegalArgumentException("Product " + item.productId() + " does not belong to store: " + store.getSlug());
-        }
+        Product product = productRepository.findByIdAndStore(item.productId(), store)
+                .orElseThrow(() -> new ProductNotFoundException(item.productId()));
 
         if (product.getStockQuantity() < item.quantity()) {
             throw new IllegalArgumentException("Insufficient stock for product: " + product.getId());
@@ -173,9 +146,9 @@ public class OrderService {
         );
     }
 
-    private CustomerOrder findByOrderNumber(String orderNumber) {
-        return orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Order does not exist: " + orderNumber));
+    private CustomerOrder findByOrderNumberAndStoreOrThrow(String orderNumber, Store store) {
+        return orderRepository.findByOrderNumberAndStore(orderNumber, store)
+                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
 
     private OrderSummaryResponse toSummary(CustomerOrder order) {
@@ -218,17 +191,5 @@ public class OrderService {
         }
         String normalized = publisherRef.trim().toLowerCase(Locale.ROOT);
         return ALLOWED_PUBLISHER_REFERENCES.contains(normalized) ? normalized : null;
-    }
-
-    private Store getDefaultStore() {
-        return storeRepository.findById(1L)
-                .orElseGet(() -> {
-                    Store store = new Store();
-                    store.setId(1L);
-                    store.setName("NOVA");
-                    store.setSlug("nova");
-                    store.setActive(true);
-                    return storeRepository.save(store);
-                });
     }
 }
