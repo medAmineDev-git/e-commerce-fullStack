@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.store.Store;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -10,14 +11,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
+import java.util.stream.Stream;
 
+/**
+ * Stockage des visuels, partitionne par boutique.
+ *
+ * Les fichiers etaient auparavant deposes dans un dossier commun, servi en acces
+ * libre : les visuels d'une boutique etaient enumerables depuis n'importe quelle
+ * autre. Deux mesures ici, l'arborescence par boutique et des noms non devinables.
+ *
+ * L'interface reste volontairement etroite (deposer, supprimer, mesurer) pour
+ * qu'un passage a un stockage objet ne touche pas au metier.
+ */
 @Service
 public class ProductImageStorageService {
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
+    private static final long MAX_STORE_QUOTA_BYTES = 200L * 1024 * 1024;
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
             MediaType.IMAGE_PNG_VALUE,
@@ -25,30 +39,106 @@ public class ProductImageStorageService {
             "image/webp"
     );
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final Path storageDirectory;
 
     public ProductImageStorageService(@Value("${app.uploads.directory:uploads/products}") String directory) {
         this.storageDirectory = Paths.get(directory).toAbsolutePath().normalize();
     }
 
-    public String store(MultipartFile file) {
+    public String store(Store store, MultipartFile file) {
         validate(file);
+        Path storeDirectory = directoryFor(store);
+        enforceQuota(storeDirectory, file.getSize(), store);
 
         try {
-            Files.createDirectories(storageDirectory);
-            String extension = extension(file.getOriginalFilename(), file.getContentType());
-            String filename = UUID.randomUUID() + extension;
-            Path target = storageDirectory.resolve(filename).normalize();
+            Files.createDirectories(storeDirectory);
+            String filename = unpredictableName() + extension(file.getOriginalFilename(), file.getContentType());
+            Path target = storeDirectory.resolve(filename).normalize();
 
-            if (!target.getParent().equals(storageDirectory)) {
+            if (!storeDirectory.equals(target.getParent())) {
                 throw new IllegalArgumentException("Invalid image filename");
             }
 
             file.transferTo(target);
-            return "/uploads/products/" + filename;
+            return "/uploads/products/" + store.getId() + "/" + filename;
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to store product image", exception);
         }
+    }
+
+    /**
+     * @return true si le fichier appartenait bien a cette boutique et a ete supprime.
+     *         Un chemin pointant ailleurs est ignore, jamais suivi.
+     */
+    public boolean delete(Store store, String imageUrl) {
+        Path storeDirectory = directoryFor(store);
+        String prefix = "/uploads/products/" + store.getId() + "/";
+
+        if (imageUrl == null || !imageUrl.startsWith(prefix)) {
+            return false;
+        }
+
+        Path target = storeDirectory.resolve(imageUrl.substring(prefix.length())).normalize();
+        if (!storeDirectory.equals(target.getParent())) {
+            return false;
+        }
+
+        try {
+            return Files.deleteIfExists(target);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to delete product image", exception);
+        }
+    }
+
+    public long usedBytes(Store store) {
+        Path storeDirectory = directoryFor(store);
+        if (!Files.isDirectory(storeDirectory)) {
+            return 0L;
+        }
+
+        try (Stream<Path> files = Files.list(storeDirectory)) {
+            return files.filter(Files::isRegularFile).mapToLong(path -> {
+                try {
+                    return Files.size(path);
+                } catch (IOException exception) {
+                    return 0L;
+                }
+            }).sum();
+        } catch (IOException exception) {
+            return 0L;
+        }
+    }
+
+    public long quotaBytes() {
+        return MAX_STORE_QUOTA_BYTES;
+    }
+
+    private Path directoryFor(Store store) {
+        if (store == null || store.getId() == null) {
+            throw new IllegalArgumentException("A store is required to store an image");
+        }
+        // L'identifiant numerique, jamais le slug : un slug est modifiable, ce qui
+        // rendrait les visuels deja publies introuvables.
+        return storageDirectory.resolve(String.valueOf(store.getId())).normalize();
+    }
+
+    private void enforceQuota(Path storeDirectory, long incomingSize, Store store) {
+        if (usedBytes(store) + incomingSize > MAX_STORE_QUOTA_BYTES) {
+            throw new IllegalArgumentException(
+                    "Storage quota exceeded for this store (" + (MAX_STORE_QUOTA_BYTES / (1024 * 1024)) + " MB)");
+        }
+    }
+
+    /**
+     * 128 bits d'aleatoire : le nom ne se devine pas, meme en connaissant
+     * l'identifiant de la boutique.
+     */
+    private String unpredictableName() {
+        byte[] bytes = new byte[16];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private void validate(MultipartFile file) {
@@ -66,7 +156,10 @@ public class ProductImageStorageService {
     private String extension(String originalFilename, String contentType) {
         String extension = StringUtils.getFilenameExtension(originalFilename);
         if (extension != null && !extension.isBlank()) {
-            return "." + extension.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            String cleaned = extension.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (!cleaned.isBlank()) {
+                return "." + cleaned;
+            }
         }
         return switch (contentType) {
             case MediaType.IMAGE_PNG_VALUE -> ".png";
