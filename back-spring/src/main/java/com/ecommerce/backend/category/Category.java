@@ -13,8 +13,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import com.ecommerce.backend.store.Store;
+import jakarta.persistence.UniqueConstraint;
+
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", uniqueConstraints = {
+        @UniqueConstraint(name = "idx_categories_store_name_unique", columnNames = {"store_id", "name"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,7 +29,11 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 120, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
+
+    @Column(nullable = false, length = 120)
     private String name;
 
     @Column(nullable = false, length = 1200)

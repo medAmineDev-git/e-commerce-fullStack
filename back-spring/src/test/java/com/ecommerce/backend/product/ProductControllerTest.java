@@ -43,6 +43,9 @@ class ProductControllerTest {
     @MockitoBean
     private ProductService productService;
 
+    @MockitoBean
+    private com.ecommerce.backend.store.StoreService storeService;
+
     @Test
     void getAllShouldReturn200AndList() throws Exception {
         when(productService.getAllProducts()).thenReturn(List.of(

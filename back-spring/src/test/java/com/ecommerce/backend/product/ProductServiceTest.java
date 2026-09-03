@@ -32,6 +32,9 @@ class ProductServiceTest {
     @Mock
     private ProductMapper productMapper;
 
+    @Mock
+    private com.ecommerce.backend.store.StoreRepository storeRepository;
+
     @InjectMocks
     private ProductService productService;
 

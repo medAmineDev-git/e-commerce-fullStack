@@ -1,12 +1,20 @@
 package com.ecommerce.backend.order;
 
+import com.ecommerce.backend.store.Store;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
 import java.util.List;
-import org.springframework.data.domain.Sort;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<CustomerOrder, Long> {
-	Optional<CustomerOrder> findByOrderNumber(String orderNumber);
+    Optional<CustomerOrder> findByOrderNumber(String orderNumber);
+
+    Optional<CustomerOrder> findByOrderNumberAndStore(String orderNumber, Store store);
+
     List<CustomerOrder> findByPublisherRef(String publisherRef, Sort sort);
+
+    List<CustomerOrder> findAllByStore(Store store, Sort sort);
+
+    List<CustomerOrder> findByStoreAndPublisherRef(Store store, String publisherRef, Sort sort);
 }

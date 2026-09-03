@@ -38,6 +38,9 @@ class OrderControllerTest {
     @MockitoBean
     private OrderService orderService;
 
+    @MockitoBean
+    private com.ecommerce.backend.store.StoreService storeService;
+
     @Test
     void placeOrderShouldReturn200WhenPayloadIsValid() throws Exception {
         OrderRequest request = request();

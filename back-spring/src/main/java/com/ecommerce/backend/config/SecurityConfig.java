@@ -27,8 +27,6 @@ public class SecurityConfig {
         this.jwtService = jwtService;
     }
 
-    // Configuration temporaire pour le developpement : toutes les routes sont ouvertes.
-    // Sera remplacee par une vraie securite JWT (authentification/roles) dans une prochaine lecon.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -36,14 +34,16 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/swagger.html", "/openapi.yaml", "/uploads/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/public/**", "/swagger.html", "/openapi.yaml", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/home/configuration").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
-                        .requestMatchers("/api/dev/**").hasRole("ADMIN")
-                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**") .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**", "/api/home/configuration").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/platform/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
+                        .requestMatchers("/api/dev/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/api/orders/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**", "/api/home/configuration").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasAnyRole("ADMIN", "STORE_OWNER", "SUPER_ADMIN")
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);

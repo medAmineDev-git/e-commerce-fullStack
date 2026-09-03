@@ -5,6 +5,8 @@ import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.product.Product;
 import com.ecommerce.backend.product.ProductRepository;
+import com.ecommerce.backend.store.Store;
+import com.ecommerce.backend.store.StoreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,15 +32,19 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private StoreRepository storeRepository;
+
     @InjectMocks
     private OrderService orderService;
 
     @Test
     void placeOrderShouldPersistItemsCalculateTotalAndDecreaseStock() {
-        Product product = product(1L, "49.90", 3);
+        Store store = store(1L, "nova");
+        Product product = product(1L, "49.90", 3, store);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-        OrderResponse response = orderService.placeOrder(request(1L, 2, "0.01"));
+        OrderResponse response = orderService.placeOrder(store, request(1L, 2, "0.01"));
 
         ArgumentCaptor<CustomerOrder> orderCaptor = ArgumentCaptor.forClass(CustomerOrder.class);
         verify(orderRepository).save(orderCaptor.capture());
@@ -46,6 +52,7 @@ class OrderServiceTest {
 
         assertEquals(new BigDecimal("99.80"), response.total());
         assertEquals(OrderService.PENDING_ADMIN_VALIDATION, response.status());
+        assertEquals(store, savedOrder.getStore());
         assertEquals(1, savedOrder.getItems().size());
         assertEquals(savedOrder, savedOrder.getItems().getFirst().getOrder());
         assertEquals(1, product.getStockQuantity());
@@ -53,14 +60,29 @@ class OrderServiceTest {
 
     @Test
     void placeOrderShouldRejectQuantityAboveAvailableStock() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product(1L, "49.90", 1)));
+        Store store = store(1L, "nova");
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product(1L, "49.90", 1, store)));
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> orderService.placeOrder(request(1L, 2, "99.80"))
+                () -> orderService.placeOrder(store, request(1L, 2, "99.80"))
         );
 
         assertEquals("Insufficient stock for product: 1", exception.getMessage());
+    }
+
+    @Test
+    void placeOrderShouldRejectProductFromAnotherStore() {
+        Store store = store(1L, "nova");
+        Store otherStore = store(2L, "atelier");
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product(1L, "49.90", 10, otherStore)));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> orderService.placeOrder(store, request(1L, 1, "49.90"))
+        );
+
+        assertEquals("Product 1 does not belong to store: nova", exception.getMessage());
     }
 
     private OrderRequest request(Long productId, int quantity, String total) {
@@ -76,7 +98,15 @@ class OrderServiceTest {
         );
     }
 
-    private Product product(Long id, String price, int stock) {
+    private Store store(Long id, String slug) {
+        Store store = new Store();
+        store.setId(id);
+        store.setName(slug);
+        store.setSlug(slug);
+        return store;
+    }
+
+    private Product product(Long id, String price, int stock, Store store) {
         Product product = new Product();
         product.setId(id);
         product.setName("Sneaker Urban Pulse");
@@ -84,6 +114,7 @@ class OrderServiceTest {
         product.setDescription("Description");
         product.setPrice(new BigDecimal(price));
         product.setStockQuantity(stock);
+        product.setStore(store);
         return product;
     }
 }

@@ -1,5 +1,8 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.store.Store;
+import com.ecommerce.backend.store.StoreRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -18,6 +21,20 @@ class ProductRepositoryTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
+
+    private Store testStore;
+
+    @BeforeEach
+    void setUp() {
+        Store store = new Store();
+        store.setName("NOVA Test");
+        store.setSlug("nova-test");
+        store.setActive(true);
+        testStore = storeRepository.save(store);
+    }
 
     @Test
     void shouldFindProductsByNameOrDescriptionIgnoringCase() {
@@ -50,6 +67,7 @@ class ProductRepositoryTest {
 
     private Product product(String name, String category, String description, String price, int stock) {
         Product product = new Product();
+        product.setStore(testStore);
         product.setName(name);
         product.setCategory(category);
         product.setDescription(description);

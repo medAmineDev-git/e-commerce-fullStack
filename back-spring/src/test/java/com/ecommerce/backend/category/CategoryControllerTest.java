@@ -2,7 +2,10 @@ package com.ecommerce.backend.category;
 
 import com.ecommerce.backend.category.dto.CategoryRequest;
 import com.ecommerce.backend.category.dto.CategoryResponse;
+import com.ecommerce.backend.store.Store;
+import com.ecommerce.backend.store.StoreService;
 import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -41,6 +44,20 @@ class CategoryControllerTest {
     @MockitoBean
     private CategoryService categoryService;
 
+    @MockitoBean
+    private StoreService storeService;
+
+    private Store store;
+
+    @BeforeEach
+    void setUp() {
+        store = new Store();
+        store.setId(1L);
+        store.setName("NOVA Boutique Urbaine");
+        store.setSlug("nova");
+        when(storeService.getStoreEntityById(1L)).thenReturn(store);
+    }
+
     @Test
     void getAllShouldReturn200AndList() throws Exception {
         when(categoryService.getAllCategories()).thenReturn(List.of(
@@ -78,7 +95,7 @@ class CategoryControllerTest {
     @Test
     void createShouldReturn201WhenPayloadIsValid() throws Exception {
         CategoryRequest request = request("Sneakers");
-        when(categoryService.createCategory(request)).thenReturn(response(10L, "Sneakers"));
+        when(categoryService.createCategory(store, request)).thenReturn(response(10L, "Sneakers"));
 
         mockMvc.perform(post("/api/categories")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,7 +121,7 @@ class CategoryControllerTest {
     @Test
     void updateShouldReturn200WhenPayloadIsValid() throws Exception {
         CategoryRequest request = request("Accessoires");
-        when(categoryService.updateCategory(1L, request)).thenReturn(response(1L, "Accessoires"));
+        when(categoryService.updateCategory(store, 1L, request)).thenReturn(response(1L, "Accessoires"));
 
         mockMvc.perform(put("/api/categories/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -116,17 +133,17 @@ class CategoryControllerTest {
 
     @Test
     void deleteShouldReturn204() throws Exception {
-        doNothing().when(categoryService).deleteCategory(1L);
+        doNothing().when(categoryService).deleteCategory(store, 1L);
 
         mockMvc.perform(delete("/api/categories/1"))
                 .andExpect(status().isNoContent());
 
-        verify(categoryService).deleteCategory(1L);
+        verify(categoryService).deleteCategory(store, 1L);
     }
 
     @Test
     void deleteShouldReturn404WhenNotFound() throws Exception {
-        doThrow(new CategoryNotFoundException(404L)).when(categoryService).deleteCategory(404L);
+        doThrow(new CategoryNotFoundException(404L)).when(categoryService).deleteCategory(store, 404L);
 
         mockMvc.perform(delete("/api/categories/404"))
                 .andExpect(status().isNotFound())
