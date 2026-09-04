@@ -2,6 +2,7 @@ package com.ecommerce.backend.config;
 
 import com.ecommerce.backend.auth.JwtAuthenticationFilter;
 import com.ecommerce.backend.auth.JwtService;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,13 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // La redispatch interne vers /error doit traverser la chaine
+                        // sans etre reevaluee. Sans cette ligne, sendError(403)
+                        // repasse par denyAll() et ressort en 401 : le client ne peut
+                        // plus distinguer "connecte-toi" de "tu n'as pas le droit".
+                        // MockMvc ne simule pas cette redispatch, d'ou des tests verts
+                        // sur un comportement faux en conditions reelles.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC).permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
