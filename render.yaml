@@ -1,16 +1,52 @@
+# Blueprint Render — un seul service web, qui sert le site et l'API.
+#
+# Ce fichier n'est pris en compte que pour un service cree via un Blueprint.
+# Un service cree a la main depuis le tableau de bord l'ignore : ses variables
+# doivent alors etre saisies dans l'onglet Environment.
+
 services:
   - type: web
-    name: ecommerce-backend
+    name: ecommerce-boutiques
     runtime: docker
-    healthCheckPath: /swagger.html
+    branch: main
+    plan: starter
+    # La page daccueil, prerendue et toujours servie : elle ne depend ni de la
+    # base ni dune boutique existante.
+    healthCheckPath: /
+
+    # Les visuels televerses par les vendeurs vivent ici. Sans ce disque, ils
+    # sont effaces a chaque deploiement : le systeme de fichiers d'une instance
+    # est ephemere.
+    disk:
+      name: uploads
+      mountPath: /var/data
+      sizeGB: 1
+
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+
+      - key: APP_UPLOADS_DIR
+        value: /var/data/uploads/products
+
+      # Render fournit l'URL au format postgres://user:mot-de-passe@hote/base.
+      # JDBC ne l'accepte pas telle quelle : la reecrire en
+      # jdbc:postgresql://hote:5432/base, et porter l'utilisateur et le mot de
+      # passe dans leurs propres variables.
       - key: DB_URL
         sync: false
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD
         sync: false
+
+      # Signe les sessions. Genere une fois, puis jamais modifie : le changer
+      # deconnecte tout le monde.
       - key: JWT_SECRET
         generateValue: true
+
+databases:
+  - name: ecommerce-db
+    databaseName: ecommerce_prod
+    user: ecommerce_app
+    plan: basic-256mb

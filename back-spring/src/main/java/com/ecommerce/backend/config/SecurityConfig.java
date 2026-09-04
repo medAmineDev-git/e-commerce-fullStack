@@ -53,8 +53,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
-                                "/swagger.html",
-                                "/openapi.yaml",
                                 "/uploads/**"
                         ).permitAll()
                         // Deux roles seulement depuis V110. ROLE_ADMIN a disparu :
@@ -62,7 +60,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/platform/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/dev/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasAnyRole("STORE_OWNER", "SUPER_ADMIN")
-                        .anyRequest().denyAll()
+                        // Toute autre route sous /api est refusee explicitement, avant
+                        // que la regle suivante n'ouvre le reste : sans cette ligne,
+                        // un futur endpoint mal place serait servi sans controle.
+                        .requestMatchers("/api/**").denyAll()
+                        // Le site lui-meme, embarque dans le jar : pages, scripts,
+                        // feuilles de style et documentation de l'API.
+                        .anyRequest().permitAll()
                 )
                 // Sans ceci, une requete anonyme recoit 403 : le client ne peut pas
                 // distinguer "connecte-toi" de "tu n'as pas le droit", et ne sait donc

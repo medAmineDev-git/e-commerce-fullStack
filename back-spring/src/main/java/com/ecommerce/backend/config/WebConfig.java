@@ -2,13 +2,31 @@ package com.ecommerce.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 
+/**
+ * Ressources statiques : les visuels televerses, et le site lui-meme.
+ *
+ * Le frontend compile est embarque dans le jar. Un seul service sert donc le
+ * site et l'API, sur une seule origine : plus de question d'origine croisee, et
+ * un seul deploiement a gerer.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    /** Coque des routes rendues cote client. Ce n'est pas index.html. */
+    private static final String CSR_SHELL = "/static/index.csr.html";
+
+    /** Ces prefixes ne doivent jamais tomber sur le repli du site. */
+    private static final String[] SERVER_PREFIXES = { "api/", "uploads/" };
 
     private final String uploadsLocation;
 
@@ -18,7 +36,51 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Les visuels d'abord : ils vivent hors du jar, sur le disque.
         registry.addResourceHandler("/uploads/products/**")
-                .addResourceLocations(uploadsLocation);
+                .addResourceLocations(uploadsLocation)
+                .setCachePeriod(3600)
+                .resourceChain(true);
+
+        // Puis le site. Le gestionnaire est declare en dernier pour ne capter
+        // que ce qu'aucun autre n'a servi.
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .resourceChain(true)
+                .addResolver(new SinglePageResolver());
+    }
+
+    /**
+     * Sert le fichier demande s'il existe, sinon la coque de l'application.
+     *
+     * Les routes comme /boutique/nova n'ont aucun fichier correspondant : sans
+     * ce repli, un lien profond ou un rafraichissement renverrait 404.
+     *
+     * Le repli vise index.csr.html et non index.html : index.html est la page
+     * d'accueil du service, figee au prerendu. La renvoyer sur /boutique/nova
+     * afficherait le contenu de la page d'accueil avant que l'application ne
+     * prenne la main.
+     */
+    private static final class SinglePageResolver extends PathResourceResolver {
+
+        @Override
+        @Nullable
+        protected Resource getResource(String resourcePath, Resource location) throws IOException {
+            Resource requested = location.createRelative(resourcePath);
+            if (requested.exists() && requested.isReadable()) {
+                return requested;
+            }
+
+            // Une requete API sans correspondance doit rester un 404 de l'API,
+            // et surtout pas renvoyer du HTML a un client qui attend du JSON.
+            for (String prefix : SERVER_PREFIXES) {
+                if (resourcePath.startsWith(prefix)) {
+                    return null;
+                }
+            }
+
+            ClassPathResource shell = new ClassPathResource(CSR_SHELL);
+            return shell.exists() ? shell : null;
+        }
     }
 }

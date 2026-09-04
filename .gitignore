@@ -23,3 +23,9 @@ Thumbs.db
 
 # Paquet de livraison, reconstruit a la demande
 deploy-package/
+
+# Site compile, injecte dans les ressources statiques par le Dockerfile.
+# Seuls swagger.html et openapi.yaml sont versionnes.
+back-spring/src/main/resources/static/*
+!back-spring/src/main/resources/static/swagger.html
+!back-spring/src/main/resources/static/openapi.yaml
