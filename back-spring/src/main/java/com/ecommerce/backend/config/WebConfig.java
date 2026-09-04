@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.CacheControl;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Duration;
 
 /**
  * Ressources statiques : les visuels televerses, et le site lui-meme.
@@ -36,16 +38,34 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Les visuels d'abord : ils vivent hors du jar, sur le disque.
+        // Les visuels vivent hors du jar, sur le disque.
         registry.addResourceHandler("/uploads/products/**")
                 .addResourceLocations(uploadsLocation)
-                .setCachePeriod(3600)
+                .setCacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
                 .resourceChain(true);
 
-        // Puis le site. Le gestionnaire est declare en dernier pour ne capter
-        // que ce qu'aucun autre n'a servi.
+        /*
+         * Scripts et feuilles de style portent une empreinte dans leur nom :
+         * main-VGYWWZ34.js change de nom des que son contenu change. Ils peuvent
+         * donc etre gardes indefiniment, et un deploiement n'a aucun risque de
+         * servir un fichier perime.
+         *
+         * Sans cela, le navigateur retelechargeait plus d'un megaoctet de
+         * JavaScript a chaque visite.
+         */
+        registry.addResourceHandler("/*.js", "/*.css", "/media/**", "/favicon.ico")
+                .addResourceLocations("classpath:/static/")
+                .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
+                .resourceChain(true);
+
+        /*
+         * Le reste — index.html, index.csr.html, robots.txt, sitemap.xml — garde
+         * un nom fixe. Il doit etre revalide a chaque visite, sinon un
+         * deploiement resterait invisible pour les visiteurs deja venus.
+         */
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
+                .setCacheControl(CacheControl.noCache())
                 .resourceChain(true)
                 .addResolver(new SinglePageResolver());
     }

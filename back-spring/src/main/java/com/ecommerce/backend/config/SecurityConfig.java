@@ -13,6 +13,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.header.writers.CacheControlHeadersWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 
 /**
@@ -41,6 +44,23 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
+                /*
+                 * Spring Security interdit toute mise en cache par defaut, sur
+                 * chaque reponse. C'est le bon comportement pour du JSON
+                 * authentifie, mais il s'appliquait aussi aux scripts du site :
+                 * le navigateur retelechargeait plus d'un megaoctet a chaque
+                 * visite.
+                 *
+                 * On desactive donc la regle globale, et on la remet sur les
+                 * seules routes d'API. Les fichiers statiques recuperent alors
+                 * les durees declarees dans WebConfig.
+                 */
+                .headers(headers -> headers
+                        .cacheControl(cache -> cache.disable())
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/**"),
+                                new CacheControlHeadersWriter()))
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // La redispatch interne vers /error doit traverser la chaine
