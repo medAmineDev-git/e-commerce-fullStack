@@ -1,6 +1,6 @@
 :host {
   display: block;
-  /* Laisse la place à la barre d'achat ancrée, en plus de la barre de navigation. */
+  /* Laisse la place à la barre d'achat ancrée en bas de l'écran. */
   padding-bottom: 5.5rem;
 }
 
@@ -410,13 +410,14 @@
 
 .buy-bar {
   position: fixed;
-  inset: auto 0 calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)) 0;
+  inset: auto 0 0 0;
   z-index: 25;
   background: var(--paper);
   border-top: 1px solid var(--line);
 }
 
 .buy-bar-inner {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   display: flex;
   align-items: center;
   gap: 1rem;

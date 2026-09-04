@@ -63,12 +63,6 @@
   object-fit: contain;
 }
 
-/* La navigation principale disparaît sous 48rem : la barre basse la remplace,
-   à portée de pouce. */
-.desktop-nav {
-  display: none;
-}
-
 .cart-trigger {
   font: inherit;
   font-size: 0.8125rem;
@@ -108,35 +102,6 @@
 @media (min-width: 48rem) {
   .brand-name {
     font-size: 1.75rem;
-  }
-
-  .desktop-nav {
-    display: flex;
-    gap: 2rem;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-
-    a {
-      font-size: 0.8125rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-decoration: none;
-      padding-block: 0.25rem;
-      border-bottom: 1px solid transparent;
-      transition: color var(--motion-fast) var(--ease);
-
-      &:hover,
-      &.active {
-        color: var(--ink);
-      }
-
-      &.active {
-        border-bottom-color: var(--ink);
-      }
-    }
   }
 
   .shell-header-inner {
