@@ -46,7 +46,7 @@ public class AdminProductController {
     ) {
         Store store = storeContext.requireOwnedStore(authentication);
         return productService.searchProducts(
-                store, category, subcategory, season, null, null, null, null,
+                store, category, subcategory, season, null, null, null,
                 page, size, sortBy, sortDirection);
     }
 

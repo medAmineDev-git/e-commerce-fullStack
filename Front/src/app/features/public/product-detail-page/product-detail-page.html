@@ -49,6 +49,17 @@
               {{ product()!.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
             </span>
           }
+          @if (discountPercent()) {
+            <span class="discount">-{{ discountPercent() }}%</span>
+          }
+        </p>
+
+        <p class="stock-line" [class.stock-low]="stockState() === 'low'" [class.stock-out]="stockState() === 'out'">
+          @switch (stockState()) {
+            @case ('out') { Épuisé }
+            @case ('low') { Plus que {{ product()!.stockQuantity }} en stock }
+            @default { En stock &middot; expédié sous 48 h }
+          }
         </p>
       </header>
 
@@ -117,16 +128,55 @@
             <span aria-hidden="true">+</span>
           </button>
         </div>
-        @if (product()!.stockQuantity <= 3) {
-          <p class="low-stock">Plus que {{ product()!.stockQuantity }} en stock</p>
-        }
       </section>
 
       <section class="description">
+        <h2 class="u-label">Description</h2>
         <p>{{ product()!.longDescription }}</p>
       </section>
 
-      <dl class="assurances">
+      <section class="specs">
+        <h2 class="u-label">Caractéristiques</h2>
+        <dl>
+          <div>
+            <dt>Catégorie</dt>
+            <dd>
+              {{ product()!.category }}
+              @if (product()!.subcategory) {
+                &middot; {{ product()!.subcategory }}
+              }
+            </dd>
+          </div>
+          @if ((product()!.sizes?.length ?? 0) > 0) {
+            <div>
+              <dt>Tailles</dt>
+              <dd>{{ (product()!.sizes ?? []).join(', ') }}</dd>
+            </div>
+          }
+          @if ((product()!.colors?.length ?? 0) > 0) {
+            <div>
+              <dt>Coloris</dt>
+              <dd>{{ (product()!.colors ?? []).length }} disponible(s)</dd>
+            </div>
+          }
+          @if ((product()!.seasons?.length ?? 0) > 0) {
+            <div>
+              <dt>Saison</dt>
+              <dd>{{ (product()!.seasons ?? []).join(', ') }}</dd>
+            </div>
+          }
+          @if (product()!.sku) {
+            <div>
+              <dt>Référence</dt>
+              <dd class="mono">{{ product()!.sku }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="assurances-block">
+        <h2 class="u-label">Livraison et retours</h2>
+        <dl class="assurances">
         <div>
           <dt>Livraison</dt>
           <dd>48 à 72 heures</dd>
@@ -139,7 +189,8 @@
           <dt>Retour</dt>
           <dd>Sous 7 jours</dd>
         </div>
-      </dl>
+        </dl>
+      </section>
 
       @if (relatedProducts().length > 0) {
         <section class="related">

@@ -10,15 +10,6 @@
       }
     </a>
 
-    <nav class="desktop-nav" aria-label="Navigation principale">
-      <a
-        [routerLink]="storeContext.link()"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        >Accueil</a
-      >
-    </nav>
-
     <button type="button" class="cart-trigger" (click)="toggleCartDrawer()">
       <span class="u-sr-only">Ouvrir le panier</span>
       <span aria-hidden="true">Panier</span>
@@ -136,18 +127,3 @@
   </aside>
 }
 
-<nav class="bottom-nav" aria-label="Navigation">
-  <a
-    [routerLink]="storeContext.link()"
-    routerLinkActive="active"
-    [routerLinkActiveOptions]="{ exact: true }"
-  >
-    Accueil
-  </a>
-  <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">
-    Panier
-    @if (cartStore.totalItems() > 0) {
-      <span class="bottom-count">{{ cartStore.totalItems() }}</span>
-    }
-  </a>
-</nav>

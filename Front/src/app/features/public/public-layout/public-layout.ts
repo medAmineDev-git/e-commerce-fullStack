@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { CartStore } from '../../../core/stores/cart.store';
@@ -9,7 +9,7 @@ import { SeoService } from '../../../core/seo/seo.service';
 
 @Component({
   selector: 'app-public-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CurrencyPipe],
+  imports: [RouterOutlet, RouterLink, CurrencyPipe],
   templateUrl: './public-layout.html',
   styleUrl: './public-layout.scss',
 })

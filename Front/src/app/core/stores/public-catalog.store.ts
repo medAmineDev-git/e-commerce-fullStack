@@ -17,7 +17,6 @@ type CatalogState = {
   selectedSubcategory: string;
   selectedSeason: string;
   selectedSize: string;
-  selectedColor: string;
   minPrice: number | null;
   maxPrice: number | null;
   availableCategories: Category[];
@@ -36,7 +35,6 @@ export type CatalogQueryState = {
   subcategory?: string;
   season?: string;
   productSize?: string;
-  color?: string;
   minPrice?: number | null;
   maxPrice?: number | null;
   sortBy: CatalogSortField;
@@ -52,7 +50,6 @@ const initialState: CatalogState = {
   selectedSubcategory: '',
   selectedSeason: '',
   selectedSize: '',
-  selectedColor: '',
   minPrice: null,
   maxPrice: null,
   availableCategories: [],
@@ -110,7 +107,6 @@ export const PublicCatalogStore = signalStore(
     }),
 
     availableSizes: computed(() => state.facets()?.sizes ?? []),
-    availableColors: computed(() => state.facets()?.colors ?? []),
     priceBounds: computed(() => ({
       min: state.facets()?.minPrice ?? null,
       max: state.facets()?.maxPrice ?? null,
@@ -122,7 +118,6 @@ export const PublicCatalogStore = signalStore(
       if (state.selectedSubcategory()) count++;
       if (state.selectedSeason()) count++;
       if (state.selectedSize()) count++;
-      if (state.selectedColor()) count++;
       if (state.minPrice() !== null || state.maxPrice() !== null) count++;
       return count;
     }),
@@ -136,7 +131,6 @@ export const PublicCatalogStore = signalStore(
           subcategory: store.selectedSubcategory(),
           season: store.selectedSeason(),
           productSize: store.selectedSize(),
-          color: store.selectedColor(),
           minPrice: store.minPrice(),
           maxPrice: store.maxPrice(),
           page: store.pageIndex(),
@@ -179,7 +173,6 @@ export const PublicCatalogStore = signalStore(
           selectedSubcategory: queryState.subcategory ?? '',
           selectedSeason: queryState.season ?? '',
           selectedSize: queryState.productSize ?? '',
-          selectedColor: queryState.color ?? '',
           minPrice: queryState.minPrice ?? null,
           maxPrice: queryState.maxPrice ?? null,
           sortBy: queryState.sortBy,
@@ -220,14 +213,6 @@ export const PublicCatalogStore = signalStore(
         void fetchPage();
       },
 
-      setColor(color: string): void {
-        patchState(store, {
-          selectedColor: store.selectedColor() === color ? '' : color,
-          pageIndex: 0,
-        });
-        void fetchPage();
-      },
-
       setPriceRange(minPrice: number | null, maxPrice: number | null): void {
         patchState(store, { minPrice, maxPrice, pageIndex: 0 });
         void fetchPage();
@@ -259,7 +244,6 @@ export const PublicCatalogStore = signalStore(
           selectedSubcategory: '',
           selectedSeason: '',
           selectedSize: '',
-          selectedColor: '',
           minPrice: null,
           maxPrice: null,
           sortBy: 'id',

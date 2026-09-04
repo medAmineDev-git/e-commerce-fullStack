@@ -23,6 +23,8 @@ export interface PublicProduct {
   category: PublicCategory;
   subcategory?: string;
   seasons?: string[];
+  /** Reference interne, affichee sur la fiche produit quand elle existe. */
+  sku?: string;
   price: number;
   originalPrice?: number;
   rating: number;

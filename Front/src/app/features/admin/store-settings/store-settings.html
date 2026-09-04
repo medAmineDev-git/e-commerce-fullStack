@@ -119,30 +119,58 @@
       <fieldset>
         <legend>Visuels</legend>
 
-        <div class="field-row">
-          <label class="field">
-            <span class="label">URL du logo</span>
-            <input
-              type="url"
-              name="logoUrl"
-              placeholder="https://…/logo.png"
-              [ngModel]="logoUrl()"
-              (ngModelChange)="logoUrl.set($event)"
-            />
-            <span class="hint">Remplace le nom dans l'en-tête.</span>
-          </label>
+        <div class="upload-row">
+          <div class="upload">
+            <span class="label">Logo</span>
+            <div class="upload-preview upload-preview--logo">
+              @if (logoPreview()) {
+                <img [src]="logoPreview()!" alt="Logo de la boutique" />
+              } @else {
+                <span class="upload-placeholder">Aucun logo</span>
+              }
+            </div>
+            <div class="upload-actions">
+              <label class="upload-button">
+                {{ uploading() === 'logo' ? 'Envoi…' : logoPreview() ? 'Remplacer' : 'Choisir un fichier' }}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  [disabled]="uploading() !== null"
+                  (change)="onFileSelected('logo', $any($event.target))"
+                />
+              </label>
+              @if (logoPreview()) {
+                <button type="button" class="upload-remove" (click)="removeImage('logo')">Retirer</button>
+              }
+            </div>
+            <span class="hint">Remplace le nom dans l'en-tête de la vitrine.</span>
+          </div>
 
-          <label class="field">
-            <span class="label">URL de la bannière</span>
-            <input
-              type="url"
-              name="bannerUrl"
-              placeholder="https://…/banniere.jpg"
-              [ngModel]="bannerUrl()"
-              (ngModelChange)="bannerUrl.set($event)"
-            />
-            <span class="hint">Visuel de tête de la vitrine.</span>
-          </label>
+          <div class="upload">
+            <span class="label">Bannière</span>
+            <div class="upload-preview upload-preview--banner">
+              @if (bannerPreview()) {
+                <img [src]="bannerPreview()!" alt="Bannière de la boutique" />
+              } @else {
+                <span class="upload-placeholder">Aucune bannière</span>
+              }
+            </div>
+            <div class="upload-actions">
+              <label class="upload-button">
+                {{ uploading() === 'banner' ? 'Envoi…' : bannerPreview() ? 'Remplacer' : 'Choisir un fichier' }}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  [disabled]="uploading() !== null"
+                  (change)="onFileSelected('banner', $any($event.target))"
+                />
+              </label>
+              @if (bannerPreview()) {
+                <button type="button" class="upload-remove" (click)="removeImage('banner')">Retirer</button>
+              }
+            </div>
+            <span class="hint">Visuel de tête de la vitrine. JPEG, PNG, GIF ou WebP, 5 Mo maximum.</span>
+          </div>
         </div>
       </fieldset>
 

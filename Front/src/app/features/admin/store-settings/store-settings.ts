@@ -2,6 +2,9 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StoreAdminService } from '../../../core/services/store-admin.service';
 import { OwnedStore } from '../../../core/models/store.model';
+import { environment } from '../../../../environments/environment';
+
+type ImageSlot = 'logo' | 'banner';
 
 /** Identité de la boutique : ce que voient ses clients sur la vitrine. */
 @Component({
@@ -12,6 +15,7 @@ import { OwnedStore } from '../../../core/models/store.model';
 })
 export class StoreSettings {
   private readonly storeAdminService = inject(StoreAdminService);
+  private readonly apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '');
 
   readonly store = signal<OwnedStore | null>(null);
   readonly loading = signal(true);
@@ -27,10 +31,16 @@ export class StoreSettings {
   readonly logoUrl = signal('');
   readonly bannerUrl = signal('');
 
-  /** La section Informations n'apparait sur la vitrine que si elle est remplie. */
+  /** Slot en cours de téléversement, pour n'afficher l'attente que sur celui-ci. */
+  readonly uploading = signal<ImageSlot | null>(null);
+
   readonly hasInformation = computed(
     () => !!(this.address().trim() || this.phone().trim() || this.email().trim()),
   );
+
+  /** Les URL stockées sont relatives à l'API : l'aperçu a besoin de l'origine. */
+  readonly logoPreview = computed(() => this.absolute(this.logoUrl()));
+  readonly bannerPreview = computed(() => this.absolute(this.bannerUrl()));
 
   constructor() {
     void this.load();
@@ -52,6 +62,46 @@ export class StoreSettings {
       this.error.set('Impossible de charger les informations de la boutique.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  /**
+   * Le fichier part immédiatement, mais l'URL n'est enregistrée qu'avec le reste
+   * du formulaire : on évite de publier un visuel sur la vitrine avant que le
+   * propriétaire ait validé.
+   */
+  async onFileSelected(slot: ImageSlot, input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    this.uploading.set(slot);
+    this.error.set(null);
+
+    try {
+      const { url } = await this.storeAdminService.uploadImage(file);
+      if (slot === 'logo') {
+        this.logoUrl.set(url);
+      } else {
+        this.bannerUrl.set(url);
+      }
+    } catch {
+      this.error.set(
+        "Le fichier n'a pas pu être envoyé. Formats acceptés : JPEG, PNG, GIF, WebP, 5 Mo maximum.",
+      );
+    } finally {
+      this.uploading.set(null);
+      // Permet de re-sélectionner le même fichier après une erreur.
+      input.value = '';
+    }
+  }
+
+  removeImage(slot: ImageSlot): void {
+    if (slot === 'logo') {
+      this.logoUrl.set('');
+    } else {
+      this.bannerUrl.set('');
     }
   }
 
@@ -84,5 +134,12 @@ export class StoreSettings {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private absolute(url: string): string | null {
+    if (!url) {
+      return null;
+    }
+    return url.startsWith('/') ? `${this.apiOrigin}${url}` : url;
   }
 }

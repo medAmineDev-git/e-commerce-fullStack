@@ -256,29 +256,88 @@
   font-weight: 600;
 }
 
-.low-stock {
-  margin: 0;
+.discount {
   font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background: var(--signal);
+  padding: 0.1875rem 0.4375rem;
+}
+
+/* L'etat de stock est un texte, pas un chiffre : le client veut savoir s'il
+   doit se depecher, pas connaitre l'inventaire. */
+.stock-line {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ok);
+}
+
+.stock-low {
   color: var(--signal);
+}
+
+.stock-out {
+  color: var(--muted);
 }
 
 /* ---------------------------------------------------------- texte */
 
-.description {
+.description,
+.specs,
+.assurances-block {
   border-top: 1px solid var(--line);
   padding-top: 1.75rem;
 
-  p {
-    margin: 0;
-    color: var(--ink-soft);
-    max-width: 62ch;
+  h2 {
+    margin: 0 0 0.875rem;
   }
+}
+
+.description p {
+  margin: 0;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+.specs dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.875rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  > div:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  dt {
+    color: var(--muted);
+    flex: none;
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+  }
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  font-size: 0.9em;
 }
 
 .assurances {
   margin: 0;
-  border-top: 1px solid var(--line);
-  padding-top: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.875rem;

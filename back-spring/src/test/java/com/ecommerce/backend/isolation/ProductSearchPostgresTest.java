@@ -86,50 +86,51 @@ class ProductSearchPostgresTest {
     /** Le cas qui echouait : tous les criteres NULL. */
     @Test
     void searchWithoutAnyCriterionShouldNotFail() {
-        assertThat(search(null, null, null, null, null)).hasSize(2);
+        assertThat(search(null, null, null, null)).hasSize(2);
     }
 
     @Test
     void shouldFilterByCategory() {
-        assertThat(search("Homme", null, null, null, null))
+        assertThat(search("Homme", null, null, null))
                 .extracting(Product::getName)
                 .containsExactly("Veste noire");
     }
 
     @Test
-    void shouldFilterBySizeAndColour() {
-        assertThat(search(null, "M", null, null, null)).hasSize(1);
-        assertThat(search(null, null, "Ecru", null, null))
+    void shouldFilterBySize() {
+        assertThat(search(null, "M", null, null))
+                .extracting(Product::getName)
+                .containsExactly("Veste noire");
+        assertThat(search(null, "S", null, null))
                 .extracting(Product::getName)
                 .containsExactly("Robe ecrue");
     }
 
     @Test
     void shouldFilterByPriceRange() {
-        assertThat(search(null, null, null, new BigDecimal("100"), null)).hasSize(1);
-        assertThat(search(null, null, null, null, new BigDecimal("80"))).hasSize(1);
-        assertThat(search(null, null, null, new BigDecimal("50"), new BigDecimal("200"))).hasSize(2);
+        assertThat(search(null, null, new BigDecimal("100"), null)).hasSize(1);
+        assertThat(search(null, null, null, new BigDecimal("80"))).hasSize(1);
+        assertThat(search(null, null, new BigDecimal("50"), new BigDecimal("200"))).hasSize(2);
     }
 
     /** La casse ne doit pas empecher de trouver. */
     @Test
     void filtersShouldIgnoreCase() {
-        assertThat(search("homme", "m", "noir", null, null)).hasSize(1);
+        assertThat(search("homme", "m", null, null)).hasSize(1);
     }
 
     @Test
     void facetsShouldRunOnPostgres() {
         assertThat(productRepository.findDistinctCategories(store)).containsExactly("Femme", "Homme");
         assertThat(productRepository.findDistinctSizes(store)).containsExactly("L", "M", "S");
-        assertThat(productRepository.findDistinctColorNames(store)).containsExactly("Ecru", "Noir");
         assertThat(productRepository.findMinPrice(store)).isEqualByComparingTo("60.00");
         assertThat(productRepository.findMaxPrice(store)).isEqualByComparingTo("120.00");
     }
 
-    private List<Product> search(String category, String size, String color,
+    private List<Product> search(String category, String size,
                                  BigDecimal minPrice, BigDecimal maxPrice) {
         return productRepository
-                .search(store, category, null, null, size, color, minPrice, maxPrice, FIRST_PAGE)
+                .search(store, category, null, null, size, minPrice, maxPrice, FIRST_PAGE)
                 .getContent();
     }
 

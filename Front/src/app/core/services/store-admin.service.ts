@@ -29,6 +29,17 @@ export class StoreAdminService {
     return firstValueFrom(this.http.put<OwnedStore>(this.storeUrl, input));
   }
 
+  /** Dépose un visuel et renvoie son URL. Le stockage est déjà cloisonné par boutique. */
+  uploadImage(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return firstValueFrom(this.http.post<{ url: string }>(`${this.storeUrl}/images`, formData));
+  }
+
+  deleteImage(url: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.storeUrl}/images`, { params: { url } }));
+  }
+
   listAllStores(): Promise<StoreSummary[]> {
     return firstValueFrom(this.http.get<StoreSummary[]>(this.platformUrl));
   }

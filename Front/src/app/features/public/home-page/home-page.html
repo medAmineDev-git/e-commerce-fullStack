@@ -198,25 +198,6 @@
         </fieldset>
       }
 
-      @if (catalogStore.availableColors().length) {
-        <fieldset class="group">
-          <legend class="u-label">Couleur</legend>
-          <div class="option-row">
-            @for (color of catalogStore.availableColors(); track color) {
-              <button
-                type="button"
-                class="option"
-                [class.selected]="catalogStore.selectedColor() === color"
-                [attr.aria-pressed]="catalogStore.selectedColor() === color"
-                (click)="setColor(color)"
-              >
-                {{ color }}
-              </button>
-            }
-          </div>
-        </fieldset>
-      }
-
       @if (catalogStore.availableSizes().length) {
         <fieldset class="group">
           <legend class="u-label">Taille</legend>

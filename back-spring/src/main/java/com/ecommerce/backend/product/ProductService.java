@@ -52,7 +52,6 @@ public class ProductService {
         return new ProductFacetsResponse(
                 productRepository.findDistinctCategories(store),
                 productRepository.findDistinctSizes(store),
-                productRepository.findDistinctColorNames(store),
                 productRepository.findMinPrice(store),
                 productRepository.findMaxPrice(store)
         );
@@ -64,7 +63,6 @@ public class ProductService {
             String subcategory,
             String season,
             String size,
-            String color,
             BigDecimal minPrice,
             BigDecimal maxPrice,
             int page,
@@ -88,7 +86,6 @@ public class ProductService {
                 blankToNull(subcategory),
                 blankToNull(season),
                 blankToNull(size),
-                blankToNull(color),
                 minPrice,
                 maxPrice,
                 pageable

@@ -37,9 +37,9 @@ class ProductRepositoryTest {
         atelier = store("Atelier Test", "atelier-test");
     }
 
-    private Page<Product> search(Store store, String category, String size, String color,
+    private Page<Product> search(Store store, String category, String size,
                                  BigDecimal minPrice, BigDecimal maxPrice, PageRequest page) {
-        return productRepository.search(store, category, null, null, size, color, minPrice, maxPrice, page);
+        return productRepository.search(store, category, null, null, size, minPrice, maxPrice, page);
     }
 
     @Test
@@ -48,7 +48,7 @@ class ProductRepositoryTest {
         productRepository.save(product(nova, "Denim Jacket", "Homme", "74.50"));
         productRepository.save(product(nova, "Cap Basic", "Accessoires", "19.00"));
 
-        Page<Product> result = search(nova, "Homme", null, null, null, null, FIRST_PAGE);
+        Page<Product> result = search(nova, "Homme", null, null, null, FIRST_PAGE);
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().getFirst().getName()).isEqualTo("Denim Jacket");
@@ -60,7 +60,7 @@ class ProductRepositoryTest {
         productRepository.save(product(nova, "Item A", "Femme", "10.00"));
         productRepository.save(product(nova, "Item B", "Sneakers", "20.00"));
 
-        Page<Product> page = search(nova, null, null, null, null, null,
+        Page<Product> page = search(nova, null, null, null, null,
                 PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "price")));
 
         assertThat(page.getTotalElements()).isEqualTo(3);
@@ -75,7 +75,7 @@ class ProductRepositoryTest {
         productRepository.save(product(nova, "Denim Jacket", "Homme", "74.50"));
         productRepository.save(product(atelier, "Denim Jacket", "Homme", "79.50"));
 
-        Page<Product> result = search(nova, "Homme", null, null, null, null, FIRST_PAGE);
+        Page<Product> result = search(nova, "Homme", null, null, null, FIRST_PAGE);
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().getFirst().getStore().getSlug()).isEqualTo("nova-test");
@@ -87,12 +87,12 @@ class ProductRepositoryTest {
         productRepository.save(product(nova, "Milieu", "Homme", "75.00"));
         productRepository.save(product(nova, "Haut", "Homme", "249.00"));
 
-        assertThat(search(nova, null, null, null, new BigDecimal("50"), new BigDecimal("100"), FIRST_PAGE))
+        assertThat(search(nova, null, null, new BigDecimal("50"), new BigDecimal("100"), FIRST_PAGE))
                 .extracting(Product::getName)
                 .containsExactly("Milieu");
 
         // Une seule borne suffit : l'autre reste ouverte.
-        assertThat(search(nova, null, null, null, new BigDecimal("50"), null, FIRST_PAGE))
+        assertThat(search(nova, null, null, new BigDecimal("50"), null, FIRST_PAGE))
                 .hasSize(2);
     }
 
@@ -106,24 +106,9 @@ class ProductRepositoryTest {
         large.setSizes(List.of("XL"));
         productRepository.save(large);
 
-        assertThat(search(nova, null, "M", null, null, null, FIRST_PAGE))
+        assertThat(search(nova, null, "M", null, null, FIRST_PAGE))
                 .extracting(Product::getName)
                 .containsExactly("Tee S");
-    }
-
-    @Test
-    void shouldFilterByColour() {
-        Product black = product(nova, "Veste noire", "Homme", "120.00");
-        black.setColors(List.of(new ProductColor("Noir", "#000000")));
-        productRepository.save(black);
-
-        Product beige = product(nova, "Veste beige", "Homme", "120.00");
-        beige.setColors(List.of(new ProductColor("Beige", "#d8cbb8")));
-        productRepository.save(beige);
-
-        assertThat(search(nova, null, null, "Noir", null, null, FIRST_PAGE))
-                .extracting(Product::getName)
-                .containsExactly("Veste noire");
     }
 
     /** Un produit a plusieurs tailles ne doit pas remonter plusieurs fois. */
@@ -134,7 +119,7 @@ class ProductRepositoryTest {
         product.setColors(List.of(new ProductColor("Noir", "#000000"), new ProductColor("Ecru", "#f2ece1")));
         productRepository.save(product);
 
-        assertThat(search(nova, null, null, null, null, null, FIRST_PAGE)).hasSize(1);
+        assertThat(search(nova, null, null, null, null, FIRST_PAGE)).hasSize(1);
     }
 
     @Test
@@ -155,7 +140,6 @@ class ProductRepositoryTest {
 
         assertThat(productRepository.findDistinctCategories(nova)).containsExactly("Femme", "Homme");
         assertThat(productRepository.findDistinctSizes(nova)).containsExactly("M", "S");
-        assertThat(productRepository.findDistinctColorNames(nova)).containsExactly("Noir");
         assertThat(productRepository.findMinPrice(nova)).isEqualByComparingTo("80.00");
         assertThat(productRepository.findMaxPrice(nova)).isEqualByComparingTo("120.00");
     }

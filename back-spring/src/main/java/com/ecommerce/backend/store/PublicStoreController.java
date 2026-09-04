@@ -83,7 +83,6 @@ public class PublicStoreController {
             @RequestParam(name = "subcategory", required = false) String subcategory,
             @RequestParam(name = "season", required = false) String season,
             @RequestParam(name = "productSize", required = false) String productSize,
-            @RequestParam(name = "color", required = false) String color,
             @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
             @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
             @RequestParam(name = "page", defaultValue = "0") int page,
@@ -93,7 +92,7 @@ public class PublicStoreController {
     ) {
         Store store = storeService.getStoreEntityBySlug(slug);
         return productService.searchProducts(
-                store, category, subcategory, season, productSize, color,
+                store, category, subcategory, season, productSize,
                 minPrice, maxPrice, page, size, sortBy, sortDirection);
     }
 

@@ -16,6 +16,7 @@ type BackendProduct = {
   price: number;
   stockQuantity: number;
   compareAtPrice?: number | null;
+  sku?: string;
   imageUrls?: string[];
   sizes?: string[];
   seasons?: string[];
@@ -41,7 +42,6 @@ export type CatalogSortField = 'id' | 'name' | 'price' | 'stockQuantity';
 export type CatalogFacets = {
   categories: string[];
   sizes: string[];
-  colors: string[];
   minPrice: number | null;
   maxPrice: number | null;
 };
@@ -51,7 +51,6 @@ export type PublicCatalogPageQuery = {
   subcategory: string;
   season: string;
   productSize: string;
-  color: string;
   minPrice: number | null;
   maxPrice: number | null;
   page: number;
@@ -131,7 +130,6 @@ export class PublicCatalogService {
       ['subcategory', query.subcategory],
       ['season', query.season],
       ['productSize', query.productSize],
-      ['color', query.color],
       ['minPrice', query.minPrice],
       ['maxPrice', query.maxPrice],
     ];
@@ -186,6 +184,7 @@ export class PublicCatalogService {
       category: product.category,
       subcategory: product.subcategory,
       seasons: product.seasons ?? [],
+      sku: product.sku || undefined,
       price: product.price,
       originalPrice: product.compareAtPrice ?? undefined,
       rating: 4.5,

@@ -166,7 +166,7 @@ class ProductServiceTest {
         Page<Product> page = new PageImpl<>(List.of(first, second), PageRequest.of(0, 2), 2);
 
         when(productRepository.search(
-                store, "Sneakers", null, null, "M", "Noir",
+                store, "Sneakers", null, null, "M",
                 new BigDecimal("20"), new BigDecimal("200"),
                 PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "price"))
         )).thenReturn(page);
@@ -174,7 +174,7 @@ class ProductServiceTest {
         when(productMapper.toResponse(second)).thenReturn(response(12L, "Sneaker Pro"));
 
         ProductPageResponse result = productService.searchProducts(
-                store, "Sneakers", "", "", "M", "Noir",
+                store, "Sneakers", "", "", "M",
                 new BigDecimal("20"), new BigDecimal("200"), 0, 2, "price", "asc");
 
         assertEquals(2, result.items().size());
@@ -191,13 +191,13 @@ class ProductServiceTest {
         Page<Product> page = new PageImpl<>(List.of(only), PageRequest.of(0, 1), 1);
 
         when(productRepository.search(
-                store, null, null, null, null, null, null, null,
+                store, null, null, null, null, null, null,
                 PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))))
                 .thenReturn(page);
         when(productMapper.toResponse(only)).thenReturn(response(2L, "Item"));
 
         ProductPageResponse result = productService.searchProducts(
-                store, "", "  ", "", "", "", null, null, 0, 1, "badField", "invalid");
+                store, "", "  ", "", "", null, null, 0, 1, "badField", "invalid");
 
         assertEquals(1, result.items().size());
         assertEquals("id", result.sortBy());

@@ -202,3 +202,111 @@ legend {
   color: var(--ink-soft);
   font-style: italic;
 }
+
+/* ---------------------------------------------------------- téléversement */
+
+.upload-row {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+/* Le cadre garde sa place même vide : la mise en page ne saute pas
+   au moment où l'image arrive. */
+.upload-preview {
+  border: 1px dashed var(--line-strong, #c2cecc);
+  border-radius: 4px;
+  background: #f4f6f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.upload-preview--logo {
+  height: 6rem;
+
+  img {
+    object-fit: contain;
+    padding: 0.5rem;
+  }
+}
+
+.upload-preview--banner {
+  aspect-ratio: 21 / 9;
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.upload-placeholder {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.upload-button {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong, #c2cecc);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--ink, #16191c);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--ink, #16191c);
+  }
+
+  /* Le champ natif est masqué mais reste focalisable au clavier. */
+  input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.upload-remove {
+  font: inherit;
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--danger);
+  }
+}

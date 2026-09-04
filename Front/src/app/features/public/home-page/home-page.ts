@@ -75,7 +75,6 @@ export class HomePage {
           subcategory: params.get('subcategory') ?? '',
           season: params.get('season') ?? '',
           productSize: params.get('productSize') ?? '',
-          color: params.get('color') ?? '',
           minPrice: this.parseNumber(params.get('minPrice')),
           maxPrice: this.parseNumber(params.get('maxPrice')),
           sortBy: this.allowedSortBy.includes(sortByRaw as CatalogSortField)
@@ -131,11 +130,6 @@ export class HomePage {
     this.syncUrl({ productSize: this.catalogStore.selectedSize(), page: 1 });
   }
 
-  setColor(value: string): void {
-    this.catalogStore.setColor(value);
-    this.syncUrl({ color: this.catalogStore.selectedColor(), page: 1 });
-  }
-
   applyPriceRange(): void {
     const min = this.draftMinPrice();
     const max = this.draftMaxPrice();
@@ -171,7 +165,6 @@ export class HomePage {
       subcategory: '',
       season: '',
       productSize: '',
-      color: '',
       minPrice: null,
       maxPrice: null,
       sortBy: 'id',

@@ -34,6 +34,25 @@ export class ProductDetailPage {
   readonly selectedSize = signal<ProductSizeOption | null>(null);
   readonly addedToCart = signal(false);
   readonly relatedProducts = signal<PublicProduct[]>([]);
+
+  /** Remise affichee en pourcentage, calculee sur le prix barre. */
+  readonly discountPercent = computed(() => {
+    const product = this.product();
+    if (!product?.originalPrice || product.originalPrice <= product.price) {
+      return null;
+    }
+    return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  });
+
+  /**
+   * Trois etats plutot qu'un nombre brut : le client a besoin de savoir s'il
+   * doit se depecher, pas de connaitre l'inventaire exact.
+   */
+  readonly stockState = computed<'out' | 'low' | 'ok'>(() => {
+    const stock = this.product()?.stockQuantity ?? 0;
+    if (stock <= 0) return 'out';
+    return stock <= 3 ? 'low' : 'ok';
+  });
   readonly fallbackImage =
     'https://placehold.co/900x1200/f4ede4/5d4c3c?text=Image+Produit';
   readonly unitPrice = computed(() => this.product()?.price ?? 0);

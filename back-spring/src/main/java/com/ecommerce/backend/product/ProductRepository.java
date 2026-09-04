@@ -27,13 +27,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      *
      * Les trois requetes precedentes se distinguaient par les seuls criteres
      * qu'elles acceptaient, ce qui obligeait le service a choisir laquelle
-     * appeler. Ajouter le prix, la couleur et la taille aurait multiplie les
-     * variantes ; un critere absent vaut ici NULL et ne filtre rien.
+     * appeler. Un critere absent vaut ici NULL et ne filtre rien.
      *
-     * Les jointures sur les collections sont laterales : sans DISTINCT, un
-     * produit a trois couleurs remonterait trois fois.
-     */
-    /*
+     * DISTINCT est indispensable : sans lui, un produit a trois tailles
+     * remonterait trois fois a cause des jointures sur les collections.
+     *
      * Les parametres passes a UPPER sont explicitement types.
      *
      * Sans le CAST, PostgreSQL ne peut pas deviner le type d'un parametre NULL
@@ -45,13 +43,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         SELECT DISTINCT p FROM Product p
         LEFT JOIN p.seasons season
         LEFT JOIN p.sizes size
-        LEFT JOIN p.colors color
         WHERE p.store = :store
           AND (CAST(:category AS String) IS NULL OR UPPER(p.category) = UPPER(CAST(:category AS String)))
           AND (CAST(:subcategory AS String) IS NULL OR UPPER(p.subcategory) = UPPER(CAST(:subcategory AS String)))
           AND (CAST(:season AS String) IS NULL OR UPPER(season) = UPPER(CAST(:season AS String)))
           AND (CAST(:size AS String) IS NULL OR UPPER(size) = UPPER(CAST(:size AS String)))
-          AND (CAST(:color AS String) IS NULL OR UPPER(color.name) = UPPER(CAST(:color AS String)))
           AND (CAST(:minPrice AS BigDecimal) IS NULL OR p.price >= :minPrice)
           AND (CAST(:maxPrice AS BigDecimal) IS NULL OR p.price <= :maxPrice)
     """)
@@ -61,7 +57,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         @Param("subcategory") String subcategory,
         @Param("season") String season,
         @Param("size") String size,
-        @Param("color") String color,
         @Param("minPrice") BigDecimal minPrice,
         @Param("maxPrice") BigDecimal maxPrice,
         Pageable pageable
@@ -78,9 +73,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT DISTINCT size FROM Product p JOIN p.sizes size WHERE p.store = :store ORDER BY size")
     List<String> findDistinctSizes(@Param("store") Store store);
-
-    @Query("SELECT DISTINCT color.name FROM Product p JOIN p.colors color WHERE p.store = :store ORDER BY color.name")
-    List<String> findDistinctColorNames(@Param("store") Store store);
 
     @Query("SELECT MIN(p.price) FROM Product p WHERE p.store = :store")
     BigDecimal findMinPrice(@Param("store") Store store);
