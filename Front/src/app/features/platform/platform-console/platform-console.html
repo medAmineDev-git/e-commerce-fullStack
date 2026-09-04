@@ -3,7 +3,10 @@
     <p class="eyebrow">Plateforme</p>
     <h1>Boutiques</h1>
   </div>
-  <button type="button" class="ghost" (click)="logout()">Se déconnecter</button>
+  <div class="header-right">
+    <span class="who">{{ currentUsername() }}</span>
+    <button type="button" class="ghost" (click)="logout()">Se déconnecter</button>
+  </div>
 </header>
 
 <main class="console-body">
@@ -32,10 +35,20 @@
         </thead>
         <tbody>
           @for (store of stores(); track store.id) {
-            <tr [class.inactive]="!store.active">
-              <td class="store-name">{{ store.name }}</td>
+            <tr [class.inactive]="!store.active" [class.expanded]="openDetailId() === store.id">
+              <td class="store-name">
+                <button type="button" class="name-toggle" (click)="toggleDetail(store)">
+                  <span class="caret" [class.open]="openDetailId() === store.id" aria-hidden="true">›</span>
+                  {{ store.name }}
+                </button>
+              </td>
               <td class="mono">/boutique/{{ store.slug }}</td>
-              <td>{{ store.ownerUsername ?? '—' }}</td>
+              <td>
+                {{ store.ownerUsername ?? '—' }}
+                @if (isOwnStore(store)) {
+                  <span class="you">vous</span>
+                }
+              </td>
               <td>{{ store.createdAt | date: 'dd/MM/yyyy' }}</td>
               <td>
                 @if (editingDomainFor() === store.id) {
@@ -65,16 +78,111 @@
                 <button type="button" class="link" (click)="toggleActive(store)">
                   {{ store.active ? 'Désactiver' : 'Réactiver' }}
                 </button>
+                @if (!isOwnStore(store)) {
+                  <button type="button" class="link danger" (click)="startDelete(store)">Supprimer</button>
+                }
               </td>
             </tr>
+
+            <!-- Fiche détaillée, chargée seulement à l'ouverture -->
+            @if (openDetailId() === store.id) {
+              <tr class="detail-row">
+                <td colspan="7">
+                  @if (detailLoading()) {
+                    <p class="muted">Chargement de la fiche…</p>
+                  } @else if (detail(); as d) {
+                    <div class="detail">
+                      <section class="detail-block">
+                        <h2 class="detail-title">Propriétaire</h2>
+                        <dl>
+                          <div><dt>Compte</dt><dd>{{ d.ownerUsername ?? '—' }}</dd></div>
+                          <div><dt>E-mail</dt><dd>{{ d.ownerEmail ?? '—' }}</dd></div>
+                          <div><dt>Rôle</dt><dd class="mono">{{ d.ownerRole ?? '—' }}</dd></div>
+                        </dl>
+                      </section>
+
+                      <section class="detail-block">
+                        <h2 class="detail-title">Contenu</h2>
+                        <dl>
+                          <div><dt>Produits</dt><dd>{{ d.productCount | number }}</dd></div>
+                          <div><dt>Catégories</dt><dd>{{ d.categoryCount | number }}</dd></div>
+                          <div><dt>Commandes</dt><dd>{{ d.orderCount | number }}</dd></div>
+                          <div><dt>Visuels</dt><dd>{{ formatBytes(d.storageUsedBytes) }}</dd></div>
+                        </dl>
+                      </section>
+
+                      <section class="detail-block">
+                        <h2 class="detail-title">Coordonnées publiques</h2>
+                        <dl>
+                          <div><dt>Téléphone</dt><dd>{{ d.phone ?? '—' }}</dd></div>
+                          <div><dt>E-mail</dt><dd>{{ d.email ?? '—' }}</dd></div>
+                          <div><dt>Adresse</dt><dd>{{ d.address ?? '—' }}</dd></div>
+                          <div><dt>Modifiée le</dt><dd>{{ d.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+                        </dl>
+                      </section>
+
+                      @if (d.description) {
+                        <section class="detail-block wide">
+                          <h2 class="detail-title">Description</h2>
+                          <p class="detail-text">{{ d.description }}</p>
+                        </section>
+                      }
+
+                      <a class="visit" [href]="'/boutique/' + d.slug" target="_blank" rel="noopener">
+                        Ouvrir la vitrine
+                      </a>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+
+            <!-- Suppression : confirmation par saisie du slug -->
+            @if (deletingId() === store.id) {
+              <tr class="delete-row">
+                <td colspan="7">
+                  <div class="delete-box">
+                    <h2 class="delete-title">Supprimer « {{ store.name }} » définitivement</h2>
+                    <p class="delete-text">
+                      Cette action efface la boutique, ses produits, ses catégories,
+                      <strong>ses commandes</strong>, ses visuels et le compte
+                      <strong>{{ store.ownerUsername }}</strong>. Elle est irréversible.
+                      Pour fermer une boutique sans perdre son historique, préférez
+                      <em>Désactiver</em>.
+                    </p>
+                    <label class="delete-confirm">
+                      <span>Tapez <code>{{ store.slug }}</code> pour confirmer</span>
+                      <input
+                        type="text"
+                        name="confirmation"
+                        autocomplete="off"
+                        [ngModel]="deleteConfirmation()"
+                        (ngModelChange)="deleteConfirmation.set($event)"
+                      />
+                    </label>
+                    <div class="delete-actions">
+                      <button
+                        type="button"
+                        class="danger-button"
+                        [disabled]="!canConfirmDelete(store)"
+                        (click)="confirmDelete(store)"
+                      >
+                        {{ deleting() ? 'Suppression…' : 'Supprimer définitivement' }}
+                      </button>
+                      <button type="button" class="link muted-link" (click)="cancelDelete()">Annuler</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
     </div>
 
     <p class="footnote">
-      Désactiver une boutique ferme sa vitrine et empêche son propriétaire de se connecter.
-      Les commandes déjà passées sont conservées.
+      Désactiver une boutique ferme sa vitrine et empêche son propriétaire de se
+      connecter, en conservant tout. Supprimer efface tout, sans retour possible.
     </p>
   }
 </main>

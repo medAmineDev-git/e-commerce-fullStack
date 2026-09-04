@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -89,6 +90,30 @@ public class ProductImageStorageService {
             return Files.deleteIfExists(target);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to delete product image", exception);
+        }
+    }
+
+    /**
+     * Efface tout le dossier d'une boutique. Utilise a sa suppression.
+     * Une erreur d'ecriture ne doit pas faire echouer la suppression en base,
+     * deja validee : elle est signalee, pas propagee.
+     */
+    public void deleteAll(Store store) {
+        Path storeDirectory = directoryFor(store);
+        if (!Files.isDirectory(storeDirectory)) {
+            return;
+        }
+
+        try (Stream<Path> files = Files.walk(storeDirectory)) {
+            files.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException ignored) {
+                    // Un fichier verrouille ne doit pas interrompre le nettoyage.
+                }
+            });
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to clear store images", exception);
         }
     }
 

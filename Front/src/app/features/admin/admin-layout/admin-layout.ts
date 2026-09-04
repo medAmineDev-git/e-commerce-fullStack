@@ -26,6 +26,9 @@ export class AdminLayout {
 
   readonly username = this.authService.username;
 
+  /** Un exploitant qui tient aussi une boutique doit pouvoir revenir a la console. */
+  readonly isPlatformOperator = this.authService.isPlatformOperator;
+
   /** Lien vers sa propre vitrine. Le slug vient de la session, pas d'une devinette. */
   readonly storefrontLink = computed(() => {
     const slug = this.authService.storeSlug();

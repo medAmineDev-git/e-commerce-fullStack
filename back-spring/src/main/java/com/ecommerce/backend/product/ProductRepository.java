@@ -22,6 +22,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndStore(Long id, Store store);
 
+    long countByStore(Store store);
+
     /**
      * Recherche unique portant tous les criteres.
      *

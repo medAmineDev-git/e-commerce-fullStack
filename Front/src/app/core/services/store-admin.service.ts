@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { OwnedStore, StoreSettingsInput, StoreSummary } from '../models/store.model';
+import { OwnedStore, StoreDetail, StoreSettingsInput, StoreSummary } from '../models/store.model';
 
 export type SlugCheck = { slug: string; available: boolean };
 
@@ -42,6 +42,15 @@ export class StoreAdminService {
 
   listAllStores(): Promise<StoreSummary[]> {
     return firstValueFrom(this.http.get<StoreSummary[]>(this.platformUrl));
+  }
+
+  getStoreDetail(id: number): Promise<StoreDetail> {
+    return firstValueFrom(this.http.get<StoreDetail>(`${this.platformUrl}/${id}`));
+  }
+
+  /** Suppression definitive : la boutique, son contenu et son compte proprietaire. */
+  deleteStore(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.platformUrl}/${id}`));
   }
 
   toggleStoreActive(id: number): Promise<StoreSummary> {

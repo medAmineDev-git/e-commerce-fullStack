@@ -1,9 +1,12 @@
 package com.ecommerce.backend.store;
 
+import com.ecommerce.backend.store.dto.StoreDetailResponse;
 import com.ecommerce.backend.store.dto.StoreDomainRequest;
 import com.ecommerce.backend.store.dto.StoreSummaryResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,15 +26,38 @@ public class PlatformAdminController {
 
     private final StoreService storeService;
     private final StoreMapper storeMapper;
+    private final PlatformStoreService platformStoreService;
 
-    public PlatformAdminController(StoreService storeService, StoreMapper storeMapper) {
+    public PlatformAdminController(
+            StoreService storeService,
+            StoreMapper storeMapper,
+            PlatformStoreService platformStoreService
+    ) {
         this.storeService = storeService;
         this.storeMapper = storeMapper;
+        this.platformStoreService = platformStoreService;
     }
 
     @GetMapping
     public List<StoreSummaryResponse> getAllStores() {
         return storeService.getAllStores();
+    }
+
+    /** Fiche complete : proprietaire, coordonnees, et ce que la boutique contient. */
+    @GetMapping("/{id}")
+    public StoreDetailResponse getStore(@PathVariable Long id) {
+        return platformStoreService.getDetail(id);
+    }
+
+    /**
+     * Supprime definitivement une boutique, son contenu et son compte
+     * proprietaire. Sans retour possible : preferer la desactivation quand le
+     * doute subsiste.
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteStore(@PathVariable Long id, Authentication authentication) {
+        platformStoreService.deleteStore(id, authentication.getName());
     }
 
     @PatchMapping("/{id}/toggle-active")

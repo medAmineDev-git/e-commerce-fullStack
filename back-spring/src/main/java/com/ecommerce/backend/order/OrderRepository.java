@@ -12,5 +12,9 @@ public interface OrderRepository extends JpaRepository<CustomerOrder, Long> {
 
     List<CustomerOrder> findAllByStore(Store store, Sort sort);
 
+    List<CustomerOrder> findAllByStore(Store store);
+
+    long countByStore(Store store);
+
     List<CustomerOrder> findByStoreAndPublisherRef(Store store, String publisherRef, Sort sort);
 }

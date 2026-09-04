@@ -41,3 +41,28 @@ export type StoreSummary = {
   ownerUsername: string | null;
   createdAt: string;
 };
+
+/** Fiche complete d'une boutique, vue par l'exploitant de la plateforme. */
+export type StoreDetail = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  domain: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  ownerUsername: string | null;
+  ownerEmail: string | null;
+  ownerRole: string | null;
+
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+
+  productCount: number;
+  categoryCount: number;
+  orderCount: number;
+  storageUsedBytes: number;
+};

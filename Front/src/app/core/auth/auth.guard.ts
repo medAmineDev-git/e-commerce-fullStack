@@ -15,8 +15,11 @@ export const storeOwnerGuard: CanActivateFn = (_, state) => {
     return true;
   }
 
+  // Rien n'interdit à un exploitant de la plateforme de tenir aussi une
+  // boutique, et le serveur l'autorise déjà. Le bloquer ici obligeait à
+  // maintenir deux comptes séparés sans raison.
   if (authService.isPlatformOperator()) {
-    return router.createUrlTree(['/plateforme']);
+    return authService.storeSlug() ? true : router.createUrlTree(['/plateforme']);
   }
 
   return router.createUrlTree(['/connexion'], { queryParams: { returnUrl: state.url } });
