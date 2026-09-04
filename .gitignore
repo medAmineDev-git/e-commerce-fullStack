@@ -20,3 +20,6 @@ back-spring/target/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Paquet de livraison, reconstruit a la demande
+deploy-package/
