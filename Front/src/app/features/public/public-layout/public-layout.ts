@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -23,6 +23,13 @@ export class PublicLayout {
   /** L'identité affichée vient de la boutique, jamais d'un nom écrit en dur. */
   readonly store = this.storeContext.store;
   readonly cartDrawerOpen = signal(false);
+  readonly currentYear = new Date().getFullYear();
+
+  /** La section Informations ne s'affiche que si le proprietaire l'a renseignee. */
+  readonly hasContactDetails = computed(() => {
+    const store = this.store();
+    return !!(store?.address || store?.phone || store?.email);
+  });
 
   constructor() {
     effect(() => {

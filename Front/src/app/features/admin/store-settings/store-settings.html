@@ -1,6 +1,6 @@
 <section class="settings">
   <header>
-    <h1>Ma boutique</h1>
+    <h1>Configuration</h1>
     @if (store(); as currentStore) {
       <p class="address">
         Vitrine publique :
@@ -22,50 +22,129 @@
     }
 
     <form (ngSubmit)="save()">
-      <label class="field">
-        <span class="label">Nom de la boutique</span>
-        <input type="text" name="name" required [ngModel]="name()" (ngModelChange)="name.set($event)" />
-      </label>
+      <fieldset>
+        <legend>Identité</legend>
 
-      <label class="field">
-        <span class="label">Description</span>
-        <textarea
-          name="description"
-          rows="3"
-          [ngModel]="description()"
-          (ngModelChange)="description.set($event)"
-        ></textarea>
-        <span class="hint">Affichée sur la page d'accueil de votre vitrine.</span>
-      </label>
-
-      <div class="field-row">
         <label class="field">
-          <span class="label">Téléphone</span>
-          <input type="tel" name="phone" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+          <span class="label">Nom de la boutique</span>
+          <input
+            type="text"
+            name="name"
+            required
+            placeholder="Atelier Rive Gauche"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+          />
         </label>
 
         <label class="field">
-          <span class="label">E-mail de contact</span>
-          <input type="email" name="email" [ngModel]="email()" (ngModelChange)="email.set($event)" />
+          <span class="label">Description</span>
+          <textarea
+            name="description"
+            rows="3"
+            placeholder="Prêt-à-porter féminin, sélection de créateurs français."
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+          ></textarea>
+          <span class="hint">Affichée en tête de votre vitrine et dans le pied de page.</span>
         </label>
-      </div>
+      </fieldset>
 
-      <label class="field">
-        <span class="label">Adresse</span>
-        <input type="text" name="address" [ngModel]="address()" (ngModelChange)="address.set($event)" />
-      </label>
+      <fieldset>
+        <legend>Informations</legend>
+        <p class="fieldset-hint">
+          Ce bloc apparaît dans le pied de page de votre vitrine. Chaque ligne laissée
+          vide n'est simplement pas affichée.
+        </p>
 
-      <div class="field-row">
         <label class="field">
-          <span class="label">URL du logo</span>
-          <input type="url" name="logoUrl" [ngModel]="logoUrl()" (ngModelChange)="logoUrl.set($event)" />
+          <span class="label">Adresse</span>
+          <input
+            type="text"
+            name="address"
+            placeholder="12 rue des Archives, 75004 Paris"
+            [ngModel]="address()"
+            (ngModelChange)="address.set($event)"
+          />
         </label>
 
-        <label class="field">
-          <span class="label">URL de la bannière</span>
-          <input type="url" name="bannerUrl" [ngModel]="bannerUrl()" (ngModelChange)="bannerUrl.set($event)" />
-        </label>
-      </div>
+        <div class="field-row">
+          <label class="field">
+            <span class="label">Téléphone</span>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="01 42 78 90 12"
+              [ngModel]="phone()"
+              (ngModelChange)="phone.set($event)"
+            />
+          </label>
+
+          <label class="field">
+            <span class="label">E-mail de contact</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="contact@atelier-rive-gauche.fr"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+            />
+          </label>
+        </div>
+
+        <!-- Aperçu du rendu : le propriétaire voit ce que verront ses clients
+             sans avoir à ouvrir sa vitrine dans un autre onglet. -->
+        <div class="preview">
+          <p class="preview-title">Aperçu dans le pied de page</p>
+          @if (hasInformation()) {
+            <dl>
+              @if (address().trim()) {
+                <div><dt>Adresse</dt><dd>{{ address() }}</dd></div>
+              }
+              @if (phone().trim()) {
+                <div><dt>Téléphone</dt><dd>{{ phone() }}</dd></div>
+              }
+              @if (email().trim()) {
+                <div><dt>E-mail</dt><dd>{{ email() }}</dd></div>
+              }
+            </dl>
+          } @else {
+            <p class="preview-empty">
+              Aucune information renseignée : la section n'apparaîtra pas sur votre vitrine.
+            </p>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Visuels</legend>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="label">URL du logo</span>
+            <input
+              type="url"
+              name="logoUrl"
+              placeholder="https://…/logo.png"
+              [ngModel]="logoUrl()"
+              (ngModelChange)="logoUrl.set($event)"
+            />
+            <span class="hint">Remplace le nom dans l'en-tête.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">URL de la bannière</span>
+            <input
+              type="url"
+              name="bannerUrl"
+              placeholder="https://…/banniere.jpg"
+              [ngModel]="bannerUrl()"
+              (ngModelChange)="bannerUrl.set($event)"
+            />
+            <span class="hint">Visuel de tête de la vitrine.</span>
+          </label>
+        </div>
+      </fieldset>
 
       <div class="actions">
         <button type="submit" class="submit" [disabled]="saving()">

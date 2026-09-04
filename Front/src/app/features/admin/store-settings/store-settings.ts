@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StoreAdminService } from '../../../core/services/store-admin.service';
 import { OwnedStore } from '../../../core/models/store.model';
@@ -26,6 +26,11 @@ export class StoreSettings {
   readonly address = signal('');
   readonly logoUrl = signal('');
   readonly bannerUrl = signal('');
+
+  /** La section Informations n'apparait sur la vitrine que si elle est remplie. */
+  readonly hasInformation = computed(
+    () => !!(this.address().trim() || this.phone().trim() || this.email().trim()),
+  );
 
   constructor() {
     void this.load();

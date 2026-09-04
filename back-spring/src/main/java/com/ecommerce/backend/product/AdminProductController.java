@@ -36,7 +36,6 @@ public class AdminProductController {
     @GetMapping("/page")
     public ProductPageResponse searchProducts(
             Authentication authentication,
-            @RequestParam(name = "q", defaultValue = "") String query,
             @RequestParam(name = "category", defaultValue = "") String category,
             @RequestParam(name = "subcategory", defaultValue = "") String subcategory,
             @RequestParam(name = "season", defaultValue = "") String season,
@@ -46,7 +45,9 @@ public class AdminProductController {
             @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDirection
     ) {
         Store store = storeContext.requireOwnedStore(authentication);
-        return productService.searchProducts(store, query, category, subcategory, season, page, size, sortBy, sortDirection);
+        return productService.searchProducts(
+                store, category, subcategory, season, null, null, null, null,
+                page, size, sortBy, sortDirection);
     }
 
     @GetMapping("/{id}")

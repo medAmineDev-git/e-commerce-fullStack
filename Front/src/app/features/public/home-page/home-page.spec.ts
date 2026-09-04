@@ -3,8 +3,8 @@ import localeFr from '@angular/common/locales/fr';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { CartStore } from '../../../core/stores/cart.store';
 import { StoreContextService } from '../../../core/services/store-context.service';
+import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
 import { HomePage } from './home-page';
 
@@ -14,34 +14,69 @@ describe('HomePage', () => {
   let router: Router;
   let navigateSpy: ReturnType<typeof vi.spyOn>;
 
-  const mockCatalogStore = {
-    products: signal([
-      {
-        id: 1,
-        slug: 'veste',
-        name: 'Veste',
-        shortDescription: 'desc',
-        longDescription: 'long',
-        category: 'Homme' as const,
-        price: 70,
-        rating: 4.8,
-        reviewsCount: 20,
-        stockQuantity: 10,
-        imageUrl: 'img',
-        gallery: ['img'],
-      },
-    ]),
-    loading: signal(false),
-    loadProducts: vi.fn().mockResolvedValue(undefined),
-    setCategory: vi.fn(),
+  const product = {
+    id: 1,
+    slug: 'veste',
+    name: 'Veste',
+    shortDescription: 'desc',
+    longDescription: 'long',
+    category: 'Homme' as const,
+    price: 70,
+    rating: 4.8,
+    reviewsCount: 20,
+    stockQuantity: 10,
+    imageUrl: 'img',
+    gallery: ['img'],
   };
 
-  const mockCartStore = {
-    addItem: vi.fn(),
+  const mockCatalogStore = {
+    products: signal([product]),
+    pagedProducts: signal([product]),
+    loading: signal(false),
+    error: signal(null),
+    totalFiltered: signal(1),
+    totalPages: signal(1),
+    currentPage: signal(1),
+    pageIndex: signal(0),
+    categories: signal(['Tous', 'Homme']),
+    subcategories: signal([]),
+    availableSizes: signal(['S', 'M']),
+    availableColors: signal(['Noir']),
+    priceBounds: signal({ min: 10, max: 200 }),
+    activeFilterCount: signal(0),
+    selectedCategory: signal('Tous'),
+    selectedSubcategory: signal(''),
+    selectedSeason: signal(''),
+    selectedSize: signal(''),
+    selectedColor: signal(''),
+    minPrice: signal(null),
+    maxPrice: signal(null),
+    sortBy: signal('id'),
+    sortDirection: signal('desc'),
+    applyQueryState: vi.fn().mockResolvedValue(undefined),
+    loadProducts: vi.fn().mockResolvedValue(undefined),
+    setCategory: vi.fn(),
+    setSubcategory: vi.fn(),
+    setSeason: vi.fn(),
+    setSize: vi.fn(),
+    setColor: vi.fn(),
+    setPriceRange: vi.fn(),
+    setSort: vi.fn(),
+    setPage: vi.fn(),
+    resetFilters: vi.fn(),
+  };
+
+  const mockCatalogService = {
+    getHomeConfiguration: vi.fn().mockResolvedValue({
+      title: 'Titre',
+      text: 'Texte',
+      featuredProductId: 1,
+    }),
   };
 
   beforeEach(async () => {
     registerLocaleData(localeFr);
+    vi.clearAllMocks();
 
     await TestBed.configureTestingModule({
       imports: [HomePage],
@@ -52,12 +87,23 @@ describe('HomePage', () => {
           provide: StoreContextService,
           useValue: {
             slug: () => 'nova',
-            store: () => ({ id: 1, name: 'NOVA', slug: 'nova', description: null, logoUrl: null, bannerUrl: null, phone: null, email: null, address: null, domain: null }),
+            store: () => ({
+              id: 1,
+              name: 'NOVA',
+              slug: 'nova',
+              description: null,
+              logoUrl: null,
+              bannerUrl: null,
+              phone: null,
+              email: null,
+              address: null,
+              domain: null,
+            }),
             link: (...segments: (string | number)[]) => ['/boutique', 'nova', ...segments],
           },
         },
         { provide: PublicCatalogStore, useValue: mockCatalogStore },
-        { provide: CartStore, useValue: mockCartStore },
+        { provide: PublicCatalogService, useValue: mockCatalogService },
       ],
     }).compileComponents();
 
@@ -73,16 +119,35 @@ describe('HomePage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load products on init', () => {
-    expect(mockCatalogStore.loadProducts).toHaveBeenCalled();
+  /** L'accueil porte desormais le catalogue : il applique l'etat de l'URL. */
+  it('should apply the query state from the url on init', () => {
+    expect(mockCatalogStore.applyQueryState).toHaveBeenCalled();
   });
 
-  it('should open category and navigate to shop', () => {
-    component.openCategory('Homme');
+  /**
+   * Filtrer par categorie ne quitte plus la page : la boutique tient sur
+   * l'accueil depuis la suppression de la page /shop.
+   */
+  it('should filter in place when a category is picked', () => {
+    component.setCategory('Homme');
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'shop'], {
-      queryParams: { category: 'Homme' },
-    });
+    expect(mockCatalogStore.setCategory).toHaveBeenCalledWith('Homme');
+    expect(navigateSpy).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ category: 'Homme' }),
+      }),
+    );
+  });
+
+  /** Les bornes inversees sont remises dans l'ordre plutot qu'ignorees. */
+  it('should reorder an inverted price range', () => {
+    component.draftMinPrice.set(200);
+    component.draftMaxPrice.set(50);
+
+    component.applyPriceRange();
+
+    expect(mockCatalogStore.setPriceRange).toHaveBeenCalledWith(50, 200);
   });
 
   /**
@@ -90,7 +155,7 @@ describe('HomePage', () => {
    * un vetement se choisit avec sa taille et sa couleur.
    */
   it('should open the product sheet', () => {
-    component.openProduct(mockCatalogStore.products()[0]);
+    component.openProduct(product);
     expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'product', 1]);
   });
 });

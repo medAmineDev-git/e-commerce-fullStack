@@ -17,7 +17,6 @@
         [routerLinkActiveOptions]="{ exact: true }"
         >Accueil</a
       >
-      <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Boutique</a>
     </nav>
 
     <button type="button" class="cart-trigger" (click)="toggleCartDrawer()">
@@ -35,21 +34,54 @@
 </main>
 
 <footer class="shell-footer">
-  <div class="u-shell">
-    <p class="footer-name">{{ store()?.name }}</p>
-    <div class="footer-details">
-      @if (store()?.address) {
-        <span>{{ store()!.address }}</span>
+  <div class="footer-inner u-shell">
+    <section class="footer-brand">
+      <p class="footer-name">{{ store()?.name }}</p>
+      @if (store()?.description) {
+        <p class="footer-desc">{{ store()!.description }}</p>
       }
-      @if (store()?.phone) {
-        <a [href]="'tel:' + store()!.phone">{{ store()!.phone }}</a>
-      }
-      @if (store()?.email) {
-        <a [href]="'mailto:' + store()!.email">{{ store()!.email }}</a>
-      }
-    </div>
-    <p class="footer-note">Paiement à la livraison ou par virement.</p>
+    </section>
+
+    <!-- Section Informations : renseignee par le proprietaire depuis
+         Configuration. Chaque bloc disparait s'il n'est pas rempli, plutot
+         que d'afficher une etiquette suivie de rien. -->
+    @if (hasContactDetails()) {
+      <section class="footer-info" aria-labelledby="footer-info-title">
+        <h2 id="footer-info-title" class="u-label">Informations</h2>
+        <dl>
+          @if (store()?.address) {
+            <div>
+              <dt>Adresse</dt>
+              <dd>{{ store()!.address }}</dd>
+            </div>
+          }
+          @if (store()?.phone) {
+            <div>
+              <dt>Téléphone</dt>
+              <dd><a [href]="'tel:' + store()!.phone">{{ store()!.phone }}</a></dd>
+            </div>
+          }
+          @if (store()?.email) {
+            <div>
+              <dt>E-mail</dt>
+              <dd><a [href]="'mailto:' + store()!.email">{{ store()!.email }}</a></dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+
+    <section class="footer-info">
+      <h2 class="u-label">Commande</h2>
+      <ul class="footer-list">
+        <li>Paiement à la livraison ou par virement</li>
+        <li>Livraison en 48 à 72 heures</li>
+        <li>Retour possible sous 7 jours</li>
+      </ul>
+    </section>
   </div>
+
+  <p class="footer-legal u-shell">&copy; {{ currentYear }} {{ store()?.name }}</p>
 </footer>
 
 @if (cartDrawerOpen()) {
@@ -66,7 +98,7 @@
     @if (cartStore.isEmpty()) {
       <div class="drawer-empty">
         <p>Votre panier est vide.</p>
-        <a class="u-btn u-btn--outline" [routerLink]="storeContext.link('shop')" (click)="closeCartDrawer()">
+        <a class="u-btn u-btn--outline" [routerLink]="storeContext.link()" (click)="closeCartDrawer()">
           Parcourir la boutique
         </a>
       </div>
@@ -112,7 +144,6 @@
   >
     Accueil
   </a>
-  <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Boutique</a>
   <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">
     Panier
     @if (cartStore.totalItems() > 0) {

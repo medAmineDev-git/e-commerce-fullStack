@@ -9,7 +9,7 @@
 } @else if (error() || !product()) {
   <section class="state u-shell">
     <h1 class="u-display">{{ error() ?? 'Produit introuvable' }}</h1>
-    <a class="u-btn u-btn--outline" [routerLink]="storeContext.link('shop')">Retour à la boutique</a>
+    <a class="u-btn u-btn--outline" [routerLink]="storeContext.link()">Retour à la boutique</a>
   </section>
 } @else {
   <article class="product">
@@ -33,7 +33,7 @@
 
     <div class="detail u-shell">
       <nav class="crumbs" aria-label="Fil d'Ariane">
-        <a [routerLink]="storeContext.link('shop')">Boutique</a>
+        <a [routerLink]="storeContext.link()">Boutique</a>
         <span aria-hidden="true">/</span>
         <span>{{ product()!.category }}</span>
       </nav>

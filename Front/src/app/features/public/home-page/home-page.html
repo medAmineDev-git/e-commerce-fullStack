@@ -12,66 +12,281 @@
     @if (heroText()) {
       <p class="hero-text">{{ heroText() }}</p>
     }
-    <button type="button" class="u-btn u-btn--solid hero-cta" (click)="openCategory('')">
+    <button type="button" class="u-btn u-btn--solid hero-cta" (click)="scrollToCatalog()">
       Découvrir la collection
     </button>
   </div>
 </section>
 
-@if (categories().length) {
-  <nav class="categories u-shell" aria-label="Catégories">
-    @for (category of categories(); track category) {
-      <button type="button" class="category-chip" (click)="openCategory(category)">
-        {{ category }}
+<section id="catalogue" class="catalogue" aria-labelledby="catalogue-title">
+  <div class="u-shell">
+    <header class="catalogue-head">
+      <h2 id="catalogue-title" class="u-display">La collection</h2>
+      <p class="u-label">{{ catalogStore.totalFiltered() }} article(s)</p>
+    </header>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner u-shell">
+      <div class="chip-row" role="group" aria-label="Catégories">
+        @for (category of catalogStore.categories(); track category) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="catalogStore.selectedCategory() === category"
+            (click)="setCategory(category)"
+          >
+            {{ category }}
+          </button>
+        }
+      </div>
+
+      <button type="button" class="filter-toggle" (click)="toggleFilters()">
+        Filtrer
+        @if (catalogStore.activeFilterCount() > 0) {
+          <span class="filter-count">{{ catalogStore.activeFilterCount() }}</span>
+        }
       </button>
-    }
-  </nav>
-}
-
-<section class="arrivals u-shell" aria-labelledby="arrivals-title">
-  <header class="section-head">
-    <h2 id="arrivals-title" class="u-display">Nouveautés</h2>
-    <button type="button" class="u-btn u-btn--quiet" (click)="openCategory('')">Tout voir</button>
-  </header>
-
-  @if (catalogStore.loading()) {
-    <div class="u-product-grid" aria-busy="true">
-      @for (placeholder of [1, 2, 3, 4]; track placeholder) {
-        <div class="card-skeleton">
-          <div class="u-media"></div>
-          <span></span>
-          <span class="short"></span>
-        </div>
-      }
     </div>
-  } @else if (newArrivals().length === 0) {
-    <p class="empty">Cette boutique n'a pas encore publié d'article.</p>
-  } @else {
-    <div class="u-product-grid">
-      @for (product of newArrivals(); track product.id) {
-        <article class="card">
-          <button type="button" class="card-link" (click)="openProduct(product)">
-            <span class="u-media">
-              <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
-              @if (product.originalPrice) {
-                <span class="card-flag">Promo</span>
-              }
-            </span>
-            <span class="card-body">
-              <span class="u-label">{{ product.category }}</span>
-              <span class="card-name">{{ product.name }}</span>
-              <span class="card-price">
-                <span class="u-price">{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+  </div>
+
+  <div class="u-shell">
+    @if (catalogStore.loading()) {
+      <div class="u-product-grid" aria-busy="true">
+        @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {
+          <div class="card-skeleton">
+            <div class="u-media"></div>
+            <span></span>
+            <span class="short"></span>
+          </div>
+        }
+      </div>
+    } @else if (catalogStore.totalFiltered() === 0) {
+      <div class="empty">
+        @if (catalogStore.activeFilterCount() > 0 || catalogStore.selectedCategory() !== 'Tous') {
+          <p>Aucun article ne correspond à ces filtres.</p>
+          <button type="button" class="u-btn u-btn--outline" (click)="clearAll()">
+            Réinitialiser les filtres
+          </button>
+        } @else {
+          <p>Cette boutique n'a pas encore publié d'article.</p>
+        }
+      </div>
+    } @else {
+      <div class="u-product-grid">
+        @for (product of catalogStore.pagedProducts(); track product.id) {
+          <article class="card">
+            <button type="button" class="card-link" (click)="openProduct(product)">
+              <span class="u-media">
+                <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
                 @if (product.originalPrice) {
-                  <span class="u-price-was">
-                    {{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                  <span class="card-flag">Promo</span>
+                }
+              </span>
+
+              <span class="card-body">
+                <span class="u-label">{{ product.category }}</span>
+                <span class="card-name">{{ product.name }}</span>
+
+                <span class="card-price">
+                  <span class="u-price">{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+                  @if (product.originalPrice) {
+                    <span class="u-price-was">
+                      {{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                    </span>
+                  }
+                </span>
+
+                <!-- Tailles et couleurs disponibles : sur un vetement, ce sont
+                     les deux informations qui decident d'ouvrir la fiche. -->
+                @if ((product.colors?.length ?? 0) > 0) {
+                  <span class="card-swatches">
+                    @for (color of (product.colors ?? []).slice(0, 5); track color.name) {
+                      <span class="swatch" [style.background]="color.hex" [title]="color.name"></span>
+                    }
+                    @if ((product.colors?.length ?? 0) > 5) {
+                      <span class="swatch-more">+{{ (product.colors?.length ?? 0) - 5 }}</span>
+                    }
+                  </span>
+                }
+
+                @if ((product.sizes?.length ?? 0) > 0) {
+                  <span class="card-sizes">
+                    @for (size of product.sizes ?? []; track size) {
+                      <span class="size-tag">{{ size }}</span>
+                    }
                   </span>
                 }
               </span>
-            </span>
+            </button>
+          </article>
+        }
+      </div>
+
+      @if (catalogStore.totalPages() > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button
+            type="button"
+            class="u-btn u-btn--outline"
+            (click)="previousPage()"
+            [disabled]="catalogStore.pageIndex() === 0"
+          >
+            Précédent
           </button>
-        </article>
+          <span class="pager-state">
+            {{ catalogStore.currentPage() }} / {{ catalogStore.totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="u-btn u-btn--outline"
+            (click)="nextPage()"
+            [disabled]="catalogStore.currentPage() >= catalogStore.totalPages()"
+          >
+            Suivant
+          </button>
+        </nav>
       }
-    </div>
-  }
+    }
+  </div>
 </section>
+
+@if (filtersOpen()) {
+  <div class="sheet-backdrop" (click)="toggleFilters()"></div>
+  <section class="filter-sheet" role="dialog" aria-label="Filtres">
+    <header class="sheet-head">
+      <p class="u-label">Filtrer et trier</p>
+      <button type="button" class="sheet-close" (click)="toggleFilters()">
+        <span class="u-sr-only">Fermer</span>
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </header>
+
+    <div class="sheet-body">
+      @if (catalogStore.priceBounds().min !== null) {
+        <fieldset class="group">
+          <legend class="u-label">Prix</legend>
+          <div class="price-range">
+            <label>
+              <span class="u-sr-only">Prix minimum</span>
+              <input
+                type="number"
+                inputmode="decimal"
+                [attr.min]="catalogStore.priceBounds().min"
+                [attr.max]="catalogStore.priceBounds().max"
+                [placeholder]="catalogStore.priceBounds().min"
+                [value]="draftMinPrice() ?? ''"
+                (input)="draftMinPrice.set($any($event.target).valueAsNumber || null)"
+              />
+            </label>
+            <span class="range-dash" aria-hidden="true">—</span>
+            <label>
+              <span class="u-sr-only">Prix maximum</span>
+              <input
+                type="number"
+                inputmode="decimal"
+                [attr.min]="catalogStore.priceBounds().min"
+                [attr.max]="catalogStore.priceBounds().max"
+                [placeholder]="catalogStore.priceBounds().max"
+                [value]="draftMaxPrice() ?? ''"
+                (input)="draftMaxPrice.set($any($event.target).valueAsNumber || null)"
+              />
+            </label>
+            <button type="button" class="u-btn u-btn--outline range-apply" (click)="applyPriceRange()">
+              OK
+            </button>
+          </div>
+        </fieldset>
+      }
+
+      @if (catalogStore.availableColors().length) {
+        <fieldset class="group">
+          <legend class="u-label">Couleur</legend>
+          <div class="option-row">
+            @for (color of catalogStore.availableColors(); track color) {
+              <button
+                type="button"
+                class="option"
+                [class.selected]="catalogStore.selectedColor() === color"
+                [attr.aria-pressed]="catalogStore.selectedColor() === color"
+                (click)="setColor(color)"
+              >
+                {{ color }}
+              </button>
+            }
+          </div>
+        </fieldset>
+      }
+
+      @if (catalogStore.availableSizes().length) {
+        <fieldset class="group">
+          <legend class="u-label">Taille</legend>
+          <div class="option-row">
+            @for (size of catalogStore.availableSizes(); track size) {
+              <button
+                type="button"
+                class="option option--square"
+                [class.selected]="catalogStore.selectedSize() === size"
+                [attr.aria-pressed]="catalogStore.selectedSize() === size"
+                (click)="setSize(size)"
+              >
+                {{ size }}
+              </button>
+            }
+          </div>
+        </fieldset>
+      }
+
+      @if (catalogStore.subcategories().length) {
+        <label class="group">
+          <span class="u-label">Sous-catégorie</span>
+          <select
+            [value]="catalogStore.selectedSubcategory()"
+            (change)="setSubcategory($any($event.target).value)"
+          >
+            <option value="">Toutes</option>
+            @for (subcategory of catalogStore.subcategories(); track subcategory) {
+              <option [value]="subcategory">{{ subcategory }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <label class="group">
+        <span class="u-label">Saison</span>
+        <select [value]="catalogStore.selectedSeason()" (change)="setSeason($any($event.target).value)">
+          <option value="">Toutes</option>
+          <option value="Printemps">Printemps</option>
+          <option value="Été">Été</option>
+          <option value="Automne">Automne</option>
+          <option value="Hiver">Hiver</option>
+        </select>
+      </label>
+
+      <fieldset class="group">
+        <legend class="u-label">Trier par</legend>
+        <div class="option-row">
+          @for (option of sortOptions; track option.value) {
+            <button
+              type="button"
+              class="option"
+              [class.selected]="catalogStore.sortBy() === option.value"
+              (click)="setSort(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+        <button type="button" class="u-btn u-btn--quiet direction" (click)="toggleSortDirection()">
+          Ordre : {{ catalogStore.sortDirection() === 'asc' ? 'croissant' : 'décroissant' }}
+        </button>
+      </fieldset>
+    </div>
+
+    <footer class="sheet-foot">
+      <button type="button" class="u-btn u-btn--quiet" (click)="clearAll()">Tout effacer</button>
+      <button type="button" class="u-btn u-btn--solid" (click)="toggleFilters()">
+        Voir {{ catalogStore.totalFiltered() }} article(s)
+      </button>
+    </footer>
+  </section>
+}

@@ -37,11 +37,23 @@ type BackendProductPageResponse = {
 
 export type CatalogSortField = 'id' | 'name' | 'price' | 'stockQuantity';
 
+/** Facettes reellement presentes dans le catalogue de la boutique. */
+export type CatalogFacets = {
+  categories: string[];
+  sizes: string[];
+  colors: string[];
+  minPrice: number | null;
+  maxPrice: number | null;
+};
+
 export type PublicCatalogPageQuery = {
-  query: string;
-  category: PublicCategory | 'Tous';
+  category: PublicCategory | "Tous";
   subcategory: string;
   season: string;
+  productSize: string;
+  color: string;
+  minPrice: number | null;
+  maxPrice: number | null;
   page: number;
   size: number;
   sortBy: CatalogSortField;
@@ -99,20 +111,39 @@ export class PublicCatalogService {
     return products.map((product) => this.mapBackendProduct(product));
   }
 
+  /** Ce sur quoi cette boutique peut etre filtree. */
+  async getFacets(): Promise<CatalogFacets> {
+    return firstValueFrom(this.http.get<CatalogFacets>(`${this.baseUrl}/facets`));
+  }
+
   async listProductsPage(query: PublicCatalogPageQuery): Promise<PublicCatalogPageResponse> {
+    // Un critere vide n'est pas envoye : le serveur distingue absence de critere
+    // et valeur vide, qui ne correspondrait a aucun produit.
+    const params: Record<string, string> = {
+      page: String(query.page),
+      size: String(query.size),
+      sortBy: query.sortBy,
+      sortDirection: query.sortDirection,
+    };
+
+    const optional: Array<[string, string | number | null]> = [
+      ['category', query.category === 'Tous' ? '' : query.category],
+      ['subcategory', query.subcategory],
+      ['season', query.season],
+      ['productSize', query.productSize],
+      ['color', query.color],
+      ['minPrice', query.minPrice],
+      ['maxPrice', query.maxPrice],
+    ];
+
+    for (const [key, value] of optional) {
+      if (value !== null && value !== undefined && String(value).trim() !== '') {
+        params[key] = String(value);
+      }
+    }
+
     const backendPage = await firstValueFrom(
-      this.http.get<BackendProductPageResponse>(`${this.baseUrl}/page`, {
-        params: {
-          q: query.query,
-          category: query.category === 'Tous' ? '' : query.category,
-            subcategory: query.subcategory,
-            season: query.season,
-          page: String(query.page),
-          size: String(query.size),
-          sortBy: query.sortBy,
-          sortDirection: query.sortDirection,
-        },
-      }),
+      this.http.get<BackendProductPageResponse>(`${this.baseUrl}/page`, { params }),
     );
 
     return {

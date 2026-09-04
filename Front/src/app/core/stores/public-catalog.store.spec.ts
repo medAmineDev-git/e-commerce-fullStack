@@ -96,10 +96,9 @@ describe('PublicCatalogStore', () => {
     await store.loadProducts();
 
     await Promise.resolve();
-    // La recherche textuelle a ete retiree de la vitrine : la requete part
-    // toujours sans terme, seuls les filtres jouent.
+    // La recherche textuelle a ete retiree : seuls les filtres partent au serveur.
     expect(service.listProductsPage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ query: '', page: 0 }),
+      expect.objectContaining({ page: 0, category: 'Tous' }),
     );
 
     store.setCategory('Homme');

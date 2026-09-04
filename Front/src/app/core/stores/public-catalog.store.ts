@@ -3,6 +3,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { PublicCategory, PublicProduct } from '../models/public-product.model';
 import { Category } from '../models/category.model';
 import {
+  CatalogFacets,
   CatalogSortField,
   PublicCatalogService,
 } from '../services/public-catalog.service';
@@ -15,7 +16,12 @@ type CatalogState = {
   selectedCategory: PublicCategory | 'Tous';
   selectedSubcategory: string;
   selectedSeason: string;
+  selectedSize: string;
+  selectedColor: string;
+  minPrice: number | null;
+  maxPrice: number | null;
   availableCategories: Category[];
+  facets: CatalogFacets | null;
   sortBy: CatalogSortField;
   sortDirection: SortDirection;
   pageIndex: number;
@@ -29,6 +35,10 @@ export type CatalogQueryState = {
   category: PublicCategory | 'Tous';
   subcategory?: string;
   season?: string;
+  productSize?: string;
+  color?: string;
+  minPrice?: number | null;
+  maxPrice?: number | null;
   sortBy: CatalogSortField;
   sortDirection: SortDirection;
   page: number;
@@ -41,22 +51,20 @@ const initialState: CatalogState = {
   selectedCategory: 'Tous',
   selectedSubcategory: '',
   selectedSeason: '',
+  selectedSize: '',
+  selectedColor: '',
+  minPrice: null,
+  maxPrice: null,
   availableCategories: [],
+  facets: null,
   sortBy: 'id',
   sortDirection: 'desc',
   pageIndex: 0,
-  pageSize: 8,
+  pageSize: 12,
   totalElements: 0,
   pageCount: 1,
   lastPage: true,
 };
-
-function filterByCategory(products: PublicProduct[], category: PublicCategory | 'Tous', subcategory = ''): PublicProduct[] {
-  if (category === 'Tous') {
-    return subcategory ? products.filter((product) => product.subcategory === subcategory) : products;
-  }
-  return products.filter((product) => product.category === category && (!subcategory || product.subcategory === subcategory));
-}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Erreur lors du chargement du catalogue';
@@ -65,42 +73,72 @@ function errorMessage(error: unknown): string {
 export const PublicCatalogStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ products, loading, error, selectedCategory, selectedSubcategory, availableCategories, pageIndex, totalElements, pageCount, lastPage }) => ({
-    productCount: computed(() => totalElements()),
-    categories: computed(() => ['Tous', ...availableCategories().filter((category) => !category.parentId).map((category) => category.name)]),
+  withComputed((state) => ({
+    /*
+     * Le serveur filtre, trie et pagine. Le store se contente de presenter ce
+     * qu'il a recu : refiltrer ici par-dessus une page deja decoupee donnait des
+     * comptes faux, et n'aurait jamais pu tenir avec les filtres prix et taille,
+     * qui portent sur l'ensemble du catalogue et non sur la page affichee.
+     */
+    pagedProducts: computed(() => state.products()),
+    totalFiltered: computed(() => state.totalElements()),
+    totalPages: computed(() => Math.max(state.pageCount(), 1)),
+    currentPage: computed(() => state.pageIndex() + 1),
+    isLastPage: computed(() => state.lastPage()),
+    hasResults: computed(() => !state.loading() && !state.error() && state.totalElements() > 0),
+
+    categories: computed(() => {
+      const fromFacets = state.facets()?.categories ?? [];
+      if (fromFacets.length) {
+        return ['Tous', ...fromFacets];
+      }
+      return [
+        'Tous',
+        ...state
+          .availableCategories()
+          .filter((category) => !category.parentId)
+          .map((category) => category.name),
+      ];
+    }),
+
     subcategories: computed(() => {
-      const parent = availableCategories().find((category) => category.name === selectedCategory());
-      return availableCategories()
+      const parent = state.availableCategories().find((c) => c.name === state.selectedCategory());
+      return state
+        .availableCategories()
         .filter((category) => category.parentId === parent?.id)
         .map((category) => category.name);
     }),
-    filteredProducts: computed(() => filterByCategory(products(), selectedCategory(), selectedSubcategory())),
-    pagedProducts: computed(() => filterByCategory(products(), selectedCategory(), selectedSubcategory())),
-    totalFiltered: computed(() => {
-      if (selectedCategory() === 'Tous') {
-        return totalElements();
-      }
-      return filterByCategory(products(), selectedCategory(), selectedSubcategory()).length;
+
+    availableSizes: computed(() => state.facets()?.sizes ?? []),
+    availableColors: computed(() => state.facets()?.colors ?? []),
+    priceBounds: computed(() => ({
+      min: state.facets()?.minPrice ?? null,
+      max: state.facets()?.maxPrice ?? null,
+    })),
+
+    /** Nombre de filtres actifs, affiche sur le bouton Filtrer. */
+    activeFilterCount: computed(() => {
+      let count = 0;
+      if (state.selectedSubcategory()) count++;
+      if (state.selectedSeason()) count++;
+      if (state.selectedSize()) count++;
+      if (state.selectedColor()) count++;
+      if (state.minPrice() !== null || state.maxPrice() !== null) count++;
+      return count;
     }),
-    totalPages: computed(() => {
-      if (selectedCategory() === 'Tous') {
-        return Math.max(pageCount(), 1);
-      }
-      return 1;
-    }),
-    currentPage: computed(() => pageIndex() + 1),
-    isLastPage: computed(() => lastPage()),
-    hasResults: computed(() => !loading() && !error() && totalElements() > 0),
   })),
   withMethods((store, catalogService = inject(PublicCatalogService)) => {
     const fetchPage = async (): Promise<void> => {
       patchState(store, { loading: true, error: null });
       try {
         const page = await catalogService.listProductsPage({
-          query: '',
           category: store.selectedCategory(),
           subcategory: store.selectedSubcategory(),
           season: store.selectedSeason(),
+          productSize: store.selectedSize(),
+          color: store.selectedColor(),
+          minPrice: store.minPrice(),
+          maxPrice: store.maxPrice(),
           page: store.pageIndex(),
           size: store.pageSize(),
           sortBy: store.sortBy(),
@@ -121,28 +159,39 @@ export const PublicCatalogStore = signalStore(
       }
     };
 
+    const loadReferenceData = async (): Promise<void> => {
+      try {
+        patchState(store, { facets: await catalogService.getFacets() });
+      } catch {
+        patchState(store, { facets: null });
+      }
+      try {
+        patchState(store, { availableCategories: await catalogService.listCategories() });
+      } catch {
+        patchState(store, { availableCategories: [] });
+      }
+    };
+
     return {
       async applyQueryState(queryState: CatalogQueryState): Promise<void> {
         patchState(store, {
-
           selectedCategory: queryState.category,
           selectedSubcategory: queryState.subcategory ?? '',
           selectedSeason: queryState.season ?? '',
+          selectedSize: queryState.productSize ?? '',
+          selectedColor: queryState.color ?? '',
+          minPrice: queryState.minPrice ?? null,
+          maxPrice: queryState.maxPrice ?? null,
           sortBy: queryState.sortBy,
           sortDirection: queryState.sortDirection,
           pageIndex: Math.max(queryState.page, 0),
         });
-        const categories = await catalogService.listCategories();
-        patchState(store, { availableCategories: categories });
+        await loadReferenceData();
         await fetchPage();
       },
 
       async loadProducts(): Promise<void> {
-        try {
-          patchState(store, { availableCategories: await catalogService.listCategories() });
-        } catch {
-          patchState(store, { availableCategories: [] });
-        }
+        await loadReferenceData();
         await fetchPage();
       },
 
@@ -158,6 +207,29 @@ export const PublicCatalogStore = signalStore(
 
       setSeason(season: string): void {
         patchState(store, { selectedSeason: season, pageIndex: 0 });
+        void fetchPage();
+      },
+
+      setSize(productSize: string): void {
+        // Un second clic sur la meme taille la retire : c'est le comportement
+        // attendu d'une pastille de filtre.
+        patchState(store, {
+          selectedSize: store.selectedSize() === productSize ? '' : productSize,
+          pageIndex: 0,
+        });
+        void fetchPage();
+      },
+
+      setColor(color: string): void {
+        patchState(store, {
+          selectedColor: store.selectedColor() === color ? '' : color,
+          pageIndex: 0,
+        });
+        void fetchPage();
+      },
+
+      setPriceRange(minPrice: number | null, maxPrice: number | null): void {
+        patchState(store, { minPrice, maxPrice, pageIndex: 0 });
         void fetchPage();
       },
 
@@ -183,10 +255,13 @@ export const PublicCatalogStore = signalStore(
 
       resetFilters(): void {
         patchState(store, {
-
           selectedCategory: 'Tous',
           selectedSubcategory: '',
           selectedSeason: '',
+          selectedSize: '',
+          selectedColor: '',
+          minPrice: null,
+          maxPrice: null,
           sortBy: 'id',
           sortDirection: 'desc',
           pageIndex: 0,

@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.ProductFacetsResponse;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
 import com.ecommerce.backend.product.dto.ProductResponse;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,8 +28,6 @@ public class ProductService {
 
     private static final Set<String> ALLOWED_SORT_FIELDS =
             new LinkedHashSet<>(List.of("id", "name", "price", "stockQuantity"));
-    private static final Set<String> ALLOWED_SEASONS =
-            new LinkedHashSet<>(List.of("Printemps", "Été", "Automne", "Hiver"));
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
@@ -47,40 +47,52 @@ public class ProductService {
         return productMapper.toResponse(findByIdAndStoreOrThrow(id, store));
     }
 
+    /** Valeurs sur lesquelles le catalogue de cette boutique peut etre filtre. */
+    public ProductFacetsResponse getFacets(Store store) {
+        return new ProductFacetsResponse(
+                productRepository.findDistinctCategories(store),
+                productRepository.findDistinctSizes(store),
+                productRepository.findDistinctColorNames(store),
+                productRepository.findMinPrice(store),
+                productRepository.findMaxPrice(store)
+        );
+    }
+
     public ProductPageResponse searchProducts(
             Store store,
-            String query,
             String category,
             String subcategory,
             String season,
+            String size,
+            String color,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
             int page,
-            int size,
+            int pageSize,
             String sortBy,
             String sortDirection
     ) {
         int safePage = Math.max(page, 0);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safeSize = Math.min(Math.max(pageSize, 1), 100);
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "id";
         String safeSortDirection = "asc".equalsIgnoreCase(sortDirection) ? "asc" : "desc";
 
-        Sort.Direction direction = "asc".equalsIgnoreCase(safeSortDirection)
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-
+        Sort.Direction direction = "asc".equals(safeSortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(direction, safeSortBy));
-        String safeQuery = query == null ? "" : query.trim();
-        String safeCategory = category == null ? "" : category.trim();
-        String safeSubcategory = subcategory == null ? "" : subcategory.trim();
-        String safeSeason = season == null ? "" : season.trim();
-        if (!safeSeason.isBlank() && !ALLOWED_SEASONS.contains(safeSeason)) {
-            safeSeason = "";
-        }
 
-        Page<Product> resultPage = safeSeason.isBlank() && safeSubcategory.isBlank()
-                ? productRepository.searchProductsByStore(store, safeQuery, safeCategory, pageable)
-                : safeSeason.isBlank()
-                ? productRepository.searchProductsWithSubcategoryByStore(store, safeQuery, safeCategory, safeSubcategory, pageable)
-                : productRepository.searchProductsWithSeasonByStore(store, safeQuery, safeCategory, safeSubcategory, safeSeason, pageable);
+        // Un critere vide vaut absence de critere : la requete attend NULL,
+        // pas une chaine vide qui ne correspondrait a aucune valeur.
+        Page<Product> resultPage = productRepository.search(
+                store,
+                blankToNull(category),
+                blankToNull(subcategory),
+                blankToNull(season),
+                blankToNull(size),
+                blankToNull(color),
+                minPrice,
+                maxPrice,
+                pageable
+        );
 
         return new ProductPageResponse(
                 resultPage.getContent().stream().map(productMapper::toResponse).toList(),
@@ -91,8 +103,8 @@ public class ProductService {
                 resultPage.isLast(),
                 safeSortBy,
                 safeSortDirection,
-                safeQuery,
-                safeCategory
+                "",
+                category == null ? "" : category.trim()
         );
     }
 
@@ -125,5 +137,9 @@ public class ProductService {
     private Product findByIdAndStoreOrThrow(Long id, Store store) {
         return productRepository.findByIdAndStore(id, store)
                 .orElseThrow(() -> new ProductNotFoundException(id));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

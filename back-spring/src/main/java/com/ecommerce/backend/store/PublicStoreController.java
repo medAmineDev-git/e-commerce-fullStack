@@ -8,6 +8,7 @@ import com.ecommerce.backend.order.OrderService;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.product.ProductService;
+import com.ecommerce.backend.product.dto.ProductFacetsResponse;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductResponse;
 import com.ecommerce.backend.store.dto.SlugCheckResponse;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -67,20 +69,32 @@ public class PublicStoreController {
         return productService.getAllProducts(store);
     }
 
+    /** Valeurs de filtrage reellement presentes dans le catalogue de la boutique. */
+    @GetMapping("/{slug}/products/facets")
+    public ProductFacetsResponse getStoreProductFacets(@PathVariable String slug) {
+        Store store = storeService.getStoreEntityBySlug(slug);
+        return productService.getFacets(store);
+    }
+
     @GetMapping("/{slug}/products/page")
     public ProductPageResponse searchStoreProducts(
             @PathVariable String slug,
-            @RequestParam(name = "q", defaultValue = "") String query,
-            @RequestParam(name = "category", defaultValue = "") String category,
-            @RequestParam(name = "subcategory", defaultValue = "") String subcategory,
-            @RequestParam(name = "season", defaultValue = "") String season,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "subcategory", required = false) String subcategory,
+            @RequestParam(name = "season", required = false) String season,
+            @RequestParam(name = "productSize", required = false) String productSize,
+            @RequestParam(name = "color", required = false) String color,
+            @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
             @RequestParam(name = "sortBy", defaultValue = "id") String sortBy,
             @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDirection
     ) {
         Store store = storeService.getStoreEntityBySlug(slug);
-        return productService.searchProducts(store, query, category, subcategory, season, page, size, sortBy, sortDirection);
+        return productService.searchProducts(
+                store, category, subcategory, season, productSize, color,
+                minPrice, maxPrice, page, size, sortBy, sortDirection);
     }
 
     @GetMapping("/{slug}/products/{id}")

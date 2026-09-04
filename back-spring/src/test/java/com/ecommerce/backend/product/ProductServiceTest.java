@@ -165,38 +165,39 @@ class ProductServiceTest {
         Product second = product(12L, "Sneaker Pro");
         Page<Product> page = new PageImpl<>(List.of(first, second), PageRequest.of(0, 2), 2);
 
-        when(productRepository.searchProductsByStore(
-                store,
-                "sneaker",
-                "Sneakers",
+        when(productRepository.search(
+                store, "Sneakers", null, null, "M", "Noir",
+                new BigDecimal("20"), new BigDecimal("200"),
                 PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "price"))
         )).thenReturn(page);
         when(productMapper.toResponse(first)).thenReturn(response(11L, "Sneaker Light"));
         when(productMapper.toResponse(second)).thenReturn(response(12L, "Sneaker Pro"));
 
         ProductPageResponse result = productService.searchProducts(
-                store, "sneaker", "Sneakers", "", "", 0, 2, "price", "asc");
+                store, "Sneakers", "", "", "M", "Noir",
+                new BigDecimal("20"), new BigDecimal("200"), 0, 2, "price", "asc");
 
         assertEquals(2, result.items().size());
         assertEquals(2, result.totalElements());
         assertEquals("price", result.sortBy());
         assertEquals("asc", result.sortDirection());
-        assertEquals("sneaker", result.query());
         assertEquals("Sneakers", result.category());
     }
 
+    /** Un critere vide vaut absence de critere, et non une valeur a rechercher. */
     @Test
-    void searchProductsShouldFallbackToDefaultSortAndDirection() {
+    void searchProductsShouldTreatBlankCriteriaAsAbsent() {
         Product only = product(2L, "Item");
         Page<Product> page = new PageImpl<>(List.of(only), PageRequest.of(0, 1), 1);
 
-        when(productRepository.searchProductsByStore(
-                store, "", "", PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))))
+        when(productRepository.search(
+                store, null, null, null, null, null, null, null,
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))))
                 .thenReturn(page);
         when(productMapper.toResponse(only)).thenReturn(response(2L, "Item"));
 
         ProductPageResponse result = productService.searchProducts(
-                store, "", "", "", "", 0, 1, "badField", "invalid");
+                store, "", "  ", "", "", "", null, null, 0, 1, "badField", "invalid");
 
         assertEquals(1, result.items().size());
         assertEquals("id", result.sortBy());

@@ -54,7 +54,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
-        path: 'boutique',
+        path: 'configuration',
         loadComponent: () =>
           import('./features/admin/store-settings/store-settings').then((m) => m.StoreSettings),
       },
@@ -112,20 +112,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/public/home-page/home-page').then((m) => m.HomePage),
       },
       {
-        path: 'shop',
-        loadComponent: () => import('./features/public/shop-page/shop-page').then((m) => m.ShopPage),
-      },
-      {
-        path: 'category/:category',
-        loadComponent: () => import('./features/public/shop-page/shop-page').then((m) => m.ShopPage),
-      },
-      {
         path: 'product/:id',
         loadComponent: () =>
           import('./features/public/product-detail-page/product-detail-page').then(
             (m) => m.ProductDetailPage,
           ),
       },
+      // La page boutique a fusionne avec l'accueil : les anciens liens y menent.
+      { path: 'shop', redirectTo: '', pathMatch: 'full' },
+      { path: 'category/:category', redirectTo: '', pathMatch: 'full' },
       {
         path: 'cart',
         loadComponent: () => import('./features/public/cart-page/cart-page').then((m) => m.CartPage),

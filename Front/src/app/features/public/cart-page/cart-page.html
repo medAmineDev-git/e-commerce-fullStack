@@ -7,7 +7,7 @@
   @if (cartStore.isEmpty()) {
     <div class="empty">
       <p>Votre panier est vide.</p>
-      <a class="u-btn u-btn--solid" [routerLink]="storeContext.link('shop')">
+      <a class="u-btn u-btn--solid" [routerLink]="storeContext.link()">
         Parcourir la boutique
       </a>
     </div>
@@ -83,7 +83,7 @@
           Passer la commande
         </button>
 
-        <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link('shop')">
+        <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link()">
           Continuer mes achats
         </a>
       </aside>
