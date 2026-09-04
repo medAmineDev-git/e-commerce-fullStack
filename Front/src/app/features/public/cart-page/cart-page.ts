@@ -16,7 +16,8 @@ export class CartPage {
   private readonly router = inject(Router);
   readonly cartStore = inject(CartStore);
 
-  setQuantity(item: CartItem, value: string): void {
+  /** Accepte un nombre (boutons + / -) comme une chaine (saisie directe). */
+  setQuantity(item: CartItem, value: string | number): void {
     const quantity = Number(value);
     if (!Number.isFinite(quantity)) {
       return;

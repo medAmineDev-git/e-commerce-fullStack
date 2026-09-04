@@ -1,80 +1,122 @@
-<header class="public-header">
-  <a class="brand" [routerLink]="storeContext.link()">
-    <span class="brand-mark">NOVA</span>
-    <span class="brand-subtitle">Boutique urbaine</span>
-  </a>
+<a class="skip-link" href="#contenu">Aller au contenu</a>
 
-  <nav class="desktop-nav" aria-label="Navigation principale">
-    <a [routerLink]="storeContext.link()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-    <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Shop</a>
-    <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">Panier ({{ cartStore.totalItems() }})</a>
-    <button type="button" class="mini-cart-trigger" (click)="toggleCartDrawer()">
-      Mini panier
-      <span>{{ cartStore.totalItems() }}</span>
+<header class="shell-header">
+  <div class="shell-header-inner u-shell">
+    <a class="brand" [routerLink]="storeContext.link()">
+      @if (store()?.logoUrl) {
+        <img class="brand-logo" [src]="store()!.logoUrl!" [alt]="store()!.name" />
+      } @else {
+        <span class="brand-name">{{ store()?.name ?? 'Boutique' }}</span>
+      }
+    </a>
+
+    <nav class="desktop-nav" aria-label="Navigation principale">
+      <a
+        [routerLink]="storeContext.link()"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >Accueil</a
+      >
+      <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Boutique</a>
+    </nav>
+
+    <button type="button" class="cart-trigger" (click)="toggleCartDrawer()">
+      <span class="u-sr-only">Ouvrir le panier</span>
+      <span aria-hidden="true">Panier</span>
+      @if (cartStore.totalItems() > 0) {
+        <span class="cart-count">{{ cartStore.totalItems() }}</span>
+      }
     </button>
-    <a href="http://localhost:8080/swagger.html" target="_blank" rel="noopener noreferrer" class="admin-link">API Docs</a>
-  </nav>
+  </div>
 </header>
 
-<section class="search-bar-wrap">
-  <label class="search-bar" for="global-search">
-    <span class="search-icon" aria-hidden="true">⌕</span>
-    <input
-      id="global-search"
-      type="search"
-      placeholder="Rechercher une veste, sneaker, accessoire..."
-      [value]="searchTerm()"
-      (input)="searchTerm.set($any($event.target).value)"
-      (keyup.enter)="goToSearch(searchTerm())"
-    />
-    <button type="button" (click)="goToSearch(searchTerm())">Chercher</button>
-  </label>
-</section>
-
-<main class="public-main">
+<main id="contenu" class="shell-main">
   <router-outlet />
 </main>
 
+<footer class="shell-footer">
+  <div class="u-shell">
+    <p class="footer-name">{{ store()?.name }}</p>
+    <div class="footer-details">
+      @if (store()?.address) {
+        <span>{{ store()!.address }}</span>
+      }
+      @if (store()?.phone) {
+        <a [href]="'tel:' + store()!.phone">{{ store()!.phone }}</a>
+      }
+      @if (store()?.email) {
+        <a [href]="'mailto:' + store()!.email">{{ store()!.email }}</a>
+      }
+    </div>
+    <p class="footer-note">Paiement à la livraison ou par virement.</p>
+  </div>
+</footer>
+
 @if (cartDrawerOpen()) {
   <div class="drawer-backdrop" (click)="closeCartDrawer()"></div>
-  <aside class="cart-drawer" aria-label="Mini panier">
-    <header>
-      <div>
-        <p>Mini panier</p>
-        <h2>{{ cartStore.totalItems() }} article(s)</h2>
-      </div>
-      <button type="button" class="close-btn" (click)="closeCartDrawer()">Fermer</button>
+  <aside class="cart-drawer" role="dialog" aria-label="Panier">
+    <header class="drawer-head">
+      <p class="u-label">Panier &middot; {{ cartStore.totalItems() }} article(s)</p>
+      <button type="button" class="drawer-close" (click)="closeCartDrawer()">
+        <span class="u-sr-only">Fermer le panier</span>
+        <span aria-hidden="true">&times;</span>
+      </button>
     </header>
 
     @if (cartStore.isEmpty()) {
-      <p class="drawer-empty">Ton panier est vide. Ajoute un produit pour le voir ici.</p>
+      <div class="drawer-empty">
+        <p>Votre panier est vide.</p>
+        <a class="u-btn u-btn--outline" [routerLink]="storeContext.link('shop')" (click)="closeCartDrawer()">
+          Parcourir la boutique
+        </a>
+      </div>
     } @else {
       <div class="drawer-items">
         @for (item of cartStore.items(); track item.product.id) {
-          <article>
-            <img [src]="item.product.imageUrl" [alt]="item.product.name" />
-            <div>
-              <h3>{{ item.product.name }}</h3>
-              <p>{{ item.quantity }} x {{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
+          <article class="drawer-item">
+            <div class="drawer-thumb u-media">
+              <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
             </div>
+            <div class="drawer-item-body">
+              <h3>{{ item.product.name }}</h3>
+              <p class="u-label">{{ item.quantity }} &times; {{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
+            </div>
+            <strong class="u-price">
+              {{ item.product.price * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+            </strong>
           </article>
         }
       </div>
 
-      <div class="drawer-summary">
-        <div>
+      <div class="drawer-foot">
+        <div class="drawer-total">
           <span>Total</span>
-          <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+          <strong class="u-price">{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
         </div>
-        <a [routerLink]="storeContext.link('cart')" (click)="closeCartDrawer()">Voir le panier</a>
-        <a [routerLink]="storeContext.link('checkout')" (click)="closeCartDrawer()">Passer la commande</a>
+        <a class="u-btn u-btn--solid" [routerLink]="storeContext.link('checkout')" (click)="closeCartDrawer()">
+          Passer la commande
+        </a>
+        <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link('cart')" (click)="closeCartDrawer()">
+          Voir le panier
+        </a>
       </div>
     }
   </aside>
 }
 
-<nav class="mobile-bottom-nav" aria-label="Navigation mobile">
-  <a [routerLink]="storeContext.link()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-  <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Shop</a>
-  <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">Panier <span>{{ cartStore.totalItems() }}</span></a>
+<nav class="bottom-nav" aria-label="Navigation">
+  <a
+    [routerLink]="storeContext.link()"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >
+    Accueil
+  </a>
+  <a [routerLink]="storeContext.link('shop')" routerLinkActive="active">Boutique</a>
+  <a [routerLink]="storeContext.link('cart')" routerLinkActive="active">
+    Panier
+    @if (cartStore.totalItems() > 0) {
+      <span class="bottom-count">{{ cartStore.totalItems() }}</span>
+    }
+  </a>
 </nav>

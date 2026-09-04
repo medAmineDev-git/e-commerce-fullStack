@@ -1,8 +1,8 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { StoreContextService } from '../../../core/services/store-context.service';
 import { CurrencyPipe } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { StoreContextService } from '../../../core/services/store-context.service';
 import { CartStore } from '../../../core/stores/cart.store';
 import { PublisherReferenceService } from '../../../core/services/publisher-reference';
 import { SeoService } from '../../../core/seo/seo.service';
@@ -15,19 +15,18 @@ import { SeoService } from '../../../core/seo/seo.service';
 })
 export class PublicLayout {
   readonly storeContext = inject(StoreContextService);
+  readonly cartStore = inject(CartStore);
   private readonly router = inject(Router);
   private readonly publisherReferenceService = inject(PublisherReferenceService);
-  readonly cartStore = inject(CartStore);
   private readonly seo = inject(SeoService);
-  readonly searchTerm = signal('');
+
+  /** L'identité affichée vient de la boutique, jamais d'un nom écrit en dur. */
+  readonly store = this.storeContext.store;
   readonly cartDrawerOpen = signal(false);
 
   constructor() {
-    // Le panier est déjà chargé par la garde de route, qui connaît la boutique
-    // avant que ce composant n'existe. Ici on ne fait que titrer la vitrine :
-    // sans cela chaque boutique porterait le titre du site vitrine.
     effect(() => {
-      const store = this.storeContext.store();
+      const store = this.store();
       if (store) {
         this.seo.apply({
           title: store.name,
@@ -38,25 +37,28 @@ export class PublicLayout {
       }
     });
 
-    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(() => {
-      const reference = new URLSearchParams(this.router.url.split('?')[1] ?? '').get('ref');
-      this.publisherReferenceService.capture(reference);
-    });
-    this.publisherReferenceService.capture(new URLSearchParams(this.router.url.split('?')[1] ?? '').get('ref'));
-  }
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.captureReference();
+        // Un tiroir ouvert doit se refermer quand on change de page,
+        // sinon il masque la vue sur laquelle on vient d'arriver.
+        this.cartDrawerOpen.set(false);
+      });
 
-  goToSearch(term: string): void {
-    const cleaned = term.trim();
-    void this.router.navigate(this.storeContext.link('shop'), {
-      queryParams: cleaned ? { q: cleaned } : {},
-    });
+    this.captureReference();
   }
 
   toggleCartDrawer(): void {
-    this.cartDrawerOpen.update((value) => !value);
+    this.cartDrawerOpen.update((open) => !open);
   }
 
   closeCartDrawer(): void {
     this.cartDrawerOpen.set(false);
+  }
+
+  private captureReference(): void {
+    const reference = new URLSearchParams(this.router.url.split('?')[1] ?? '').get('ref');
+    this.publisherReferenceService.capture(reference);
   }
 }

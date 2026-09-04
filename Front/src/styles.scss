@@ -1,45 +1,83 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
 
+/*
+ * Socle visuel de la vitrine.
+ *
+ * Le parti pris tient à une contrainte du produit : ce chrome habille
+ * n'importe quelle boutique. Il doit donc s'effacer et laisser les photos de
+ * chaque vendeur porter l'identité. D'où un système quasi monochrome, sans
+ * couleur d'accent dans l'interface — l'ancienne teinte terracotta imposait
+ * l'identité d'une boutique à toutes les autres.
+ *
+ * Une seule couleur signal, réservée aux promotions et aux ruptures.
+ */
 :root {
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Space Grotesk', 'Segoe UI', sans-serif;
-  --bg-page: #fffaf3;
-  --bg-surface: #ffffff;
-  --text-main: #221c15;
-  --text-muted: #6e6258;
-  --accent: #d56616;
-  --accent-strong: #8a3f06;
-  --accent-soft: #ffe8d2;
-  --line-soft: #eadfce;
-  --line-strong: #d1c2ad;
-  --shadow-soft: 0 8px 30px rgba(80, 44, 12, 0.08);
-  --motion-fast: 180ms;
-  --motion-medium: 320ms;
+  --font-display: 'Instrument Serif', 'Times New Roman', serif;
+  --font-body: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+
+  --ink: #131211;
+  --ink-soft: #4a4744;
+  --muted: #79756f;
+  --faint: #a8a49d;
+
+  --paper: #ffffff;
+  --mist: #f5f4f2;
+  --sunk: #edebe7;
+
+  --line: #e4e2de;
+  --line-strong: #cfccc6;
+
+  --signal: #a02c22;
+  --signal-soft: #fbeeec;
+  --ok: #2b6b46;
+
+  --header-h: 3.5rem;
+  --bottom-nav-h: 3.75rem;
+  --gutter: 1rem;
+  --radius: 2px;
+
+  --motion-fast: 160ms;
+  --motion-medium: 300ms;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: 2rem;
+    --header-h: 4.5rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  :root {
+    --gutter: 3.5rem;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-page: #16120f;
-    --bg-surface: #211a16;
-    --text-main: #f8efe2;
-    --text-muted: #c3b29f;
-    --accent: #ff9d4d;
-    --accent-strong: #ffd4aa;
-    --accent-soft: #3b2a1d;
-    --line-soft: #3f3228;
-    --line-strong: #5a4a3d;
-    --shadow-soft: 0 10px 32px rgba(0, 0, 0, 0.35);
+    --ink: #f2f0ed;
+    --ink-soft: #cbc7c1;
+    --muted: #97928b;
+    --faint: #6d6963;
+
+    --paper: #131211;
+    --mist: #1a1917;
+    --sunk: #232120;
+
+    --line: #2c2a27;
+    --line-strong: #413e3a;
+
+    --signal: #e0796c;
+    --signal-soft: #2a1a17;
+    --ok: #6fbb8f;
   }
 }
 
 html {
   height: 100%;
+  // Le back-office reste sur Angular Material : ce thème ne concerne pas la vitrine.
   @include mat.theme(
     (
       color: (
@@ -53,59 +91,185 @@ html {
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--bg-page);
-  color: var(--text-main);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.45;
-
-  // Reset the user agent margin.
+  color-scheme: light dark;
   margin: 0;
-  height: 100%;
-  background-image:
-    radial-gradient(circle at 8% -4%, rgba(252, 178, 111, 0.24), transparent 34%),
-    radial-gradient(circle at 92% 0%, rgba(255, 201, 152, 0.26), transparent 32%);
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background-image:
-      radial-gradient(circle at 8% -4%, rgba(255, 157, 77, 0.18), transparent 36%),
-      radial-gradient(circle at 92% 0%, rgba(255, 212, 170, 0.12), transparent 34%);
-  }
+  min-height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
 }
 
-@keyframes fadeSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ---------------------------------------------------------------
+   Primitives partagées par les vues de la vitrine
+   --------------------------------------------------------------- */
+
+.u-shell {
+  padding-inline: var(--gutter);
+  margin-inline: auto;
+  max-width: 90rem;
+  width: 100%;
+}
+
+/* Petite étiquette capitale : la respiration entre les lettres est ce qui
+   distingue une étiquette soignée d'un texte simplement réduit. */
+.u-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.u-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  text-wrap: balance;
+  margin: 0;
+}
+
+/* Prix : les chiffres doivent s'aligner d'une carte à l'autre. */
+.u-price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.u-price-was {
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.u-btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.9375rem 1.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem; // cible tactile confortable
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
 
-@keyframes softPulseIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+.u-btn--solid {
+  background: var(--ink);
+  color: var(--paper);
+
+  &:hover:not(:disabled) {
+    background: var(--ink-soft);
   }
 }
-/* You can add global styles to this file, and also import other style files */
+
+.u-btn--outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+
+  &:hover:not(:disabled) {
+    border-color: var(--ink);
+  }
+}
+
+.u-btn--quiet {
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  padding-inline: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  min-height: 0;
+}
+
+/* Grille produits : deux colonnes dès le mobile, comme sur les sites de mode —
+   une seule colonne oblige à faire défiler pour comparer. */
+.u-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .u-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .u-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Cadre d'image en portrait 3/4 : le format du vêtement porté. */
+.u-media {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--mist);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--motion-medium) var(--ease);
+  }
+}
+
+.u-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

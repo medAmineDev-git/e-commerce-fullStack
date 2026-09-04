@@ -1,100 +1,118 @@
-<section class="checkout-wrap">
-  <h1>Finaliser la commande</h1>
-  <button type="button" class="back-button" (click)="goBack()">Retourner</button>
+<section class="checkout u-shell">
+  <header class="checkout-head">
+    <h1 class="u-display">Commande</h1>
+    <p class="u-label">Paiement à la livraison</p>
+  </header>
 
   @if (cartStore.isEmpty()) {
-    <div class="state-card">
-      <p>Panier vide. Ajoute des produits avant de continuer.</p>
-      <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
+    <div class="empty">
+      <p>Votre panier est vide.</p>
+      <a class="u-btn u-btn--solid" [routerLink]="storeContext.link('shop')">
+        Parcourir la boutique
+      </a>
     </div>
   } @else {
-    <div class="pay-chip">Paiement a la livraison (COD)</div>
+    <div class="checkout-body">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+        <fieldset class="fieldset">
+          <legend class="u-label">Coordonnées</legend>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="checkout-form">
-      <label>
-        Nom complet
-        <input type="text" formControlName="customerName" />
-        @if (shouldShowError('customerName')) {
-          <small class="field-error">Nom requis (minimum 2 caracteres).</small>
+          <label class="field">
+            <span class="field-label">Nom complet</span>
+            <input type="text" formControlName="customerName" autocomplete="name" />
+            @if (shouldShowError('customerName')) {
+              <small class="field-error">Indiquez votre nom (2 caractères minimum).</small>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field-label">Téléphone</span>
+            <input type="tel" formControlName="phone" autocomplete="tel" inputmode="tel" />
+            @if (shouldShowError('phone')) {
+              <small class="field-error">Indiquez un téléphone (8 chiffres minimum).</small>
+            }
+          </label>
+        </fieldset>
+
+        <fieldset class="fieldset">
+          <legend class="u-label">Livraison</legend>
+
+          <label class="field">
+            <span class="field-label">Ville</span>
+            <input type="text" formControlName="city" autocomplete="address-level2" />
+            @if (shouldShowError('city')) {
+              <small class="field-error">Indiquez votre ville.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field-label">Adresse</span>
+            <textarea rows="3" formControlName="address" autocomplete="street-address"></textarea>
+            @if (shouldShowError('address')) {
+              <small class="field-error">Indiquez votre adresse (6 caractères minimum).</small>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field-label">
+              Précisions <span class="optional">(facultatif)</span>
+            </span>
+            <textarea rows="2" formControlName="note" placeholder="Étage, digicode, créneau…"></textarea>
+          </label>
+        </fieldset>
+
+        @if (errorMessage()) {
+          <p class="form-error" role="alert">{{ errorMessage() }}</p>
         }
-      </label>
 
-      <label>
-        Telephone
-        <input type="text" formControlName="phone" />
-        @if (shouldShowError('phone')) {
-          <small class="field-error">Telephone requis (minimum 8 chiffres).</small>
-        }
-      </label>
+        <button type="submit" class="u-btn u-btn--solid submit" [disabled]="!canSubmit()">
+          {{ submitting() ? 'Validation…' : 'Confirmer la commande' }}
+        </button>
 
-      <label>
-        Ville
-        <input type="text" formControlName="city" />
-        @if (shouldShowError('city')) {
-          <small class="field-error">Ville requise.</small>
-        }
-      </label>
+        <p class="legal">
+          Vous réglez au moment de la réception. Aucun paiement n'est demandé maintenant.
+        </p>
+      </form>
 
-      <label>
-        Adresse
-        <textarea rows="3" formControlName="address"></textarea>
-        @if (shouldShowError('address')) {
-          <small class="field-error">Adresse requise (minimum 6 caracteres).</small>
-        }
-      </label>
+      <aside class="summary">
+        <h2 class="u-label">Votre commande</h2>
 
-      <label>
-        Note de livraison (optionnel)
-        <textarea rows="2" formControlName="note"></textarea>
-      </label>
-
-      @if (errorMessage()) {
-        <p class="error">{{ errorMessage() }}</p>
-      }
-
-      <button type="submit" [disabled]="!canSubmit()">
-        {{ submitting() ? 'Validation...' : 'Confirmer la commande' }}
-      </button>
-    </form>
-
-    <aside class="summary">
-      <h2>Recap</h2>
-      <div>
-        <span>Sous-total</span>
-        <strong>{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-      <div>
-        <span>Livraison</span>
-        <strong>{{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-      <div class="total">
-        <span>Total</span>
-        <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-      <button type="button" class="summary-toggle" (click)="toggleCartDetails()">
-        {{ toggleDetailsLabel() }}
-      </button>
-    </aside>
-
-    @if (showCartDetails()) {
-      <section class="cart-details-panel">
-        <h3>Detail du panier</h3>
-        <div class="detail-list">
+        <ul class="summary-items">
           @for (item of cartStore.items(); track item.product.id) {
-            <article class="detail-item">
-              <div class="detail-main">
-                <img [src]="item.product.imageUrl" [alt]="item.product.name" />
-                <div>
-                  <strong>{{ item.product.name }}</strong>
-                  <p>{{ item.quantity }} x {{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
-                </div>
+            <li>
+              <div class="summary-thumb u-media">
+                <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
+                <span class="summary-qty">{{ item.quantity }}</span>
               </div>
-              <strong>{{ item.product.price * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-            </article>
+              <span class="summary-name">{{ item.product.name }}</span>
+              <span class="u-price">
+                {{ item.product.price * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+              </span>
+            </li>
           }
+        </ul>
+
+        <div class="line">
+          <span>Sous-total</span>
+          <span class="u-price">{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
         </div>
-        <a class="edit-cart-button" [routerLink]="storeContext.link('cart')">Modifier panier</a>
-      </section>
-    }
+        <div class="line">
+          <span>Livraison</span>
+          <span class="u-price">
+            @if (cartStore.deliveryFee() === 0) {
+              Offerte
+            } @else {
+              {{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+            }
+          </span>
+        </div>
+        <div class="line total">
+          <span>Total</span>
+          <strong class="u-price">{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+
+        <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link('cart')">Modifier le panier</a>
+      </aside>
+    </div>
   }
 </section>

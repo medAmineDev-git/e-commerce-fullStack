@@ -1,55 +1,77 @@
 <section class="hero">
-  <div class="hero-copy">
-    <p class="eyebrow">Nouvelle collection</p>
-    <h1>{{ heroTitle() }}</h1>
-    <p>{{ heroText() }}</p>
-    <div class="hero-actions">
-      <a [routerLink]="storeContext.link('shop')" class="primary-btn">Explorer le shop</a>
-      <a [routerLink]="storeContext.link('cart')" class="ghost-btn">Voir le panier</a>
-    </div>
+  <div class="hero-media">
+    @if (store()?.bannerUrl) {
+      <img [src]="store()!.bannerUrl!" [alt]="store()!.name" fetchpriority="high" />
+    } @else if (featured(); as product) {
+      <img [src]="product.imageUrl" [alt]="product.name" fetchpriority="high" />
+    }
   </div>
 
-  @if (configuredSpotlight(); as focus) {
-    <article class="hero-card" (click)="openProduct(focus)">
-      <img [src]="focus.imageUrl" [alt]="focus.name" loading="lazy" />
-      <div>
-        <p>{{ focus.category }}</p>
-        <h3>{{ focus.name }}</h3>
-        <span>{{ focus.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
-      </div>
-    </article>
-  }
-</section>
-
-<section class="category-strip">
-  <button type="button" (click)="openCategory('Homme')">Homme</button>
-  <button type="button" (click)="openCategory('Femme')">Femme</button>
-  <button type="button" (click)="openCategory('Sneakers')">Sneakers</button>
-  <button type="button" (click)="openCategory('Accessoires')">Accessoires</button>
-</section>
-
-<section class="section-head">
-  <h2>Produits en tendance</h2>
-  <a [routerLink]="storeContext.link('shop')">Tout voir</a>
-</section>
-
-<div class="cards-grid">
-  @if (catalogStore.loading()) {
-    <p class="state-label">Chargement du catalogue...</p>
-  } @else {
-    @for (product of topProducts(); track product.id) {
-      <article class="product-card">
-        @if (product.badge) {
-          <span class="badge">{{ product.badge }}</span>
-        }
-        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" (click)="openProduct(product)" />
-        <div class="card-body">
-          <p>{{ product.category }}</p>
-          <h3 (click)="openProduct(product)">{{ product.name }}</h3>
-          <span>{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
-          <button type="button" (click)="openProduct(product)">Afficher Détail</button>
-        </div>
-      </article>
+  <div class="hero-copy u-shell">
+    <h1 class="u-display">{{ heroTitle() }}</h1>
+    @if (heroText()) {
+      <p class="hero-text">{{ heroText() }}</p>
     }
+    <button type="button" class="u-btn u-btn--solid hero-cta" (click)="openCategory('')">
+      Découvrir la collection
+    </button>
+  </div>
+</section>
+
+@if (categories().length) {
+  <nav class="categories u-shell" aria-label="Catégories">
+    @for (category of categories(); track category) {
+      <button type="button" class="category-chip" (click)="openCategory(category)">
+        {{ category }}
+      </button>
+    }
+  </nav>
+}
+
+<section class="arrivals u-shell" aria-labelledby="arrivals-title">
+  <header class="section-head">
+    <h2 id="arrivals-title" class="u-display">Nouveautés</h2>
+    <button type="button" class="u-btn u-btn--quiet" (click)="openCategory('')">Tout voir</button>
+  </header>
+
+  @if (catalogStore.loading()) {
+    <div class="u-product-grid" aria-busy="true">
+      @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+        <div class="card-skeleton">
+          <div class="u-media"></div>
+          <span></span>
+          <span class="short"></span>
+        </div>
+      }
+    </div>
+  } @else if (newArrivals().length === 0) {
+    <p class="empty">Cette boutique n'a pas encore publié d'article.</p>
+  } @else {
+    <div class="u-product-grid">
+      @for (product of newArrivals(); track product.id) {
+        <article class="card">
+          <button type="button" class="card-link" (click)="openProduct(product)">
+            <span class="u-media">
+              <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+              @if (product.originalPrice) {
+                <span class="card-flag">Promo</span>
+              }
+            </span>
+            <span class="card-body">
+              <span class="u-label">{{ product.category }}</span>
+              <span class="card-name">{{ product.name }}</span>
+              <span class="card-price">
+                <span class="u-price">{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+                @if (product.originalPrice) {
+                  <span class="u-price-was">
+                    {{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                  </span>
+                }
+              </span>
+            </span>
+          </button>
+        </article>
+      }
+    </div>
   }
-</div>
+</section>

@@ -24,7 +24,13 @@ import java.util.stream.Collectors;
  * utiles. Le jour ou une boutique amene son propre domaine, elle est acceptee
  * sans redeploiement : c'est ce qui rend la greffe du domaine propre indolore.
  */
-@Component
+/*
+ * Le nom du bean est porteur : http.cors(withDefaults()) cherche un bean
+ * nomme exactement "corsConfigurationSource". Sous son nom de classe par
+ * defaut, ce composant existait bien mais n'etait jamais consulte, et aucun
+ * en-tete Access-Control-Allow-Origin n'etait emis.
+ */
+@Component("corsConfigurationSource")
 public class StoreAwareCorsConfigurationSource implements CorsConfigurationSource {
 
     private static final long CACHE_TTL_MILLIS = 60_000L;

@@ -1,4 +1,4 @@
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe } from "@angular/common";
 import { Component, computed, inject, signal } from '@angular/core';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { Location } from '@angular/common';
@@ -13,7 +13,7 @@ import { PublicCatalogService } from '../../../core/services/public-catalog.serv
 
 @Component({
   selector: 'app-product-detail-page',
-  imports: [CurrencyPipe, DecimalPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink],
   templateUrl: './product-detail-page.html',
   styleUrl: './product-detail-page.scss',
 })
@@ -75,7 +75,8 @@ export class ProductDetailPage {
     this.relatedProducts.set(related);
   }
 
-  setQuantity(value: string): void {
+  /** Accepte un nombre (boutons + / -) comme une chaine (saisie directe). */
+  setQuantity(value: string | number): void {
     const parsed = Number(value);
     if (!Number.isFinite(parsed) || parsed <= 0) {
       this.quantity.set(1);

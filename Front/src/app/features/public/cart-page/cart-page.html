@@ -1,51 +1,92 @@
-<section class="cart-wrap">
-  <header>
-    <h1>Ton panier</h1>
-    <p>{{ cartStore.totalItems() }} article(s)</p>
+<section class="cart u-shell">
+  <header class="cart-head">
+    <h1 class="u-display">Panier</h1>
+    <p class="u-label">{{ cartStore.totalItems() }} article(s)</p>
   </header>
 
   @if (cartStore.isEmpty()) {
     <div class="empty">
-      <p>Le panier est vide pour le moment.</p>
-      <a [routerLink]="storeContext.link('shop')">Explorer le shop</a>
+      <p>Votre panier est vide.</p>
+      <a class="u-btn u-btn--solid" [routerLink]="storeContext.link('shop')">
+        Parcourir la boutique
+      </a>
     </div>
   } @else {
-    <div class="items">
-      @for (item of cartStore.items(); track item.product.id) {
-        <article>
-          <img [src]="item.product.imageUrl" [alt]="item.product.name" />
-          <div class="content">
-            <h3>{{ item.product.name }}</h3>
-            <p>{{ item.product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</p>
-            <div class="actions">
-              <input
-                type="number"
-                min="1"
-                [value]="item.quantity"
-                (input)="setQuantity(item, $any($event.target).value)"
-              />
-              <button type="button" (click)="remove(item)">Supprimer</button>
+    <div class="cart-body">
+      <ul class="items">
+        @for (item of cartStore.items(); track item.product.id) {
+          <li class="item">
+            <div class="item-media u-media">
+              <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
             </div>
-          </div>
-        </article>
-      }
+
+            <div class="item-body">
+              <h2 class="item-name">{{ item.product.name }}</h2>
+              <p class="u-label">{{ item.product.category }}</p>
+
+              <div class="item-controls">
+                <div class="stepper">
+                  <button
+                    type="button"
+                    (click)="setQuantity(item, item.quantity - 1)"
+                    [disabled]="item.quantity <= 1"
+                  >
+                    <span class="u-sr-only">Diminuer la quantité</span>
+                    <span aria-hidden="true">&minus;</span>
+                  </button>
+                  <span class="stepper-value">{{ item.quantity }}</span>
+                  <button type="button" (click)="setQuantity(item, item.quantity + 1)">
+                    <span class="u-sr-only">Augmenter la quantité</span>
+                    <span aria-hidden="true">+</span>
+                  </button>
+                </div>
+
+                <button type="button" class="remove" (click)="remove(item)">Retirer</button>
+              </div>
+            </div>
+
+            <strong class="item-price u-price">
+              {{ item.product.price * item.quantity | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+            </strong>
+          </li>
+        }
+      </ul>
+
+      <aside class="summary">
+        <h2 class="u-label">Récapitulatif</h2>
+
+        <div class="line">
+          <span>Sous-total</span>
+          <span class="u-price">{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+        </div>
+        <div class="line">
+          <span>Livraison</span>
+          <span class="u-price">
+            @if (cartStore.deliveryFee() === 0) {
+              Offerte
+            } @else {
+              {{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+            }
+          </span>
+        </div>
+
+        @if (cartStore.deliveryFee() > 0) {
+          <p class="shipping-hint">Livraison offerte à partir de 100 €.</p>
+        }
+
+        <div class="line total">
+          <span>Total</span>
+          <strong class="u-price">{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+
+        <button type="button" class="u-btn u-btn--solid checkout" (click)="proceedToCheckout()">
+          Passer la commande
+        </button>
+
+        <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link('shop')">
+          Continuer mes achats
+        </a>
+      </aside>
     </div>
-
-    <aside class="summary">
-      <div>
-        <span>Sous-total</span>
-        <strong>{{ cartStore.subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-      <div>
-        <span>Livraison</span>
-        <strong>{{ cartStore.deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-      <div class="total">
-        <span>Total</span>
-        <strong>{{ cartStore.total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      </div>
-
-      <button type="button" (click)="proceedToCheckout()">Passer commande</button>
-    </aside>
   }
 </section>

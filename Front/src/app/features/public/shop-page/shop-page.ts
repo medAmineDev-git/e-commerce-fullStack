@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,7 +21,7 @@ export class ShopPage {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly catalogStore = inject(PublicCatalogStore);
-  readonly draftSearch = signal('');
+  readonly filtersOpen = signal(false);
   readonly isCategoryPage =
     this.route.snapshot.paramMap.has('category') || this.route.snapshot.queryParamMap.has('category');
 
@@ -44,7 +44,7 @@ export class ShopPage {
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const q = params.get('q') ?? '';
+
       const categoryRaw = params.get('category') ?? this.route.snapshot.paramMap.get('category') ?? 'Tous';
       const subcategory = params.get('subcategory') ?? '';
       const season = params.get('season') ?? '';
@@ -63,11 +63,10 @@ export class ShopPage {
         : 'desc';
       const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
 
-      this.draftSearch.set(q);
       this.isSyncingFromUrl = true;
       void this.catalogStore
         .applyQueryState({
-          q,
+
           category,
           subcategory,
           season,
@@ -79,11 +78,6 @@ export class ShopPage {
           this.isSyncingFromUrl = false;
         });
     });
-  }
-
-  applySearch(): void {
-    this.catalogStore.setSearchTerm(this.draftSearch());
-    this.syncUrl({ q: this.draftSearch(), page: 1 });
   }
 
   setCategory(value: string): void {
@@ -118,6 +112,18 @@ export class ShopPage {
     this.syncUrl({ sortBy, sortDirection: nextDirection, page: 1 });
   }
 
+  toggleFilters(): void {
+    this.filtersOpen.update((open) => !open);
+  }
+
+  /** Nombre de filtres secondaires actifs, affiche sur le bouton Filtrer. */
+  readonly activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.catalogStore.selectedSubcategory()) count++;
+    if (this.catalogStore.selectedSeason()) count++;
+    return count;
+  });
+
   openProduct(product: PublicProduct): void {
     void this.router.navigate(this.storeContext.link('product', product.id));
   }
@@ -134,12 +140,11 @@ export class ShopPage {
 
   clearAll(): void {
     this.catalogStore.resetFilters();
-    this.draftSearch.set('');
-    this.syncUrl({ q: '', category: 'Tous', sortBy: 'id', sortDirection: 'desc', page: 1 });
+    this.syncUrl({ category: 'Tous', sortBy: 'id', sortDirection: 'desc', page: 1 });
   }
 
   private syncUrl(changes: {
-    q?: string;
+
     category?: string;
     subcategory?: string;
     season?: string;
@@ -152,7 +157,7 @@ export class ShopPage {
     }
 
     const queryParams = {
-      q: changes.q ?? this.catalogStore.searchTerm(),
+
       category: changes.category ?? this.catalogStore.selectedCategory(),
       subcategory: changes.subcategory ?? this.catalogStore.selectedSubcategory(),
       season: changes.season ?? this.catalogStore.selectedSeason(),

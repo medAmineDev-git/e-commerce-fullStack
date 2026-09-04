@@ -52,6 +52,7 @@ describe('HomePage', () => {
           provide: StoreContextService,
           useValue: {
             slug: () => 'nova',
+            store: () => ({ id: 1, name: 'NOVA', slug: 'nova', description: null, logoUrl: null, bannerUrl: null, phone: null, email: null, address: null, domain: null }),
             link: (...segments: (string | number)[]) => ['/boutique', 'nova', ...segments],
           },
         },
@@ -79,14 +80,17 @@ describe('HomePage', () => {
   it('should open category and navigate to shop', () => {
     component.openCategory('Homme');
 
-    expect(mockCatalogStore.setCategory).toHaveBeenCalledWith('Homme');
     expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'shop'], {
       queryParams: { category: 'Homme' },
     });
   });
 
-  it('should add product to cart', () => {
-    component.addToCart(mockCatalogStore.products()[0]);
-    expect(mockCartStore.addItem).toHaveBeenCalledWith(mockCatalogStore.products()[0], 1);
+  /**
+   * Depuis l'accueil on ouvre la fiche produit, on n'ajoute pas au panier :
+   * un vetement se choisit avec sa taille et sa couleur.
+   */
+  it('should open the product sheet', () => {
+    component.openProduct(mockCatalogStore.products()[0]);
+    expect(navigateSpy).toHaveBeenCalledWith(['/boutique', 'nova', 'product', 1]);
   });
 });

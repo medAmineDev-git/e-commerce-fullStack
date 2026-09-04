@@ -12,7 +12,6 @@ type CatalogState = {
   products: PublicProduct[];
   loading: boolean;
   error: string | null;
-  searchTerm: string;
   selectedCategory: PublicCategory | 'Tous';
   selectedSubcategory: string;
   selectedSeason: string;
@@ -27,7 +26,6 @@ type CatalogState = {
 };
 
 export type CatalogQueryState = {
-  q: string;
   category: PublicCategory | 'Tous';
   subcategory?: string;
   season?: string;
@@ -40,7 +38,6 @@ const initialState: CatalogState = {
   products: [],
   loading: false,
   error: null,
-  searchTerm: '',
   selectedCategory: 'Tous',
   selectedSubcategory: '',
   selectedSeason: '',
@@ -100,7 +97,7 @@ export const PublicCatalogStore = signalStore(
       patchState(store, { loading: true, error: null });
       try {
         const page = await catalogService.listProductsPage({
-          query: store.searchTerm(),
+          query: '',
           category: store.selectedCategory(),
           subcategory: store.selectedSubcategory(),
           season: store.selectedSeason(),
@@ -127,7 +124,7 @@ export const PublicCatalogStore = signalStore(
     return {
       async applyQueryState(queryState: CatalogQueryState): Promise<void> {
         patchState(store, {
-          searchTerm: queryState.q,
+
           selectedCategory: queryState.category,
           selectedSubcategory: queryState.subcategory ?? '',
           selectedSeason: queryState.season ?? '',
@@ -147,11 +144,6 @@ export const PublicCatalogStore = signalStore(
           patchState(store, { availableCategories: [] });
         }
         await fetchPage();
-      },
-
-      setSearchTerm(searchTerm: string): void {
-        patchState(store, { searchTerm, pageIndex: 0 });
-        void fetchPage();
       },
 
       setCategory(category: PublicCategory | 'Tous'): void {
@@ -191,7 +183,7 @@ export const PublicCatalogStore = signalStore(
 
       resetFilters(): void {
         patchState(store, {
-          searchTerm: '',
+
           selectedCategory: 'Tous',
           selectedSubcategory: '',
           selectedSeason: '',

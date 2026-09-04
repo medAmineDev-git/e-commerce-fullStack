@@ -92,28 +92,26 @@ describe('PublicCatalogStore', () => {
     expect(store.loading()).toBe(false);
   });
 
-  it('should filter by search term and category', async () => {
+  it('should filter by category', async () => {
     await store.loadProducts();
 
-    store.setSearchTerm('sneaker');
     await Promise.resolve();
+    // La recherche textuelle a ete retiree de la vitrine : la requete part
+    // toujours sans terme, seuls les filtres jouent.
     expect(service.listProductsPage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ query: 'sneaker', page: 0 }),
+      expect.objectContaining({ query: '', page: 0 }),
     );
 
     store.setCategory('Homme');
     await store.applyQueryState({
-      q: 'sneaker',
       category: 'Homme',
       sortBy: 'id',
       sortDirection: 'desc',
       page: 0,
     });
-    expect(store.totalFiltered()).toBe(0);
-
-    store.setSearchTerm('');
     await Promise.resolve();
     expect(store.totalFiltered()).toBe(1);
+    expect(store.selectedCategory()).toBe('Homme');
   });
 
   it('should toggle sort direction and reset filters', async () => {
@@ -126,11 +124,9 @@ describe('PublicCatalogStore', () => {
     store.setSort('price');
     expect(store.sortDirection()).toBe('desc');
 
-    store.setSearchTerm('a');
     store.setCategory('Sneakers');
     store.resetFilters();
 
-    expect(store.searchTerm()).toBe('');
     expect(store.selectedCategory()).toBe('Tous');
     expect(store.sortBy()).toBe('id');
     expect(store.sortDirection()).toBe('desc');

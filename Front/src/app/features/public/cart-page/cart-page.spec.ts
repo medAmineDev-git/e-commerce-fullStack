@@ -54,6 +54,7 @@ describe('CartPage', () => {
           provide: StoreContextService,
           useValue: {
             slug: () => 'nova',
+            store: () => ({ id: 1, name: 'NOVA', slug: 'nova', description: null, logoUrl: null, bannerUrl: null, phone: null, email: null, address: null, domain: null }),
             link: (...segments: (string | number)[]) => ['/boutique', 'nova', ...segments],
           },
         },

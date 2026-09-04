@@ -1,183 +1,188 @@
 @if (loading()) {
-  <p class="state">Chargement du produit...</p>
-} @else if (error()) {
-  <section class="state-card">
-    <h2>{{ error() }}</h2>
-    <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
-  </section>
-} @else if (!product()) {
-  <section class="state-card">
-    <h2>Produit introuvable</h2>
-    <a [routerLink]="storeContext.link('shop')">Retour au shop</a>
+  <div class="detail-skeleton u-shell" aria-busy="true">
+    <div class="u-media"></div>
+    <div class="lines">
+      <span></span>
+      <span class="short"></span>
+    </div>
+  </div>
+} @else if (error() || !product()) {
+  <section class="state u-shell">
+    <h1 class="u-display">{{ error() ?? 'Produit introuvable' }}</h1>
+    <a class="u-btn u-btn--outline" [routerLink]="storeContext.link('shop')">Retour à la boutique</a>
   </section>
 } @else {
-  <section class="product-wrap">
-    <div class="top-actions">
-      <button type="button" class="back-link" (click)="goBack()">Retour</button>
-      <a [routerLink]="storeContext.link('shop')">Voir le shop</a>
-    </div>
-
-    <div class="gallery">
-      <img
-        class="hero-image"
-        [src]="imageHasSource() ? currentImage() : fallbackImage"
-        [alt]="product()!.name"
-        (error)="onMainImageError()"
-      />
-      <div class="thumbs">
+  <article class="product">
+    <!-- Galerie plein cadre : sur mobile l'image se fait glisser, comme dans
+         une application photo, plutôt que de miniaturiser le vêtement. -->
+    <section class="gallery" aria-label="Photos du produit">
+      <div class="gallery-track">
         @for (image of product()!.gallery; track image) {
-          <button type="button" (click)="selectImage(image)">
-            <img [src]="image" [alt]="product()!.name" (error)="onMainImageError()" />
-          </button>
+          <div class="gallery-slide u-media">
+            <img
+              [src]="image"
+              [alt]="product()!.name"
+              (error)="onMainImageError()"
+              [attr.fetchpriority]="$first ? 'high' : null"
+              [attr.loading]="$first ? null : 'lazy'"
+            />
+          </div>
         }
       </div>
-    </div>
+    </section>
 
-    <article class="details">
-      <p class="category">{{ product()!.category }}</p>
-      <h1>{{ product()!.name }}</h1>
-      <p class="desc">{{ product()!.longDescription }}</p>
+    <div class="detail u-shell">
+      <nav class="crumbs" aria-label="Fil d'Ariane">
+        <a [routerLink]="storeContext.link('shop')">Boutique</a>
+        <span aria-hidden="true">/</span>
+        <span>{{ product()!.category }}</span>
+      </nav>
 
-      <div class="rating">{{ product()!.rating | number: '1.1-1' }}/5 - {{ product()!.reviewsCount }} avis</div>
-
-      <div class="price-row">
-        <strong>{{ product()!.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-        @if (product()!.originalPrice) {
-          <span>{{ product()!.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
-        }
-      </div>
-
-      <section class="variant-block">
-        <p>Couleur</p>
-        <div class="color-list">
-          @for (color of product()!.colors ?? []; track color.name) {
-            <button
-              type="button"
-              class="color-dot"
-              [class.active]="selectedColor()?.name === color.name"
-              [title]="color.name"
-              [attr.aria-label]="color.name"
-              [style.background]="color.hex"
-              (click)="selectColor(color)"
-            ></button>
+      <header class="title-block">
+        <h1 class="u-display">{{ product()!.name }}</h1>
+        <p class="price-row">
+          <span class="u-price price-now">
+            {{ product()!.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+          </span>
+          @if (product()!.originalPrice) {
+            <span class="u-price-was">
+              {{ product()!.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+            </span>
           }
-        </div>
-        <small>{{ selectedColor()?.name ?? 'Choisir une couleur' }}</small>
-      </section>
+        </p>
+      </header>
+
+      @if ((product()!.colors?.length ?? 0) > 0) {
+        <section class="variant">
+          <p class="u-label">
+            Couleur
+            @if (selectedColor()) {
+              <span class="variant-value">&middot; {{ selectedColor()!.name }}</span>
+            }
+          </p>
+          <div class="swatch-row">
+            @for (color of product()!.colors ?? []; track color.name) {
+              <button
+                type="button"
+                class="swatch"
+                [class.selected]="selectedColor()?.name === color.name"
+                [style.background]="color.hex"
+                [attr.aria-label]="color.name"
+                [attr.aria-pressed]="selectedColor()?.name === color.name"
+                (click)="selectColor(color)"
+              ></button>
+            }
+          </div>
+        </section>
+      }
 
       @if (hasSizes()) {
-        <section class="variant-block">
-          <p>Taille</p>
-          <div class="color-list">
+        <section class="variant">
+          <p class="u-label">
+            Taille
+            @if (selectedSize()) {
+              <span class="variant-value">&middot; {{ selectedSize() }}</span>
+            }
+          </p>
+          <div class="size-row">
             @for (size of product()!.sizes ?? []; track size) {
               <button
                 type="button"
-                class="size-chip"
-                [class.active]="selectedSize() === size"
-                [attr.aria-label]="'Taille ' + size"
+                class="size"
+                [class.selected]="selectedSize() === size"
+                [attr.aria-pressed]="selectedSize() === size"
                 (click)="selectSize(size)"
               >
                 {{ size }}
               </button>
             }
           </div>
-          <small>{{ selectedSize() ?? 'Choisir une taille' }}</small>
         </section>
       }
 
-      <label class="quantity">
-        Quantite
-        <input type="number" min="1" [value]="quantity()" (input)="setQuantity($any($event.target).value)" />
-      </label>
-
-      <section class="purchase-recap">
-        <h2>Recap achat</h2>
-        <div>
-          <span>Prix unitaire</span>
-          <strong>{{ unitPrice() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      <section class="variant">
+        <p class="u-label">Quantité</p>
+        <div class="stepper">
+          <button type="button" (click)="setQuantity(quantity() - 1)" [disabled]="quantity() <= 1">
+            <span class="u-sr-only">Diminuer</span>
+            <span aria-hidden="true">&minus;</span>
+          </button>
+          <span class="stepper-value">{{ quantity() }}</span>
+          <button
+            type="button"
+            (click)="setQuantity(quantity() + 1)"
+            [disabled]="quantity() >= product()!.stockQuantity"
+          >
+            <span class="u-sr-only">Augmenter</span>
+            <span aria-hidden="true">+</span>
+          </button>
         </div>
-        <div>
-          <span>Sous-total ({{ quantity() }}x)</span>
-          <strong>{{ subTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-        </div>
-        <div>
-          <span>Livraison</span>
-          <strong>{{ deliveryFee() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-        </div>
-        <div class="recap-total">
-          <span>Total</span>
-          <strong>{{ orderTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-        </div>
-      </section>
-
-      @if (hasAddedToCart()) {
-        <button type="button" class="cta secondary" disabled>Produit Ajouté au Panier</button>
-        <button type="button" class="cta secondary" (click)="goToCheckout()">Passer la commande</button>
-        <p class="added-state">Produit ajoute au panier. Panier actuel: {{ cartCount() }} article(s).</p>
-      } @else {
-        <button type="button" class="cta" [disabled]="!canAddToCart()" (click)="addToCart()">
-          Ajouter au panier - {{ formatPrice(orderTotal()) }}
-        </button>
-        <p class="added-state muted">
-          @if (requiresSizeSelection()) {
-            Choisis une taille pour activer l'ajout au panier.
-          } @else {
-            Sélectionne une couleur si besoin, puis ajoute au panier.
-          }
-        </p>
-      }
-      <p class="stock">Stock disponible: {{ product()!.stockQuantity }}</p>
-
-      <ul class="benefits">
-        <li>Livraison en 48-72h</li>
-        <li>Paiement a la livraison</li>
-        <li>Retour possible sous 7 jours</li>
-      </ul>
-
-      <div class="trust-strip">
-        <span>Commande confirmee par SMS</span>
-        <span>Support client 6j/7</span>
-        <span>Colis controle avant expedition</span>
-      </div>
-
-      <section class="reviews">
-        <div class="section-title">
-          <h2>Avis clients</h2>
-          <span>{{ product()!.reviews?.length ?? 0 }} retours</span>
-        </div>
-        @for (review of product()!.reviews ?? []; track review.author + review.date) {
-          <article class="review-card">
-            <div class="review-header">
-              <strong>{{ review.author }}</strong>
-              <span>{{ review.date }}</span>
-            </div>
-            <div class="review-rating">{{ review.rating }}/5</div>
-            <p>{{ review.comment }}</p>
-          </article>
+        @if (product()!.stockQuantity <= 3) {
+          <p class="low-stock">Plus que {{ product()!.stockQuantity }} en stock</p>
         }
       </section>
 
+      <section class="description">
+        <p>{{ product()!.longDescription }}</p>
+      </section>
+
+      <dl class="assurances">
+        <div>
+          <dt>Livraison</dt>
+          <dd>48 à 72 heures</dd>
+        </div>
+        <div>
+          <dt>Paiement</dt>
+          <dd>À la livraison ou par virement</dd>
+        </div>
+        <div>
+          <dt>Retour</dt>
+          <dd>Sous 7 jours</dd>
+        </div>
+      </dl>
+
       @if (relatedProducts().length > 0) {
-        <section>
-          <div class="section-title">
-            <h2>Produits similaires</h2>
-            <span>{{ relatedProducts().length }} suggestions</span>
-          </div>
-          <div class="similar-grid">
+        <section class="related">
+          <h2 class="u-display">Dans la même catégorie</h2>
+          <div class="related-row">
             @for (item of relatedProducts(); track item.id) {
-              <article class="similar-card">
-                <img [src]="item.imageUrl" [alt]="item.name" />
-                <div>
-                  <p>{{ item.category }}</p>
-                  <h3>{{ item.name }}</h3>
-                  <strong>{{ item.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-                  <button type="button" (click)="openProduct(item.id)">Voir la fiche</button>
-                </div>
-              </article>
+              <button type="button" class="related-card" (click)="openProduct(item.id)">
+                <span class="u-media">
+                  <img [src]="item.imageUrl" [alt]="item.name" loading="lazy" />
+                </span>
+                <span class="related-name">{{ item.name }}</span>
+                <span class="u-price">{{ item.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+              </button>
             }
           </div>
         </section>
       }
-    </article>
-  </section>
+    </div>
+  </article>
+
+  <!-- Barre d'achat ancrée : le geste principal reste sous le pouce, quelle que
+       soit la longueur de la fiche. -->
+  <div class="buy-bar">
+    <div class="buy-bar-inner u-shell">
+      <div class="buy-total">
+        <span class="u-label">Total</span>
+        <strong class="u-price">{{ orderTotal() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      </div>
+
+      @if (hasAddedToCart()) {
+        <button type="button" class="u-btn u-btn--solid buy-cta" (click)="goToCheckout()">
+          Passer la commande
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="u-btn u-btn--solid buy-cta"
+          [disabled]="!canAddToCart()"
+          (click)="addToCart()"
+        >
+          {{ requiresSizeSelection() ? 'Choisir une taille' : 'Ajouter au panier' }}
+        </button>
+      }
+    </div>
+  </div>
 }

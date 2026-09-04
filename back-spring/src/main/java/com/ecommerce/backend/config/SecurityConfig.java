@@ -60,8 +60,16 @@ public class SecurityConfig {
                 // distinguer "connecte-toi" de "tu n'as pas le droit", et ne sait donc
                 // pas s'il doit rafraichir son jeton.
                 .exceptionHandling(handling -> handling
+                        // 401 : personne n'est identifie, il faut se connecter ou
+                        // rafraichir son jeton.
                         .authenticationEntryPoint((request, response, exception) ->
                                 response.sendError(HttpStatus.UNAUTHORIZED.value(), "Authentication required"))
+                        // 403 : l'appelant est identifie mais n'a pas le droit.
+                        // Sans ce gestionnaire explicite, le refus retombait sur le
+                        // point d'entree ci-dessus et sortait en 401 : le client
+                        // tentait alors un rafraichissement qui ne pouvait rien changer.
+                        .accessDeniedHandler((request, response, exception) ->
+                                response.sendError(HttpStatus.FORBIDDEN.value(), "Access denied"))
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();

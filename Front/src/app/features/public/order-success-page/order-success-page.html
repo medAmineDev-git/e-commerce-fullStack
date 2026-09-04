@@ -1,22 +1,31 @@
-<section class="success-wrap">
-  <p class="ok">Commande confirmee</p>
-  <h1>Merci pour ton achat</h1>
-  <p class="meta">Numero: {{ orderId() }}</p>
+<section class="success u-shell">
+  <p class="u-label confirmed">Commande confirmée</p>
+  <h1 class="u-display">Merci pour votre commande</h1>
+  <p class="reference">
+    Numéro <strong>{{ orderId() }}</strong>
+  </p>
 
-  <div class="card">
+  <dl class="recap">
     <div>
-      <span>Total</span>
-      <strong>{{ total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+      <dt>Total</dt>
+      <dd class="u-price">{{ total() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</dd>
     </div>
     <div>
-      <span>Livraison estimee</span>
-      <strong>{{ eta() }}</strong>
+      <dt>Livraison estimée</dt>
+      <dd>{{ eta() }}</dd>
     </div>
-    <p>Paiement a la livraison: reglement au moment de reception.</p>
-  </div>
+    <div>
+      <dt>Paiement</dt>
+      <dd>À la réception</dd>
+    </div>
+  </dl>
+
+  <p class="note">
+    Vous n'avez rien à régler maintenant. La boutique vous contacte pour confirmer la livraison.
+  </p>
 
   <div class="actions">
-    <a [routerLink]="storeContext.link('shop')">Continuer mes achats</a>
-    <a [routerLink]="storeContext.link()">Retour à la boutique</a>
+    <a class="u-btn u-btn--solid" [routerLink]="storeContext.link('shop')">Continuer mes achats</a>
+    <a class="u-btn u-btn--quiet" [routerLink]="storeContext.link()">Retour à la boutique</a>
   </div>
 </section>

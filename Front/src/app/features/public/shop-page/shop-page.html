@@ -1,101 +1,170 @@
-<section class="toolbar">
-  <div class="search-wrap">
-    <input
-      type="search"
-      placeholder="Recherche produit..."
-      [value]="draftSearch()"
-      (input)="draftSearch.set($any($event.target).value)"
-      (keyup.enter)="applySearch()"
-    />
-    <button type="button" (click)="applySearch()">OK</button>
-  </div>
+<header class="shop-head u-shell">
+  <h1 class="u-display">{{ catalogStore.selectedCategory() === 'Tous' ? 'La boutique' : catalogStore.selectedCategory() }}</h1>
+  <p class="u-label">{{ catalogStore.totalFiltered() }} article(s)</p>
+</header>
 
-  <div class="filter-row">
+<div class="filter-bar u-shell">
+  <div class="chip-row" role="group" aria-label="Catégories">
     @if (!isCategoryPage) {
-      <select [value]="catalogStore.selectedCategory()" (change)="setCategory($any($event.target).value)">
-        @for (category of catalogStore.categories(); track category) {
-          <option [value]="category">{{ category }}</option>
-        }
-      </select>
+      @for (category of catalogStore.categories(); track category) {
+        <button
+          type="button"
+          class="chip"
+          [class.selected]="catalogStore.selectedCategory() === category"
+          (click)="setCategory(category)"
+        >
+          {{ category }}
+        </button>
+      }
     }
-
-    <select [value]="catalogStore.selectedSubcategory()" (change)="setSubcategory($any($event.target).value)" [disabled]="!catalogStore.subcategories().length">
-      <option value="">Toutes les sous-catégories</option>
-      @for (subcategory of catalogStore.subcategories(); track subcategory) {
-        <option [value]="subcategory">{{ subcategory }}</option>
-      }
-    </select>
-
-    <select [value]="catalogStore.selectedSeason()" (change)="setSeason($any($event.target).value)">
-      <option value="">Toutes les saisons</option>
-      <option value="Printemps">Printemps</option>
-      <option value="Été">Été</option>
-      <option value="Automne">Automne</option>
-      <option value="Hiver">Hiver</option>
-    </select>
-
-    <select [value]="catalogStore.sortBy()" (change)="setSort($any($event.target).value)">
-      @for (opt of sortOptions; track opt.value) {
-        <option [value]="opt.value">{{ opt.label }}</option>
-      }
-    </select>
-
-    <button type="button" class="sort-dir" (click)="toggleSort()">
-      {{ catalogStore.sortDirection() === 'asc' ? 'Asc' : 'Desc' }}
-    </button>
-
-    <button type="button" class="clear-btn" (click)="clearAll()">Reset</button>
   </div>
-</section>
 
-@if (catalogStore.loading()) {
-  <p class="state">Chargement...</p>
-} @else if (catalogStore.totalFiltered() === 0) {
-  <p class="state">Aucun produit trouve. Essaie une autre recherche.</p>
-} @else {
-  <section class="grid">
-    @for (product of catalogStore.pagedProducts(); track product.id) {
-      <article class="card">
-        @if (product.badge) {
-          <span class="badge">{{ product.badge }}</span>
-        }
-        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" (click)="openProduct(product)" />
-        <div class="body">
-          <p>{{ product.category }}{{ product.subcategory ? ' · ' + product.subcategory : '' }}</p>
-          <h3 (click)="openProduct(product)">{{ product.name }}</h3>
-          @if ((product.colors?.length ?? 0) > 0) {
-            <div class="preview-row">
-              @for (color of product.colors ?? []; track color.name) {
-                <span class="preview-dot" [title]="color.name" [style.background]="color.hex"></span>
-              }
-            </div>
-          }
-          @if ((product.sizes?.length ?? 0) > 0) {
-            <div class="preview-row sizes">
-              @for (size of product.sizes ?? []; track size) {
-                <span>{{ size }}</span>
-              }
-            </div>
-          }
-          <div class="price-line">
-            <strong>{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-            @if (product.originalPrice) {
-              <span>{{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
-            }
-          </div>
-          <button type="button" class="detail-button" (click)="openProduct(product)">
-            Afficher Détail
-          </button>
-        </div>
-      </article>
+  <button type="button" class="filter-toggle" (click)="toggleFilters()">
+    Filtrer
+    @if (activeFilterCount() > 0) {
+      <span class="filter-count">{{ activeFilterCount() }}</span>
     }
-  </section>
+  </button>
+</div>
 
-  <footer class="pager">
-    <span>{{ catalogStore.totalFiltered() }} resultats - page {{ catalogStore.currentPage() }}/{{ catalogStore.totalPages() }}</span>
-    <div>
-      <button type="button" (click)="previousPage()" [disabled]="catalogStore.pageIndex() === 0">Prec</button>
-      <button type="button" (click)="nextPage()" [disabled]="catalogStore.currentPage() >= catalogStore.totalPages()">Suiv</button>
+<!-- Les réglages secondaires sont repliés derrière un panneau : une rangée de
+     listes déroulantes natives mangeait tout l'écran sur mobile. -->
+@if (filtersOpen()) {
+  <div class="sheet-backdrop" (click)="toggleFilters()"></div>
+  <section class="filter-sheet" role="dialog" aria-label="Filtres">
+    <header class="sheet-head">
+      <p class="u-label">Filtrer et trier</p>
+      <button type="button" class="sheet-close" (click)="toggleFilters()">
+        <span class="u-sr-only">Fermer</span>
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </header>
+
+    <div class="sheet-body">
+      @if (catalogStore.subcategories().length) {
+        <label class="field">
+          <span class="u-label">Sous-catégorie</span>
+          <select
+            [value]="catalogStore.selectedSubcategory()"
+            (change)="setSubcategory($any($event.target).value)"
+          >
+            <option value="">Toutes</option>
+            @for (subcategory of catalogStore.subcategories(); track subcategory) {
+              <option [value]="subcategory">{{ subcategory }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <label class="field">
+        <span class="u-label">Saison</span>
+        <select [value]="catalogStore.selectedSeason()" (change)="setSeason($any($event.target).value)">
+          <option value="">Toutes</option>
+          <option value="Printemps">Printemps</option>
+          <option value="Été">Été</option>
+          <option value="Automne">Automne</option>
+          <option value="Hiver">Hiver</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="u-label">Trier par</span>
+        <select [value]="catalogStore.sortBy()" (change)="setSort($any($event.target).value)">
+          @for (option of sortOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+
+      <button type="button" class="u-btn u-btn--outline" (click)="toggleSort()">
+        Ordre : {{ catalogStore.sortDirection() === 'asc' ? 'croissant' : 'décroissant' }}
+      </button>
     </div>
-  </footer>
+
+    <footer class="sheet-foot">
+      <button type="button" class="u-btn u-btn--quiet" (click)="clearAll()">Réinitialiser</button>
+      <button type="button" class="u-btn u-btn--solid" (click)="toggleFilters()">
+        Voir {{ catalogStore.totalFiltered() }} article(s)
+      </button>
+    </footer>
+  </section>
 }
+
+<div class="u-shell">
+  @if (catalogStore.loading()) {
+    <div class="u-product-grid" aria-busy="true">
+      @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {
+        <div class="card-skeleton">
+          <div class="u-media"></div>
+          <span></span>
+          <span class="short"></span>
+        </div>
+      }
+    </div>
+  } @else if (catalogStore.totalFiltered() === 0) {
+    <div class="empty">
+      <p>Aucun article ne correspond à ces filtres.</p>
+      <button type="button" class="u-btn u-btn--outline" (click)="clearAll()">
+        Réinitialiser les filtres
+      </button>
+    </div>
+  } @else {
+    <div class="u-product-grid">
+      @for (product of catalogStore.pagedProducts(); track product.id) {
+        <article class="card">
+          <button type="button" class="card-link" (click)="openProduct(product)">
+            <span class="u-media">
+              <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+              @if (product.originalPrice) {
+                <span class="card-flag">Promo</span>
+              }
+            </span>
+            <span class="card-body">
+              <span class="u-label">{{ product.category }}</span>
+              <span class="card-name">{{ product.name }}</span>
+              <span class="card-price">
+                <span class="u-price">{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+                @if (product.originalPrice) {
+                  <span class="u-price-was">
+                    {{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                  </span>
+                }
+              </span>
+              @if ((product.colors?.length ?? 0) > 1) {
+                <span class="swatches">
+                  @for (color of product.colors ?? []; track color.name) {
+                    <span class="swatch" [style.background]="color.hex" [title]="color.name"></span>
+                  }
+                </span>
+              }
+            </span>
+          </button>
+        </article>
+      }
+    </div>
+
+    @if (catalogStore.totalPages() > 1) {
+      <nav class="pager" aria-label="Pagination">
+        <button
+          type="button"
+          class="u-btn u-btn--outline"
+          (click)="previousPage()"
+          [disabled]="catalogStore.pageIndex() === 0"
+        >
+          Précédent
+        </button>
+        <span class="pager-state">
+          {{ catalogStore.currentPage() }} / {{ catalogStore.totalPages() }}
+        </span>
+        <button
+          type="button"
+          class="u-btn u-btn--outline"
+          (click)="nextPage()"
+          [disabled]="catalogStore.currentPage() >= catalogStore.totalPages()"
+        >
+          Suivant
+        </button>
+      </nav>
+    }
+  }
+</div>
