@@ -1,153 +1,452 @@
 openapi: 3.0.3
 info:
-  title: E-commerce Back Spring API
-  version: 1.0.0
+  title: API multi-boutique
+  version: 2.0.0
   description: |
-    Documentation OpenAPI du backend Spring.
-    Inclut le CRUD produits, la recherche paginee et la route dev de reseed.
+    Plateforme de boutiques en ligne. Trois surfaces distinctes, et rien entre elles.
+
+    - `/api/public/stores/{slug}/**` — vitrine, anonyme, périmètre donné par le slug
+    - `/api/admin/**` — back-office, périmètre donné par le jeton du propriétaire
+    - `/api/platform/**` — exploitation, réservé au rôle plateforme
+
+    **Isolation.** Une ressource appartenant à une autre boutique répond `404`,
+    jamais `403` : le code 403 révélerait son existence. Un appelant identifié
+    mais sans le droit reçoit `403` ; un appelant non identifié reçoit `401`.
+
+    **Jetons.** Le jeton d'accès vit 15 minutes et porte l'identifiant de la
+    boutique. Le jeton de rafraîchissement vit 30 jours et ne porte aucun
+    périmètre : il ne sert qu'à obtenir un nouveau jeton d'accès, ce qui donne
+    un point de passage régulier pour revoir les droits.
+
 servers:
   - url: http://localhost:8080
-    description: Local development
+    description: Développement local
 
 tags:
-  - name: Auth
-    description: Admin authentication
-  - name: Products
-    description: Product CRUD and search
-  - name: Home
-    description: Public home page configuration
-  - name: Categories
-    description: Category CRUD
-  - name: Orders
-    description: Checkout order placement
-  - name: Dev
-    description: Development-only utilities
+  - name: Authentification
+    description: Connexion, inscription d'une boutique, rafraîchissement
+  - name: Vitrine
+    description: Routes publiques d'une boutique, résolues par son slug
+  - name: Back-office
+    description: Gestion de sa propre boutique
+  - name: Plateforme
+    description: Exploitation de l'ensemble des boutiques
 
 paths:
+
+  # ----------------------------------------------------------- authentification
+
   /api/auth/login:
     post:
-      tags: [Auth]
-      summary: Login with username or email
+      tags: [Authentification]
+      summary: Ouvrir une session
+      description: |
+        Accepte le nom d'utilisateur ou l'adresse e-mail. Une boutique désactivée
+        par la plateforme ne délivre plus de jeton à son propriétaire.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier:
+                  type: string
+                  example: alice
+                password:
+                  type: string
+                  format: password
       responses:
         '200':
-          description: Authenticated admin token
+          description: Session ouverte
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '400':
-          description: Invalid credentials or body
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Identifiants invalides, ou boutique désactivée
 
-  /api/products:
-    get:
-      tags: [Products]
-      summary: Get all products
+  /api/auth/refresh:
+    post:
+      tags: [Authentification]
+      summary: Renouveler le jeton d'accès
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
       responses:
         '200':
-          description: Product list
+          description: Nouveaux jetons
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Jeton expiré, révoqué, ou compte supprimé
+
+  /api/auth/register-store:
+    post:
+      tags: [Authentification]
+      summary: Créer un compte et sa boutique
+      description: |
+        Crée le compte, sa boutique, et ouvre la session dans la même opération.
+        Le slug est dérivé du nom ; s'il est réservé ou déjà pris, un suffixe est
+        ajouté. Un compte ne peut détenir qu'une seule boutique.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password, storeName]
+              properties:
+                username: { type: string, minLength: 3, maxLength: 80 }
+                email: { type: string, format: email, maxLength: 160 }
+                password: { type: string, format: password, minLength: 4 }
+                storeName: { type: string, maxLength: 120, example: Atelier Rive Gauche }
+                storeSlug: { type: string, maxLength: 80, description: Facultatif, dérivé du nom sinon }
+                description: { type: string, maxLength: 1500 }
+      responses:
+        '201':
+          description: Boutique créée, session ouverte
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Charge utile invalide, ou nom d'utilisateur déjà pris
+
+  # ----------------------------------------------------------- vitrine
+
+  /api/public/stores/slug-check:
+    get:
+      tags: [Vitrine]
+      summary: Vérifier la disponibilité d'un slug
+      description: |
+        Renvoie le slug qui serait effectivement attribué. Un nom réservé ou déjà
+        pris donne un slug suffixé, et le formulaire l'affiche plutôt que de
+        laisser l'utilisateur découvrir la substitution après coup.
+      security: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema: { type: string }
+          example: Concept Store Marais
+      responses:
+        '200':
+          description: Slug proposé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slug: { type: string, example: concept-store-marais-2 }
+                  available: { type: boolean }
+
+  /api/public/stores/resolve:
+    get:
+      tags: [Vitrine]
+      summary: Résoudre une boutique par son domaine
+      security: []
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Boutique trouvée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicStore' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/public/stores/{slug}:
+    get:
+      tags: [Vitrine]
+      summary: Identité publique de la boutique
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Boutique
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicStore' }
+        '404':
+          description: Boutique inconnue ou désactivée — le serveur ne distingue pas les deux
+
+  /api/public/stores/{slug}/products:
+    get:
+      tags: [Vitrine]
+      summary: Catalogue complet
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Produits de cette boutique
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/ProductResponse'
+                items: { $ref: '#/components/schemas/Product' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/public/stores/{slug}/products/facets:
+    get:
+      tags: [Vitrine]
+      summary: Valeurs de filtrage disponibles
+      description: |
+        Ce sur quoi ce catalogue peut réellement être filtré. Le formulaire se
+        construit à partir d'ici : proposer une taille absente donnerait un
+        résultat vide sans raison compréhensible pour le visiteur.
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Facettes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories: { type: array, items: { type: string } }
+                  sizes: { type: array, items: { type: string } }
+                  minPrice: { type: number, format: double, nullable: true }
+                  maxPrice: { type: number, format: double, nullable: true }
+
+  /api/public/stores/{slug}/products/page:
+    get:
+      tags: [Vitrine]
+      summary: Catalogue filtré et paginé
+      description: |
+        Un critère absent ne filtre pas. Le filtrage, le tri et la pagination
+        sont faits par le serveur : filtrer côté client sur une page déjà
+        découpée donnerait des comptes faux.
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Slug' }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: subcategory, in: query, schema: { type: string } }
+        - { name: season, in: query, schema: { type: string, enum: [Printemps, Été, Automne, Hiver] } }
+        - { name: productSize, in: query, schema: { type: string }, example: M }
+        - { name: minPrice, in: query, schema: { type: number, format: double } }
+        - { name: maxPrice, in: query, schema: { type: number, format: double } }
+        - { name: page, in: query, schema: { type: integer, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, default: 12, maximum: 100 } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [id, name, price, stockQuantity], default: id } }
+        - { name: sortDirection, in: query, schema: { type: string, enum: [asc, desc], default: desc } }
+      responses:
+        '200':
+          description: Page de résultats
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductPage' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/public/stores/{slug}/products/{id}:
+    get:
+      tags: [Vitrine]
+      summary: Fiche produit
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Slug' }
+        - { $ref: '#/components/parameters/Id' }
+      responses:
+        '200':
+          description: Produit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404':
+          description: Produit inconnu, ou appartenant à une autre boutique
+
+  /api/public/stores/{slug}/categories:
+    get:
+      tags: [Vitrine]
+      summary: Catégories de la boutique
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Catégories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Category' }
+
+  /api/public/stores/{slug}/categories/{id}:
+    get:
+      tags: [Vitrine]
+      summary: Une catégorie de la boutique
+      security: []
+      parameters:
+        - { : '#/components/parameters/Slug' }
+        - { : '#/components/parameters/Id' }
+      responses:
+        '200':
+          description: Catégorie
+          content:
+            application/json:
+              schema: { : '#/components/schemas/Category' }
+        '404':
+          description: Inconnue, ou appartenant à une autre boutique
+
+  /api/public/stores/{slug}/home:
+    get:
+      tags: [Vitrine]
+      summary: Configuration de la page d'accueil
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Titre, texte et produit mis en avant
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomeConfiguration' }
+
+  /api/public/stores/{slug}/orders:
     post:
-      tags: [Products]
-      summary: Create a product
+      tags: [Vitrine]
+      summary: Passer une commande
+      description: |
+        Route anonyme : le client n'a pas de compte. Le total est recalculé par
+        le serveur, celui du corps de requête n'est pas retenu. Le stock est
+        décrémenté dans la même transaction.
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ProductRequest'
+            schema: { $ref: '#/components/schemas/OrderRequest' }
       responses:
         '201':
-          description: Product created
+          description: Commande enregistrée
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ProductResponse'
+              schema: { $ref: '#/components/schemas/OrderConfirmation' }
         '400':
-          description: Validation error or malformed body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
+          description: Charge utile invalide, ou stock insuffisant
+        '404':
+          description: Boutique inconnue, ou produit appartenant à une autre boutique
 
-  /api/products/{id}:
+  # ----------------------------------------------------------- back-office
+
+  /api/admin/products:
     get:
-      tags: [Products]
-      summary: Get product by id
-      parameters:
-        - $ref: '#/components/parameters/IdPath'
+      tags: [Back-office]
+      summary: Mon catalogue
       responses:
         '200':
-          description: Product found
+          description: Produits de ma boutique
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ProductResponse'
-        '404':
-          description: Product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-    put:
-      tags: [Products]
-      summary: Update product by id
-      parameters:
-        - $ref: '#/components/parameters/IdPath'
+              schema: { type: array, items: { $ref: '#/components/schemas/Product' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { description: Aucune boutique rattachée à ce compte }
+    post:
+      tags: [Back-office]
+      summary: Publier un produit
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ProductRequest'
+            schema: { $ref: '#/components/schemas/ProductRequest' }
+      responses:
+        '201':
+          description: Produit créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/admin/products/page:
+    get:
+      tags: [Back-office]
+      summary: Mon catalogue, filtré et paginé
+      description: |
+        Même moteur que la vitrine, mais borné à ma boutique par le jeton.
+        Les filtres taille et prix ne sont pas exposés ici.
+      parameters:
+        - { name: category, in: query, schema: { type: string } }
+        - { name: subcategory, in: query, schema: { type: string } }
+        - { name: season, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, default: 12 } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [id, name, price, stockQuantity], default: id } }
+        - { name: sortDirection, in: query, schema: { type: string, enum: [asc, desc], default: desc } }
       responses:
         '200':
-          description: Product updated
+          description: Page de résultats
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ProductResponse'
-        '400':
-          description: Validation error or malformed body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-        '404':
-          description: Product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-    delete:
-      tags: [Products]
-      summary: Delete product by id
-      parameters:
-        - $ref: '#/components/parameters/IdPath'
-      responses:
-        '204':
-          description: Product deleted
-        '404':
-          description: Product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
+              schema: { : '#/components/schemas/ProductPage' }
+        '401': { : '#/components/responses/Unauthorized' }
 
-  /api/products/images:
+  /api/admin/products/{id}:
+    get:
+      tags: [Back-office]
+      summary: Lire un produit
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Produit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404': { description: Inconnu, ou appartenant à une autre boutique }
+    put:
+      tags: [Back-office]
+      summary: Modifier un produit
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductRequest' }
+      responses:
+        '200':
+          description: Produit modifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { description: Inconnu, ou appartenant à une autre boutique }
+    delete:
+      tags: [Back-office]
+      summary: Supprimer un produit
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '204': { description: Supprimé }
+        '404': { description: Inconnu, ou appartenant à une autre boutique }
+
+  /api/admin/products/images:
     post:
-      tags: [Products]
-      summary: Upload a product image
+      tags: [Back-office]
+      summary: Déposer un visuel produit
+      description: |
+        Stockage partitionné par boutique, sous un nom non devinable.
+        Formats acceptés : JPEG, PNG, GIF, WebP. 5 Mo par fichier,
+        200 Mo par boutique.
       requestBody:
         required: true
         content:
@@ -156,528 +455,578 @@ paths:
               type: object
               required: [file]
               properties:
-                file:
-                  type: string
-                  format: binary
+                file: { type: string, format: binary }
       responses:
         '201':
-          description: Image uploaded
+          description: Visuel déposé
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  url:
-                    type: string
-        '400':
-          description: Invalid image or file too large
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-
-  /api/products/page:
-    get:
-      tags: [Products]
-      summary: Search products with pagination and sorting
-      parameters:
-        - name: q
-          in: query
-          required: false
-          schema:
-            type: string
-            default: ''
-          description: Search text in name/description
-        - name: category
-          in: query
-          required: false
-          schema:
-            type: string
-            default: ''
-            enum: ['', Homme, Femme, Sneakers, Accessoires]
-          description: Exact category filter (invalid values ignored by service)
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            minimum: 0
-        - name: size
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 12
-            minimum: 1
-            maximum: 100
-        - name: sortBy
-          in: query
-          required: false
-          schema:
-            type: string
-            default: id
-            enum: [id, name, price, stockQuantity]
-        - name: sortDirection
-          in: query
-          required: false
-          schema:
-            type: string
-            default: desc
-            enum: [asc, desc]
-          - name: season
-            in: query
-            required: false
-            schema:
-              type: string
-              enum: [Printemps, Été, Automne, Hiver]
-            description: Exact season filter
-      responses:
-        '200':
-          description: Paged result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductPageResponse'
-
-  /api/home/configuration:
-    get:
-      tags: [Home]
-      summary: Get home page configuration
-      responses:
-        '200':
-          description: Current home configuration
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HomeConfigurationResponse'
-    put:
-      tags: [Home]
-      summary: Save home page configuration
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HomeConfigurationRequest'
-      responses:
-        '200':
-          description: Configuration saved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HomeConfigurationResponse'
-        '400':
-          description: Validation error or featured product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-
-  /api/categories:
-    get:
-      tags: [Categories]
-      summary: Get all categories
-      responses:
-        '200':
-          description: Category list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CategoryResponse'
-    post:
-      tags: [Categories]
-      summary: Create a category
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CategoryRequest'
-      responses:
-        '201':
-          description: Category created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CategoryResponse'
-        '400':
-          description: Validation error or malformed body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-
-  /api/categories/{id}:
-    get:
-      tags: [Categories]
-      summary: Get category by id
-      parameters:
-        - $ref: '#/components/parameters/IdPath'
-      responses:
-        '200':
-          description: Category found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CategoryResponse'
-        '404':
-          description: Category not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-    put:
-      tags: [Categories]
-      summary: Update category by id
-      parameters:
-        - $ref: '#/components/parameters/IdPath'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CategoryRequest'
-      responses:
-        '200':
-          description: Category updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CategoryResponse'
-        '400':
-          description: Validation error or malformed body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-        '404':
-          description: Category not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
+                  url: { type: string, example: /uploads/products/2/5aZOW7iZZyXJbHLle-IIUw.png }
+        '400': { description: Format refusé, taille dépassée, ou quota atteint }
     delete:
-      tags: [Categories]
-      summary: Delete category by id
+      tags: [Back-office]
+      summary: Supprimer un visuel
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+        - { name: url, in: query, required: true, schema: { type: string } }
       responses:
-        '204':
-          description: Category deleted
-        '404':
-          description: Category not found
+        '204': { description: Supprimé, ou ignoré si le visuel appartient à une autre boutique }
+
+  /api/admin/products/images/usage:
+    get:
+      tags: [Back-office]
+      summary: Espace de stockage consommé
+      responses:
+        '200':
+          description: Usage et quota, en octets
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
+                type: object
+                properties:
+                  usedBytes: { type: integer, format: int64 }
+                  quotaBytes: { type: integer, format: int64 }
 
-  /api/orders:
+  /api/admin/categories:
+    get:
+      tags: [Back-office]
+      summary: Mes catégories
+      responses:
+        '200':
+          description: Catégories
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Category' } }
     post:
-      tags: [Orders]
-      summary: Place checkout order
+      tags: [Back-office]
+      summary: Créer une catégorie
+      description: |
+        Le nom est unique à l'intérieur de la boutique, pas sur la plateforme :
+        deux boutiques peuvent chacune avoir une catégorie « Sneakers ».
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '201':
+          description: Catégorie créée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '400': { description: Charge utile invalide, ou nom déjà utilisé dans cette boutique }
+
+  /api/admin/categories/{id}:
+    get:
+      tags: [Back-office]
+      summary: Lire une catégorie
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Catégorie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+    put:
+      tags: [Back-office]
+      summary: Modifier une catégorie
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '200':
+          description: Catégorie modifiée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+    delete:
+      tags: [Back-office]
+      summary: Supprimer une catégorie
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '204': { description: Supprimée }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+
+  /api/admin/orders:
+    get:
+      tags: [Back-office]
+      summary: Mes commandes
+      parameters:
+        - name: ref
+          in: query
+          description: Filtre sur la référence de l'apporteur d'affaire
+          schema: { type: string, enum: [am, wa] }
+      responses:
+        '200':
+          description: Commandes de ma boutique, les plus récentes d'abord
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/OrderSummary' } }
+
+  /api/admin/orders/{orderNumber}:
+    get:
+      tags: [Back-office]
+      summary: Détail d'une commande
+      parameters: [{ $ref: '#/components/parameters/OrderNumber' }]
+      responses:
+        '200':
+          description: Commande
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderDetail' }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+    put:
+      tags: [Back-office]
+      summary: Changer le statut d'une commande
+      description: |
+        L'appartenance est vérifiée avant la validité du statut : sinon un statut
+        invalide répondrait 400 sur une commande qui, pour cet appelant, n'existe pas.
+      parameters: [{ $ref: '#/components/parameters/OrderNumber' }]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderRequest'
-      responses:
-        '201':
-          description: Order confirmed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderResponse'
-        '400':
-          description: Validation error or malformed body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-
-  /api/dev/catalog/reseed:
-    post:
-      tags: [Dev]
-      summary: Reseed dev catalog (dev profile only)
-      description: Endpoint is registered only when SPRING_PROFILES_ACTIVE=dev.
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - EN_ATTENTE_VALIDATION_ADMIN
+                    - VALIDEE_PAR_LE_CLIENT
+                    - LIVRAISON_EN_COURS
+                    - LIVREE_ET_PAYEE
+                    - RETOURNEE_PAR_LE_CLIENT
+                    - ANNULEE
+                note: { type: string }
       responses:
         '200':
-          description: Catalog reseeded
+          description: Commande mise à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderDetail' }
+        '400': { description: Statut hors de la liste autorisée }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+
+  /api/admin/home/configuration:
+    get:
+      tags: [Back-office]
+      summary: Lire la configuration de ma page d'accueil
+      responses:
+        '200':
+          description: Configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomeConfiguration' }
+    put:
+      tags: [Back-office]
+      summary: Enregistrer la configuration
+      description: Le produit mis en avant doit appartenir à la boutique.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HomeConfiguration' }
+      responses:
+        '200':
+          description: Configuration enregistrée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomeConfiguration' }
+        '404': { description: Produit mis en avant inconnu dans cette boutique }
+
+  /api/admin/store:
+    get:
+      tags: [Back-office]
+      summary: Ma boutique
+      responses:
+        '200':
+          description: Boutique du compte authentifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnedStore' }
+        '404': { description: Aucune boutique rattachée à ce compte }
+    put:
+      tags: [Back-office]
+      summary: Modifier ma boutique
+      description: |
+        Le domaine n'est pas modifiable ici : il est rattaché par la plateforme,
+        car il engage un certificat et une entrée DNS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoreSettings' }
+      responses:
+        '200':
+          description: Boutique mise à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnedStore' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/admin/store/images:
+    post:
+      tags: [Back-office]
+      summary: Déposer un logo ou une bannière
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Visuel déposé
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DevCatalogReseedResponse'
-        '404':
-          description: Endpoint unavailable outside dev profile
+                type: object
+                properties:
+                  url: { type: string }
+        '400': { description: Format refusé ou taille dépassée }
+    delete:
+      tags: [Back-office]
+      summary: Supprimer un visuel de boutique
+      parameters:
+        - { name: url, in: query, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Supprimé }
+
+  # ----------------------------------------------------------- plateforme
+
+  /api/platform/stores:
+    get:
+      tags: [Plateforme]
+      summary: Inventaire des boutiques
+      responses:
+        '200':
+          description: Toutes les boutiques
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
+              schema: { type: array, items: { $ref: '#/components/schemas/StoreSummary' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/platform/stores/{id}/toggle-active:
+    patch:
+      tags: [Plateforme]
+      summary: Activer ou désactiver une boutique
+      description: |
+        Une boutique désactivée ferme sa vitrine et son propriétaire ne peut
+        plus se connecter. Les commandes déjà passées sont conservées.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Nouvel état
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoreSummary' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/platform/stores/{id}/domain:
+    put:
+      tags: [Plateforme]
+      summary: Rattacher un domaine
+      description: |
+        Le domaine devient aussitôt une origine autorisée, sans redéploiement.
+        Un même domaine ne peut servir deux boutiques.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain: { type: string, nullable: true, maxLength: 255, example: boutique.fr }
+      responses:
+        '200':
+          description: Domaine rattaché
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoreSummary' }
+        '400': { description: Domaine déjà rattaché à une autre boutique }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
 components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Jeton d'accès obtenu par `/api/auth/login`, valable 15 minutes.
+
   parameters:
-    IdPath:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+      example: nova
+    Id:
       name: id
       in: path
       required: true
-      schema:
-        type: integer
-        format: int64
+      schema: { type: integer, format: int64 }
+    OrderNumber:
+      name: orderNumber
+      in: path
+      required: true
+      schema: { type: string }
+      example: CMD-B56B3437
+
+  responses:
+    BadRequest:
+      description: Charge utile invalide
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Unauthorized:
+      description: Non authentifié — se connecter ou rafraîchir le jeton
+    Forbidden:
+      description: Authentifié, mais sans le droit
+    NotFound:
+      description: Introuvable
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
 
   schemas:
-    LoginRequest:
+
+    ApiError:
       type: object
-      required: [identifier, password]
       properties:
-        identifier:
-          type: string
-          description: Username or email
-        password:
-          type: string
-          format: password
+        timestamp: { type: string, format: date-time }
+        status: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        path: { type: string }
+        validationErrors:
+          type: object
+          nullable: true
+          additionalProperties: { type: string }
 
     LoginResponse:
       type: object
       properties:
-        accessToken:
-          type: string
-        username:
-          type: string
-        role:
-          type: string
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresInSeconds: { type: integer, format: int64, example: 900 }
+        username: { type: string }
+        role: { type: string, enum: [ROLE_STORE_OWNER, ROLE_SUPER_ADMIN] }
+        storeId: { type: integer, format: int64, nullable: true }
+        storeSlug: { type: string, nullable: true }
+
+    PublicStore:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        logoUrl: { type: string, nullable: true }
+        bannerUrl: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        domain: { type: string, nullable: true }
+
+    OwnedStore:
+      allOf:
+        - $ref: '#/components/schemas/PublicStore'
+        - type: object
+          properties:
+            active: { type: boolean }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+            ownerUsername: { type: string, nullable: true }
+
+    StoreSettings:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 120 }
+        description: { type: string, nullable: true, maxLength: 1500 }
+        logoUrl: { type: string, nullable: true }
+        bannerUrl: { type: string, nullable: true }
+        phone: { type: string, nullable: true, maxLength: 40 }
+        email: { type: string, nullable: true, maxLength: 160 }
+        address: { type: string, nullable: true, maxLength: 500 }
+        domain: { type: string, nullable: true, maxLength: 255 }
+
+    StoreSummary:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        slug: { type: string }
+        domain: { type: string, nullable: true }
+        active: { type: boolean }
+        ownerUsername: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    ProductColor:
+      type: object
+      properties:
+        name: { type: string, example: Noir }
+        hex: { type: string, example: '#000000' }
+
+    Product:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        category: { type: string }
+        subcategory: { type: string, nullable: true }
+        description: { type: string }
+        price: { type: number, format: double }
+        stockQuantity: { type: integer }
+        sku: { type: string, nullable: true }
+        compareAtPrice: { type: number, format: double, nullable: true }
+        status: { type: string, example: ACTIVE }
+        imageUrls: { type: array, items: { type: string } }
+        sizes: { type: array, items: { type: string } }
+        seasons: { type: array, items: { type: string } }
+        colors: { type: array, items: { $ref: '#/components/schemas/ProductColor' } }
+        seoTitle: { type: string, nullable: true }
+        seoDescription: { type: string, nullable: true }
 
     ProductRequest:
       type: object
       required: [name, category, description, price, stockQuantity]
       properties:
-        name:
-          type: string
-          minLength: 1
-        category:
-          type: string
-          minLength: 1
-        subcategory:
-          type: string
-        description:
-          type: string
-          minLength: 1
-        price:
-          type: number
-          format: decimal
-          exclusiveMinimum: 0
-        stockQuantity:
-          type: integer
-          minimum: 0
-        seasons:
-          type: array
-          items:
-            type: string
-            enum: [Printemps, Été, Automne, Hiver]
+        name: { type: string }
+        category: { type: string }
+        subcategory: { type: string }
+        description: { type: string }
+        price: { type: number, format: double, exclusiveMinimum: true, minimum: 0 }
+        stockQuantity: { type: integer, minimum: 0 }
+        sku: { type: string }
+        compareAtPrice: { type: number, format: double, nullable: true }
+        status: { type: string }
+        imageUrls: { type: array, items: { type: string } }
+        sizes: { type: array, items: { type: string } }
+        seasons: { type: array, items: { type: string } }
+        colors: { type: array, items: { $ref: '#/components/schemas/ProductColor' } }
+        seoTitle: { type: string }
+        seoDescription: { type: string }
 
-    ProductResponse:
+    ProductPage:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        category:
-          type: string
-        subcategory:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-          format: decimal
-        stockQuantity:
-          type: integer
-        seasons:
-          type: array
-          items:
-            type: string
-            enum: [Printemps, Été, Automne, Hiver]
+        items: { type: array, items: { $ref: '#/components/schemas/Product' } }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        last: { type: boolean }
+        sortBy: { type: string }
+        sortDirection: { type: string }
+        query: { type: string, description: Toujours vide — la recherche textuelle a été retirée }
+        category: { type: string }
 
-    ProductPageResponse:
+    Category:
       type: object
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductResponse'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-        last:
-          type: boolean
-        sortBy:
-          type: string
-        sortDirection:
-          type: string
-        query:
-          type: string
-        category:
-          type: string
-
-    HomeConfigurationRequest:
-      type: object
-      required: [title, text, featuredProductId]
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 160
-        text:
-          type: string
-          minLength: 1
-          maxLength: 1200
-        featuredProductId:
-          type: integer
-          format: int64
-
-    HomeConfigurationResponse:
-      type: object
-      properties:
-        title:
-          type: string
-        text:
-          type: string
-        featuredProductId:
-          type: integer
-          format: int64
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+        parentId: { type: integer, format: int64, nullable: true }
+        parentName: { type: string, nullable: true }
 
     CategoryRequest:
       type: object
       required: [name, description]
       properties:
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          minLength: 1
-        parentId:
-          type: integer
-          format: int64
-
-    CategoryResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        description:
-          type: string
+        name: { type: string }
+        description: { type: string }
         parentId:
           type: integer
           format: int64
           nullable: true
-        parentName:
-          type: string
-          nullable: true
+          description: Doit appartenir à la même boutique
 
-    OrderRequest:
+    HomeConfiguration:
       type: object
-      required: [customerName, phone, city, address, paymentMethod, items]
       properties:
-        customerName:
-          type: string
-        phone:
-          type: string
-        city:
-          type: string
-        address:
-          type: string
-        note:
-          type: string
-        paymentMethod:
-          type: string
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItemRequest'
-        total:
-          type: number
-          format: decimal
-          description: Ignored by the server; the response total is calculated from current product prices.
+        title: { type: string }
+        text: { type: string }
+        featuredProductId: { type: integer, format: int64, nullable: true }
 
     OrderItemRequest:
       type: object
       required: [productId, quantity]
       properties:
-        productId:
-          type: integer
-          format: int64
-        quantity:
-          type: integer
-          minimum: 1
+        productId: { type: integer, format: int64 }
+        quantity: { type: integer, minimum: 1 }
 
-    OrderResponse:
+    OrderItem:
       type: object
       properties:
-        orderId:
-          type: string
-        estimatedDelivery:
-          type: string
+        productId: { type: integer, format: int64 }
+        productName: { type: string }
+        unitPrice: { type: number, format: double }
+        quantity: { type: integer }
+
+    OrderRequest:
+      type: object
+      required: [customerName, phone, city, address, paymentMethod, items]
+      properties:
+        customerName: { type: string }
+        phone: { type: string }
+        city: { type: string }
+        address: { type: string }
+        note: { type: string }
+        paymentMethod: { type: string, example: cash_on_delivery }
+        items: { type: array, items: { $ref: '#/components/schemas/OrderItemRequest' } }
         total:
           type: number
-          format: decimal
-        status:
-          type: string
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItemResponse'
+          format: double
+          description: Ignoré — le total est recalculé par le serveur
+        publisherRef: { type: string, enum: [am, wa] }
 
-    OrderItemResponse:
+    OrderConfirmation:
       type: object
       properties:
-        productId:
-          type: integer
-          format: int64
-        productName:
-          type: string
-        unitPrice:
-          type: number
-          format: decimal
-        quantity:
-          type: integer
+        orderId: { type: string, example: CMD-B56B3437 }
+        estimatedDelivery: { type: string, example: 07 septembre 2026 }
+        total: { type: number, format: double }
+        status: { type: string }
+        items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
 
-    DevCatalogReseedResponse:
+    OrderSummary:
       type: object
       properties:
-        message:
-          type: string
-        insertedCount:
-          type: integer
+        orderId: { type: string }
+        customerName: { type: string }
+        city: { type: string }
+        paymentMethod: { type: string }
+        publisherRef: { type: string, nullable: true }
+        status: { type: string }
+        estimatedDelivery: { type: string }
+        total: { type: number, format: double }
 
-    ApiErrorResponse:
-      type: object
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        status:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        path:
-          type: string
-        validationErrors:
-          type: object
-          additionalProperties:
-            type: string
+    OrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/OrderSummary'
+        - type: object
+          properties:
+            phone: { type: string }
+            address: { type: string }
+            note: { type: string, nullable: true }
+            items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
+
+security:
+  - bearerAuth: []
