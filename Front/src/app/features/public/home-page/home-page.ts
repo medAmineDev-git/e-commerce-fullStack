@@ -7,6 +7,7 @@ import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
 import { PublicCategory, PublicProduct } from '../../../core/models/public-product.model';
 import { CatalogSortField, PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { SortDirection } from '../../../core/stores/crud-list.helpers';
+import { DEFAULT_BANNER } from '../../../core/models/default-banner';
 
 type StoreHome = { title: string; text: string; featuredProductId: number | null };
 
@@ -45,14 +46,21 @@ export class HomePage {
     () => this.homeConfiguration()?.text ?? this.store()?.description ?? '',
   );
   /**
-   * La tete de page ne porte plus qu'une banniere.
+   * La tete de page ne porte qu'une banniere.
    *
    * Un produit y servait de visuel par defaut : une photo cadree pour une
-   * fiche article, etiree en bandeau, ne disait rien de la boutique. Sans
-   * banniere, le titre et l'accroche tiennent seuls la place.
+   * fiche article, etiree en bandeau, ne disait rien de la boutique.
    */
   readonly bannerDesktop = computed(() => this.store()?.bannerUrl ?? null);
   readonly bannerMobile = computed(() => this.store()?.bannerMobileUrl ?? null);
+
+  /**
+   * Un seul visuel televerse suffit a ecarter les images livrees : melanger le
+   * bandeau du vendeur et notre visuel generique donnerait deux identites a la
+   * meme boutique selon la taille de l'ecran.
+   */
+  readonly hasOwnBanner = computed(() => !!(this.bannerDesktop() || this.bannerMobile()));
+  readonly defaultBanner = DEFAULT_BANNER;
 
   readonly sortOptions = [
     { label: 'Nouveautés', value: 'id' as const },

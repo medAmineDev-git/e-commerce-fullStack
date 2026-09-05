@@ -1,6 +1,6 @@
 <section class="hero">
-  @if (bannerDesktop() || bannerMobile()) {
-    <div class="u-shell">
+  <div class="u-shell">
+    @if (hasOwnBanner()) {
       <picture class="hero-banner">
         @if (bannerMobile() && bannerDesktop()) {
           <source [srcset]="bannerMobile()!" media="(max-width: 47.999rem)" />
@@ -11,18 +11,23 @@
           fetchpriority="high"
         />
       </picture>
-    </div>
-  } @else {
-    <div class="hero-copy u-shell">
-      <h1 class="u-display">{{ heroTitle() }}</h1>
-      @if (heroText()) {
-        <p class="hero-text">{{ heroText() }}</p>
-      }
-      <button type="button" class="u-btn u-btn--solid hero-cta" (click)="scrollToCatalog()">
-        Découvrir la collection
-      </button>
-    </div>
-  }
+    } @else {
+      <!-- Visuel livré, sans rapport avec cette boutique : rien à annoncer. -->
+      <picture class="hero-banner">
+        <source [srcset]="defaultBanner.mobileWebp" media="(max-width: 47.999rem)" type="image/webp" />
+        <source [srcset]="defaultBanner.mobileJpeg" media="(max-width: 47.999rem)" />
+        <source [srcset]="defaultBanner.desktopWebp" type="image/webp" />
+        <img [src]="defaultBanner.desktopJpeg" alt="" fetchpriority="high" />
+      </picture>
+    }
+  </div>
+
+  <div class="hero-copy u-shell">
+    <h1 class="u-display">{{ heroTitle() }}</h1>
+    @if (heroText()) {
+      <p class="hero-text">{{ heroText() }}</p>
+    }
+  </div>
 </section>
 
 <section id="catalogue" class="catalogue" aria-labelledby="catalogue-title">

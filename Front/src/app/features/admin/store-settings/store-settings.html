@@ -152,7 +152,8 @@
               @if (bannerPreview()) {
                 <img [src]="bannerPreview()!" alt="Bannière de la boutique sur ordinateur" />
               } @else {
-                <span class="upload-placeholder">Aucune bannière</span>
+                <img [src]="defaultBanner.desktopJpeg" alt="Bannière par défaut sur ordinateur" />
+                <span class="upload-default-tag">Image par défaut</span>
               }
             </div>
             <div class="upload-actions">
@@ -170,8 +171,10 @@
               }
             </div>
             <span class="hint">
-              Visuel de tête sur écran large. Format allongé conseillé, autour de
-              2400 × 1000 px. JPEG, PNG, GIF ou WebP, 5 Mo maximum.
+              Visuel de tête sur écran large. Tant que vous n'en déposez pas un,
+              l'image ci-dessus est affichée sur votre vitrine. Format allongé
+              conseillé, autour de 2400 × 1000 px. JPEG, PNG, GIF ou WebP,
+              5 Mo maximum.
             </span>
           </div>
 
@@ -180,8 +183,11 @@
             <div class="upload-preview upload-preview--banner-mobile">
               @if (bannerMobilePreview()) {
                 <img [src]="bannerMobilePreview()!" alt="Bannière de la boutique sur mobile" />
+              } @else if (bannerPreview()) {
+                <img [src]="bannerPreview()!" alt="Bannière ordinateur, utilisée sur mobile" />
               } @else {
-                <span class="upload-placeholder">Aucune bannière mobile</span>
+                <img [src]="defaultBanner.mobileJpeg" alt="Bannière par défaut sur mobile" />
+                <span class="upload-default-tag">Image par défaut</span>
               }
             </div>
             <div class="upload-actions">
@@ -201,7 +207,8 @@
             <span class="hint">
               Facultative. Sur téléphone, une bannière large voit son sujet et son
               texte sortir du cadre : composez un visuel plus haut que large, autour
-              de 1080 × 1350 px. Sans ce visuel, la bannière ordinateur est utilisée.
+              de 1080 × 1350 px. Sans ce visuel, votre bannière ordinateur est
+              utilisée ; sans aucune des deux, l'image ci-dessus.
             </span>
           </div>
         </div>

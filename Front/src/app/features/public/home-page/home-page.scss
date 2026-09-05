@@ -47,31 +47,22 @@
   font-size: 0.9375rem;
 }
 
-.hero-cta {
-  margin-top: 0.5rem;
-  align-self: stretch;
-}
 
 @media (min-width: 48rem) {
   .hero {
     margin-bottom: 3.5rem;
   }
 
-  /* Le texte ne se pose plus sur l'image : il ne parait que faute de banniere,
-     et se lit donc sur le fond de page, en couleurs normales. */
+  /* Le texte se lit sous la banniere, sur le fond de page. Pose dessus, il
+     entrait en concurrence avec un visuel dont on ne maitrise pas le contenu. */
   .hero-copy {
-    padding-top: 3rem;
-    padding-bottom: 1rem;
+    padding-top: 2rem;
     gap: 1rem;
 
     h1 {
       font-size: clamp(2.75rem, 5vw, 4rem);
       max-width: 16ch;
     }
-  }
-
-  .hero-cta {
-    align-self: flex-start;
   }
 }
 

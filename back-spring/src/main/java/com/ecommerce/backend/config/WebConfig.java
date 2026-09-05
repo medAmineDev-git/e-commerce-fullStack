@@ -53,6 +53,17 @@ public class WebConfig implements WebMvcConfigurer {
          * Sans cela, le navigateur retelechargeait plus d'un megaoctet de
          * JavaScript a chaque visite.
          */
+        /*
+         * Les bannieres livrees avec le site portent un nom fixe, mais leur
+         * contenu ne change qu'au rythme des versions. Une semaine de cache
+         * evite de retelecharger le visuel de tete a chaque visite, sans
+         * enfermer un remplacement pour autant.
+         */
+        registry.addResourceHandler("/banners/**")
+                .addResourceLocations("classpath:/static/banners/")
+                .setCacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+                .resourceChain(true);
+
         registry.addResourceHandler("/*.js", "/*.css", "/media/**", "/favicon.ico")
                 .addResourceLocations("classpath:/static/")
                 .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())

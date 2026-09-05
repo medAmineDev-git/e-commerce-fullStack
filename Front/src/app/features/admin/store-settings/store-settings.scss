@@ -219,7 +219,23 @@ legend {
 
 /* Le cadre garde sa place même vide : la mise en page ne saute pas
    au moment où l'image arrive. */
+/* L'apercu porte l'etiquette : sans elle, le vendeur croirait avoir deja
+   depose un visuel et ne comprendrait pas de le retrouver sur une autre
+   boutique. */
+.upload-default-tag {
+  position: absolute;
+  inset: auto 0.4rem 0.4rem auto;
+  border-radius: 999px;
+  background: rgba(20, 32, 31, 0.72);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+}
+
 .upload-preview {
+  position: relative;
   border: 1px dashed var(--line-strong, #c2cecc);
   border-radius: 4px;
   background: #f4f6f5;

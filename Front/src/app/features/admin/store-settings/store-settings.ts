@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { StoreAdminService } from '../../../core/services/store-admin.service';
 import { OwnedStore } from '../../../core/models/store.model';
+import { DEFAULT_BANNER } from '../../../core/models/default-banner';
 import { environment } from '../../../../environments/environment';
 
 type ImageSlot = 'logo' | 'banner' | 'bannerMobile';
@@ -51,6 +52,9 @@ export class StoreSettings {
   readonly logoPreview = computed(() => this.absolute(this.logoUrl()));
   readonly bannerPreview = computed(() => this.absolute(this.bannerUrl()));
   readonly bannerMobilePreview = computed(() => this.absolute(this.bannerMobileUrl()));
+
+  /** Ce que voit le visiteur tant que la boutique n'a pas ses propres visuels. */
+  readonly defaultBanner = DEFAULT_BANNER;
 
   constructor() {
     void this.load();
