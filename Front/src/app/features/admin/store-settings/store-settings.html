@@ -57,6 +57,15 @@
           vide n'est simplement pas affichée.
         </p>
 
+        @if (hasPlaceholders()) {
+          <p class="fieldset-notice">
+            <strong>À compléter avant d'ouvrir votre boutique.</strong>
+            Les valeurs entre crochets sont des exemples, visibles en l'état par vos
+            clients. Remplacez-les par vos coordonnées réelles, ou videz le champ
+            pour que la ligne disparaisse du pied de page.
+          </p>
+        }
+
         <label class="field">
           <span class="label">Adresse</span>
           <input

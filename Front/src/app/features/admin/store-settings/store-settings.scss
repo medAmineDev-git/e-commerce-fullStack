@@ -160,6 +160,25 @@ legend {
   max-width: 60ch;
 }
 
+/* Disparait des que les crochets ont ete remplaces : un avertissement
+   permanent finit par ne plus etre lu. */
+.fieldset-notice {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  max-width: 68ch;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
 /* ---------------------------------------------------------- aperçu */
 
 .preview {

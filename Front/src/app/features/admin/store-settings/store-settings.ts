@@ -48,6 +48,17 @@ export class StoreSettings {
     () => !!(this.address().trim() || this.phone().trim() || this.email().trim()),
   );
 
+  /**
+   * Les valeurs proposées à la création portent des crochets. Tant qu'il en
+   * reste, le vendeur publie des exemples : mieux vaut le lui dire ici que le
+   * lui laisser découvrir sur sa vitrine.
+   */
+  readonly hasPlaceholders = computed(() =>
+    [this.address(), this.phone(), this.description()].some(
+      (value) => value.includes('[') && value.includes(']'),
+    ),
+  );
+
   /** Les URL stockées sont relatives à l'API : l'aperçu a besoin de l'origine. */
   readonly logoPreview = computed(() => this.absolute(this.logoUrl()));
   readonly bannerPreview = computed(() => this.absolute(this.bannerUrl()));

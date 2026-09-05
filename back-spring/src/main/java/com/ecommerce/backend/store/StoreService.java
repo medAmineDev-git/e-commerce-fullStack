@@ -131,6 +131,10 @@ public class StoreService {
         store.setActive(true);
         store.setOwner(owner);
 
+        // Le pied de page masque chaque ligne vide : sans cela, la section
+        // Informations n'apparaitrait pas du tout sur une boutique neuve.
+        DefaultStoreInformation.fillBlanks(store);
+
         Store created = storeRepository.save(store);
 
         // Mentions legales, livraison, retours : la vitrine ne s'ouvre pas sur un
