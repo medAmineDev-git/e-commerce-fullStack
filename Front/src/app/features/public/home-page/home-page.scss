@@ -4,23 +4,27 @@
 
 /* ---------------------------------------------------------- tête */
 
-/* Le visuel occupe une hauteur généreuse mais jamais tout l'écran : le titre
-   et le bouton doivent rester visibles sans faire défiler. */
+/* La tête ne porte qu'une bannière — ou, à défaut, le titre de la boutique. */
 .hero {
-  position: relative;
   margin-bottom: 2.5rem;
 }
 
-.hero-media {
-  aspect-ratio: 4 / 5;
-  max-height: 70dvh;
-  background: var(--mist);
-  overflow: hidden;
+/* La banniere s'affiche entiere, jamais recadree.
+   Un bandeau a ratio fixe avec object-fit: cover rognait le visuel : sur
+   telephone, le texte compose dans l'image sortait du cadre. L'image garde
+   donc ses proportions et c'est la hauteur qui suit. */
+.hero-banner {
+  display: block;
 
   img {
+    display: block;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    /* Une image tres haute ne doit pas occuper l'ecran entier : au-dela, elle
+       se contient dans la hauteur sans se faire couper. */
+    max-height: 80dvh;
+    object-fit: contain;
+    margin-inline: auto;
   }
 }
 
@@ -53,17 +57,11 @@
     margin-bottom: 3.5rem;
   }
 
-  .hero-media {
-    aspect-ratio: 21 / 9;
-    max-height: 34rem;
-  }
-
-  /* Sur grand écran le texte se pose sur l'image : c'est là que la composition
-     éditoriale se joue. En dessous, il reste dessous — illisible sinon. */
+  /* Le texte ne se pose plus sur l'image : il ne parait que faute de banniere,
+     et se lit donc sur le fond de page, en couleurs normales. */
   .hero-copy {
-    position: absolute;
-    inset: auto 0 2.5rem 0;
-    padding-top: 0;
+    padding-top: 3rem;
+    padding-bottom: 1rem;
     gap: 1rem;
 
     h1 {
@@ -72,20 +70,8 @@
     }
   }
 
-  .hero-copy h1,
-  .hero-text {
-    color: #ffffff;
-    text-shadow: 0 1px 24px rgba(19, 18, 17, 0.55);
-  }
-
   .hero-cta {
     align-self: flex-start;
-    background: var(--paper);
-    color: var(--ink);
-
-    &:hover:not(:disabled) {
-      background: var(--sunk);
-    }
   }
 }
 

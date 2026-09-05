@@ -6,6 +6,8 @@ export type PublicStore = {
   description: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
+  /** Visuel composé pour l'écran étroit ; absent, la bannière large sert. */
+  bannerMobileUrl: string | null;
   phone: string | null;
   email: string | null;
   address: string | null;
@@ -25,6 +27,8 @@ export type StoreSettingsInput = {
   description: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
+  /** Visuel composé pour l'écran étroit ; absent, la bannière large sert. */
+  bannerMobileUrl: string | null;
   phone: string | null;
   email: string | null;
   address: string | null;

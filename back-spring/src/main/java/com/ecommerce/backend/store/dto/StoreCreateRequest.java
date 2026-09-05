@@ -20,6 +20,9 @@ public record StoreCreateRequest(
         @Size(max = 2000, message = "Banner URL must not exceed 2000 characters")
         String bannerUrl,
 
+        @Size(max = 2000, message = "Mobile banner URL must not exceed 2000 characters")
+        String bannerMobileUrl,
+
         @Size(max = 40, message = "Phone must not exceed 40 characters")
         String phone,
 

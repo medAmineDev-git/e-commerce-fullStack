@@ -244,11 +244,23 @@ legend {
   }
 }
 
+/* L'apercu montre l'image entiere, comme la vitrine : un cadrage different ici
+   laisserait croire que le visuel passe alors qu'il sera recadre en ligne. */
 .upload-preview--banner {
   aspect-ratio: 21 / 9;
 
   img {
-    object-fit: cover;
+    object-fit: contain;
+  }
+}
+
+/* Le visuel mobile se juge dans un cadre etroit, pas sur toute la largeur. */
+.upload-preview--banner-mobile {
+  aspect-ratio: 4 / 5;
+  max-width: 15rem;
+
+  img {
+    object-fit: contain;
   }
 }
 

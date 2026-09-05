@@ -1,21 +1,28 @@
 <section class="hero">
-  <div class="hero-media">
-    @if (store()?.bannerUrl) {
-      <img [src]="store()!.bannerUrl!" [alt]="store()!.name" fetchpriority="high" />
-    } @else if (featured(); as product) {
-      <img [src]="product.imageUrl" [alt]="product.name" fetchpriority="high" />
-    }
-  </div>
-
-  <div class="hero-copy u-shell">
-    <h1 class="u-display">{{ heroTitle() }}</h1>
-    @if (heroText()) {
-      <p class="hero-text">{{ heroText() }}</p>
-    }
-    <button type="button" class="u-btn u-btn--solid hero-cta" (click)="scrollToCatalog()">
-      Découvrir la collection
-    </button>
-  </div>
+  @if (bannerDesktop() || bannerMobile()) {
+    <div class="u-shell">
+      <picture class="hero-banner">
+        @if (bannerMobile() && bannerDesktop()) {
+          <source [srcset]="bannerMobile()!" media="(max-width: 47.999rem)" />
+        }
+        <img
+          [src]="bannerDesktop() ?? bannerMobile()!"
+          [alt]="store()!.name"
+          fetchpriority="high"
+        />
+      </picture>
+    </div>
+  } @else {
+    <div class="hero-copy u-shell">
+      <h1 class="u-display">{{ heroTitle() }}</h1>
+      @if (heroText()) {
+        <p class="hero-text">{{ heroText() }}</p>
+      }
+      <button type="button" class="u-btn u-btn--solid hero-cta" (click)="scrollToCatalog()">
+        Découvrir la collection
+      </button>
+    </div>
+  }
 </section>
 
 <section id="catalogue" class="catalogue" aria-labelledby="catalogue-title">

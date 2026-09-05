@@ -7,6 +7,7 @@ public record StorePublicResponse(
         String description,
         String logoUrl,
         String bannerUrl,
+        String bannerMobileUrl,
         String phone,
         String email,
         String address,

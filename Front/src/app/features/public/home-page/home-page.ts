@@ -44,11 +44,15 @@ export class HomePage {
   readonly heroText = computed(
     () => this.homeConfiguration()?.text ?? this.store()?.description ?? '',
   );
-  readonly featured = computed(() => {
-    const configuredId = this.homeConfiguration()?.featuredProductId;
-    const products = this.catalogStore.pagedProducts();
-    return products.find((product) => product.id === configuredId) ?? products[0] ?? null;
-  });
+  /**
+   * La tete de page ne porte plus qu'une banniere.
+   *
+   * Un produit y servait de visuel par defaut : une photo cadree pour une
+   * fiche article, etiree en bandeau, ne disait rien de la boutique. Sans
+   * banniere, le titre et l'accroche tiennent seuls la place.
+   */
+  readonly bannerDesktop = computed(() => this.store()?.bannerUrl ?? null);
+  readonly bannerMobile = computed(() => this.store()?.bannerMobileUrl ?? null);
 
   readonly sortOptions = [
     { label: 'Nouveautés', value: 'id' as const },

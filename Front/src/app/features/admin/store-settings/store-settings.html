@@ -147,10 +147,10 @@
           </div>
 
           <div class="upload">
-            <span class="label">Bannière</span>
+            <span class="label">Bannière — ordinateur</span>
             <div class="upload-preview upload-preview--banner">
               @if (bannerPreview()) {
-                <img [src]="bannerPreview()!" alt="Bannière de la boutique" />
+                <img [src]="bannerPreview()!" alt="Bannière de la boutique sur ordinateur" />
               } @else {
                 <span class="upload-placeholder">Aucune bannière</span>
               }
@@ -169,7 +169,40 @@
                 <button type="button" class="upload-remove" (click)="removeImage('banner')">Retirer</button>
               }
             </div>
-            <span class="hint">Visuel de tête de la vitrine. JPEG, PNG, GIF ou WebP, 5 Mo maximum.</span>
+            <span class="hint">
+              Visuel de tête sur écran large. Format allongé conseillé, autour de
+              2400 × 1000 px. JPEG, PNG, GIF ou WebP, 5 Mo maximum.
+            </span>
+          </div>
+
+          <div class="upload">
+            <span class="label">Bannière — mobile</span>
+            <div class="upload-preview upload-preview--banner-mobile">
+              @if (bannerMobilePreview()) {
+                <img [src]="bannerMobilePreview()!" alt="Bannière de la boutique sur mobile" />
+              } @else {
+                <span class="upload-placeholder">Aucune bannière mobile</span>
+              }
+            </div>
+            <div class="upload-actions">
+              <label class="upload-button">
+                {{ uploading() === 'bannerMobile' ? 'Envoi…' : bannerMobilePreview() ? 'Remplacer' : 'Choisir un fichier' }}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  [disabled]="uploading() !== null"
+                  (change)="onFileSelected('bannerMobile', $any($event.target))"
+                />
+              </label>
+              @if (bannerMobilePreview()) {
+                <button type="button" class="upload-remove" (click)="removeImage('bannerMobile')">Retirer</button>
+              }
+            </div>
+            <span class="hint">
+              Facultative. Sur téléphone, une bannière large voit son sujet et son
+              texte sortir du cadre : composez un visuel plus haut que large, autour
+              de 1080 × 1350 px. Sans ce visuel, la bannière ordinateur est utilisée.
+            </span>
           </div>
         </div>
       </fieldset>

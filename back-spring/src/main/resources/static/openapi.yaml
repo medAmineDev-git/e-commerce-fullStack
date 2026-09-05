@@ -838,6 +838,7 @@ components:
         description: { type: string, nullable: true }
         logoUrl: { type: string, nullable: true }
         bannerUrl: { type: string, nullable: true }
+        bannerMobileUrl: { type: string, nullable: true }
         phone: { type: string, nullable: true }
         email: { type: string, nullable: true }
         address: { type: string, nullable: true }
@@ -861,6 +862,7 @@ components:
         description: { type: string, nullable: true, maxLength: 1500 }
         logoUrl: { type: string, nullable: true }
         bannerUrl: { type: string, nullable: true }
+        bannerMobileUrl: { type: string, nullable: true }
         phone: { type: string, nullable: true, maxLength: 40 }
         email: { type: string, nullable: true, maxLength: 160 }
         address: { type: string, nullable: true, maxLength: 500 }

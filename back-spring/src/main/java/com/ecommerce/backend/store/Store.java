@@ -34,6 +34,10 @@ public class Store {
     @Column(name = "banner_url", length = 2000)
     private String bannerUrl;
 
+    /** Visuel compose pour l'ecran etroit. Absent, la banniere de bureau sert. */
+    @Column(name = "banner_mobile_url", length = 2000)
+    private String bannerMobileUrl;
+
     @Column(length = 40)
     private String phone;
 

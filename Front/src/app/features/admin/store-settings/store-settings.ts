@@ -4,7 +4,7 @@ import { StoreAdminService } from '../../../core/services/store-admin.service';
 import { OwnedStore } from '../../../core/models/store.model';
 import { environment } from '../../../../environments/environment';
 
-type ImageSlot = 'logo' | 'banner';
+type ImageSlot = 'logo' | 'banner' | 'bannerMobile';
 
 /** Identité de la boutique : ce que voient ses clients sur la vitrine. */
 @Component({
@@ -30,6 +30,15 @@ export class StoreSettings {
   readonly address = signal('');
   readonly logoUrl = signal('');
   readonly bannerUrl = signal('');
+  /** Visuel composé pour l'écran étroit ; à défaut, la bannière large sert. */
+  readonly bannerMobileUrl = signal('');
+
+  /** Chaque emplacement d'image tient dans la même mécanique de téléversement. */
+  private readonly slots: Record<ImageSlot, ReturnType<typeof signal<string>>> = {
+    logo: this.logoUrl,
+    banner: this.bannerUrl,
+    bannerMobile: this.bannerMobileUrl,
+  };
 
   /** Slot en cours de téléversement, pour n'afficher l'attente que sur celui-ci. */
   readonly uploading = signal<ImageSlot | null>(null);
@@ -41,6 +50,7 @@ export class StoreSettings {
   /** Les URL stockées sont relatives à l'API : l'aperçu a besoin de l'origine. */
   readonly logoPreview = computed(() => this.absolute(this.logoUrl()));
   readonly bannerPreview = computed(() => this.absolute(this.bannerUrl()));
+  readonly bannerMobilePreview = computed(() => this.absolute(this.bannerMobileUrl()));
 
   constructor() {
     void this.load();
@@ -58,6 +68,7 @@ export class StoreSettings {
       this.address.set(store.address ?? '');
       this.logoUrl.set(store.logoUrl ?? '');
       this.bannerUrl.set(store.bannerUrl ?? '');
+      this.bannerMobileUrl.set(store.bannerMobileUrl ?? '');
     } catch {
       this.error.set('Impossible de charger les informations de la boutique.');
     } finally {
@@ -81,11 +92,7 @@ export class StoreSettings {
 
     try {
       const { url } = await this.storeAdminService.uploadImage(file);
-      if (slot === 'logo') {
-        this.logoUrl.set(url);
-      } else {
-        this.bannerUrl.set(url);
-      }
+      this.slots[slot].set(url);
     } catch {
       this.error.set(
         "Le fichier n'a pas pu être envoyé. Formats acceptés : JPEG, PNG, GIF, WebP, 5 Mo maximum.",
@@ -98,11 +105,7 @@ export class StoreSettings {
   }
 
   removeImage(slot: ImageSlot): void {
-    if (slot === 'logo') {
-      this.logoUrl.set('');
-    } else {
-      this.bannerUrl.set('');
-    }
+    this.slots[slot].set('');
   }
 
   async save(): Promise<void> {
@@ -123,6 +126,7 @@ export class StoreSettings {
         address: this.address().trim() || null,
         logoUrl: this.logoUrl().trim() || null,
         bannerUrl: this.bannerUrl().trim() || null,
+        bannerMobileUrl: this.bannerMobileUrl().trim() || null,
         // Le domaine est rattaché par la plateforme, pas par le propriétaire :
         // il engage un certificat et une entrée DNS.
         domain: this.store()?.domain ?? null,

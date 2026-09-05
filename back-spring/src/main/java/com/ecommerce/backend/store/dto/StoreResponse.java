@@ -9,6 +9,7 @@ public record StoreResponse(
         String description,
         String logoUrl,
         String bannerUrl,
+        String bannerMobileUrl,
         String phone,
         String email,
         String address,

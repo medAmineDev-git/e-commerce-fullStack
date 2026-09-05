@@ -116,6 +116,7 @@ public class StoreService {
         store.setDescription(request.description());
         store.setLogoUrl(request.logoUrl());
         store.setBannerUrl(request.bannerUrl());
+        store.setBannerMobileUrl(request.bannerMobileUrl());
         store.setPhone(request.phone());
         store.setEmail(request.email());
         store.setAddress(request.address());
@@ -133,6 +134,7 @@ public class StoreService {
         store.setDescription(request.description());
         store.setLogoUrl(request.logoUrl());
         store.setBannerUrl(request.bannerUrl());
+        store.setBannerMobileUrl(request.bannerMobileUrl());
         store.setPhone(request.phone());
         store.setEmail(request.email());
         store.setAddress(request.address());

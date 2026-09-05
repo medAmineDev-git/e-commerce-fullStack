@@ -33,7 +33,7 @@
   --ok: #2b6b46;
 
   --header-h: 3.5rem;
-  --gutter: 1rem;
+  --gutter: 1.25rem;
   --radius: 2px;
 
   --motion-fast: 160ms;
@@ -43,14 +43,14 @@
 
 @media (min-width: 48rem) {
   :root {
-    --gutter: 2rem;
+    --gutter: 3rem;
     --header-h: 4.5rem;
   }
 }
 
 @media (min-width: 80rem) {
   :root {
-    --gutter: 3.5rem;
+    --gutter: 5rem;
   }
 }
 
