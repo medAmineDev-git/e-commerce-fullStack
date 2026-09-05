@@ -16,7 +16,8 @@
         <span matListItemTitle>Vue d'ensemble</span>
       </a>
       <a mat-list-item routerLink="/admin/configuration" routerLinkActive="active-link">
-        <span>Configuration</span>
+        <mat-icon matListItemIcon>tune</mat-icon>
+        <span matListItemTitle>Configuration</span>
       </a>
       <a mat-list-item routerLink="/admin/products" routerLinkActive="active-link">
         <mat-icon matListItemIcon>inventory_2</mat-icon>
@@ -37,7 +38,7 @@
     </mat-nav-list>
   </mat-sidenav>
 
-  <mat-sidenav-content class="admin-content">
+  <mat-sidenav-content class="admin-content admin-scope">
     <router-outlet />
   </mat-sidenav-content>
 </mat-sidenav-container>

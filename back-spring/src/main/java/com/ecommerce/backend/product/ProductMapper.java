@@ -14,9 +14,9 @@ public class ProductMapper {
     public Product toEntity(ProductRequest request) {
         Product product = new Product();
         product.setName(request.name());
-        product.setCategory(request.category());
+        product.setCategory(blankToNull(request.category()));
         product.setSubcategory(blankToNull(request.subcategory()));
-        product.setDescription(request.description());
+        product.setDescription(blankToNull(request.description()));
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
         updateCatalogDetails(product, request);
@@ -25,9 +25,9 @@ public class ProductMapper {
 
     public void updateEntity(Product existing, ProductRequest request) {
         existing.setName(request.name());
-        existing.setCategory(request.category());
+        existing.setCategory(blankToNull(request.category()));
         existing.setSubcategory(blankToNull(request.subcategory()));
-        existing.setDescription(request.description());
+        existing.setDescription(blankToNull(request.description()));
         existing.setPrice(request.price());
         existing.setStockQuantity(request.stockQuantity());
         updateCatalogDetails(existing, request);

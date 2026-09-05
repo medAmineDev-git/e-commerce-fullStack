@@ -10,13 +10,18 @@ public class CategoryMapper {
     public Category toEntity(CategoryRequest request) {
         Category category = new Category();
         category.setName(request.name());
-        category.setDescription(request.description());
+        category.setDescription(blankToNull(request.description()));
         return category;
     }
 
     public void updateEntity(Category category, CategoryRequest request) {
         category.setName(request.name());
-        category.setDescription(request.description());
+        category.setDescription(blankToNull(request.description()));
+    }
+
+    /** Une description vide doit etre absente, pas une chaine vide a afficher. */
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     public CategoryResponse toResponse(Category category) {

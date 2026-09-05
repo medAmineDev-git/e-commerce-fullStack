@@ -62,8 +62,10 @@ export class ProductForm {
     const value = this.model();
     return {
       name: value.name.trim() ? '' : 'Le nom est obligatoire.',
-      category: value.category.trim() ? '' : 'Sélectionnez un catalogue.',
-      description: value.description.trim() ? '' : 'La description est obligatoire.',
+      // Catalogue et description sont facultatifs : un vendeur peut publier un
+      // article avant d'avoir arrêté sa taxonomie ou rédigé son texte.
+      category: '',
+      description: '',
       price: value.price > 0 ? '' : 'Le prix de vente doit être supérieur à 0.',
       compareAtPrice:
         value.compareAtPrice === null || value.compareAtPrice > value.price
@@ -296,6 +298,8 @@ export class ProductForm {
   private toPayload(model: ProductFormModel): ProductInput {
     return {
       ...model,
+      category: model.category.trim(),
+      description: model.description.trim(),
       sku: model.sku.trim(),
       seoTitle: model.seoTitle.trim(),
       seoDescription: model.seoDescription.trim(),

@@ -1,95 +1,198 @@
-<section class="dashboard-header">
-  <div>
-    <p class="eyebrow">Pilotage e-commerce</p>
-    <h1>Tableau de bord</h1>
-    <p>Suivez votre catalogue, votre stock et vos ventes depuis un seul espace.</p>
+<header class="page-head">
+  <div class="page-head__text">
+    <p class="a-label">Pilotage</p>
+    <h1 class="a-title">Tableau de bord</h1>
+    <p class="page-head__lead">Ce qui se vend, ce qui attend une action, ce qui va manquer.</p>
   </div>
-  <div class="header-actions">
-    <a routerLink="/admin/products/new">Ajouter un produit</a>
-    <a class="secondary-action" routerLink="/admin/categories/new">Créer un catalogue</a>
+  <div class="page-head__actions">
+    @if (storeSlug()) {
+      <a class="a-btn a-btn--ghost" [href]="'/boutique/' + storeSlug()" target="_blank" rel="noopener">
+        Voir ma boutique
+      </a>
+    }
+    <a class="a-btn a-btn--outline" routerLink="/admin/categories/new">Nouveau catalogue</a>
+    <a class="a-btn a-btn--primary" routerLink="/admin/products/new">Ajouter un produit</a>
   </div>
-</section>
+</header>
 
 @if (loading()) {
-  <p class="state">Chargement des indicateurs...</p>
+  <div class="skeleton-grid" aria-live="polite" aria-busy="true">
+    <span class="skeleton skeleton--tile"></span>
+    <span class="skeleton skeleton--tile"></span>
+    <span class="skeleton skeleton--tile"></span>
+    <span class="skeleton skeleton--tile"></span>
+    <span class="skeleton skeleton--panel"></span>
+    <span class="skeleton skeleton--panel"></span>
+  </div>
 } @else if (error()) {
-  <section class="state-card">
-    <p>{{ error() }}</p>
-    <button type="button" (click)="retry()">Réessayer</button>
+  <section class="a-card state">
+    <h2 class="state__title">Indicateurs indisponibles</h2>
+    <p class="state__body">{{ error() }}</p>
+    <button type="button" class="a-btn a-btn--primary" (click)="retry()">Réessayer</button>
+  </section>
+} @else if (isBrandNew()) {
+  <section class="a-card onboarding">
+    <p class="a-label">Premiers pas</p>
+    <h2 class="onboarding__title">Votre boutique est prête, il lui manque des articles</h2>
+    <p class="onboarding__body">
+      Publiez un premier produit : il apparaît immédiatement sur votre vitrine, et les
+      indicateurs de vente se remplissent dès la première commande.
+    </p>
+    <ol class="onboarding__steps">
+      <li>
+        <span class="onboarding__rank">1</span>
+        <span>
+          <strong>Ajoutez un produit</strong>
+          <em>Un nom, un prix, une photo. La catégorie et la description sont facultatives.</em>
+        </span>
+      </li>
+      <li>
+        <span class="onboarding__rank">2</span>
+        <span>
+          <strong>Renseignez vos coordonnées</strong>
+          <em>Adresse, téléphone et e-mail s'affichent dans le pied de page de la vitrine.</em>
+        </span>
+      </li>
+      <li>
+        <span class="onboarding__rank">3</span>
+        <span>
+          <strong>Partagez le lien</strong>
+          <em>Vos clients commandent directement, les commandes arrivent ici.</em>
+        </span>
+      </li>
+    </ol>
+    <div class="onboarding__actions">
+      <a class="a-btn a-btn--primary" routerLink="/admin/products/new">Ajouter mon premier produit</a>
+      <a class="a-btn a-btn--outline" routerLink="/admin/configuration">Configurer la boutique</a>
+    </div>
   </section>
 } @else {
-  <section class="metrics">
-    <article class="metric-card">
-      <span>Chiffre d'affaires</span>
-      <strong>{{ revenue() | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</strong>
-      <small>{{ orders().length }} commande(s) enregistrée(s)</small>
+  @if (pendingCount() > 0) {
+    <a class="callout" routerLink="/admin/orders">
+      <span class="callout__dot" aria-hidden="true"></span>
+      <span class="callout__text">
+        <strong>{{ pendingCount() }} commande(s) en attente de validation</strong>
+        <span>Les clients attendent votre confirmation avant expédition.</span>
+      </span>
+      <span class="callout__go" aria-hidden="true">→</span>
+    </a>
+  }
+
+  <section class="metrics" aria-label="Indicateurs clés">
+    <article class="metric">
+      <p class="metric__label">Chiffre d'affaires</p>
+      <p class="metric__value">{{ revenue() | currency: 'EUR' : 'symbol' : '1.0-0' : 'fr' }}</p>
+      <p class="metric__note">
+        Panier moyen {{ averageOrder() | currency: 'EUR' : 'symbol' : '1.0-0' : 'fr' }}
+      </p>
     </article>
-    <article class="metric-card">
-      <span>Produits actifs</span>
-      <strong>{{ products().length }}</strong>
-      <small>{{ categoryCount() }} catalogue(s) structuré(s)</small>
+    <article class="metric">
+      <p class="metric__label">Commandes</p>
+      <p class="metric__value">{{ orders().length | number: '1.0-0' : 'fr' }}</p>
+      <p class="metric__note">
+        @if (pendingCount() > 0) {
+          <span class="a-badge a-badge--warn">{{ pendingCount() }} à traiter</span>
+        } @else {
+          Aucune en attente
+        }
+      </p>
     </article>
-    <article class="metric-card">
-      <span>Unités en stock</span>
-      <strong>{{ inventoryUnits() }}</strong>
-      <small>Sur l'ensemble du catalogue</small>
+    <article class="metric">
+      <p class="metric__label">Produits en ligne</p>
+      <p class="metric__value">{{ products().length | number: '1.0-0' : 'fr' }}</p>
+      <p class="metric__note">{{ categoryCount() }} catalogue(s)</p>
     </article>
-    <article class="metric-card attention">
-      <span>Stock à surveiller</span>
-      <strong>{{ lowStockProducts().length }}</strong>
-      <small>Produit(s) à 10 unités ou moins</small>
+    <article class="metric">
+      <p class="metric__label">Unités en stock</p>
+      <p class="metric__value">{{ inventoryUnits() | number: '1.0-0' : 'fr' }}</p>
+      <p class="metric__note">
+        @if (outOfStockCount() > 0) {
+          <span class="a-badge a-badge--danger">{{ outOfStockCount() }} épuisé(s)</span>
+        } @else {
+          Aucune rupture
+        }
+      </p>
     </article>
   </section>
 
-  <section class="dashboard-grid">
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Alertes de stock</h2>
-          <p>Réapprovisionnez les produits à risque.</p>
-        </div>
-        <a routerLink="/admin/products">Gérer le stock</a>
-      </div>
-      @if (lowStockProducts().length) {
-        <div class="stock-list">
-          @for (product of lowStockProducts(); track product.id) {
-            <div class="stock-row">
-              <div>
-                <strong>{{ product.name }}</strong>
-                <span>{{ product.category }}</span>
-              </div>
-              <b [class.critical]="product.stockQuantity <= 3">{{ product.stockQuantity }} unités</b>
-            </div>
-          }
-        </div>
-      } @else {
-        <p class="empty">Aucune alerte : le niveau de stock est sain.</p>
-      }
-    </article>
+  <div class="panels">
+    <section class="a-card panel">
+      <header class="panel__head">
+        <h2 class="panel__title">Dernières commandes</h2>
+        <a class="panel__link" routerLink="/admin/orders">Tout voir</a>
+      </header>
 
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Dernières commandes</h2>
-          <p>Suivi rapide des ventes récentes.</p>
-        </div>
-        <a routerLink="/admin/orders">Voir tout</a>
-      </div>
-      @if (recentOrders().length) {
-        <div class="order-list">
+      @if (recentOrders().length === 0) {
+        <p class="panel__empty">Aucune commande pour le moment.</p>
+      } @else {
+        <ul class="orders">
           @for (order of recentOrders(); track order.orderId) {
-            <div class="order-row">
-              <div>
-                <strong>{{ order.orderId }}</strong>
-                <span>{{ order.customerName }} · {{ order.city }}</span>
-              </div>
-              <b>{{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</b>
-            </div>
+            <li class="orders__row">
+              <span class="orders__who">
+                <strong>{{ order.customerName }}</strong>
+                <em>{{ order.city }} · {{ order.orderId }}</em>
+              </span>
+              <span class="a-badge" [class]="'a-badge--' + statusTone(order.status)">
+                {{ statusLabel(order.status) }}
+              </span>
+              <span class="orders__total">
+                {{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+              </span>
+            </li>
           }
-        </div>
-      } @else {
-        <p class="empty">Aucune commande enregistrée pour le moment.</p>
+        </ul>
       }
-    </article>
-  </section>
+    </section>
+
+    <div class="side">
+      <section class="a-card panel">
+        <header class="panel__head">
+          <h2 class="panel__title">Stock à surveiller</h2>
+          <a class="panel__link" routerLink="/admin/products">Catalogue</a>
+        </header>
+
+        @if (lowStockProducts().length === 0) {
+          <p class="panel__empty">Tous vos articles ont un stock confortable.</p>
+        } @else {
+          <ul class="stock">
+            @for (product of lowStockProducts().slice(0, 6); track product.id) {
+              <li class="stock__row" [class.stock__row--out]="product.stockQuantity === 0">
+                <span class="stock__name">{{ product.name }}</span>
+                <span class="stock__count">
+                  @if (product.stockQuantity === 0) {
+                    Épuisé
+                  } @else {
+                    {{ product.stockQuantity }} restant(s)
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      @if (statusTallies().length > 0) {
+        <section class="a-card panel">
+          <header class="panel__head">
+            <h2 class="panel__title">Répartition des commandes</h2>
+          </header>
+          <ul class="tally">
+            @for (tally of statusTallies(); track tally.status) {
+              <li class="tally__row">
+                <span class="tally__label">{{ tally.label }}</span>
+                <span class="tally__bar" aria-hidden="true">
+                  <span
+                    class="tally__fill"
+                    [class]="'tally__fill--' + tally.tone"
+                    [style.width.%]="(tally.count / orders().length) * 100"
+                  ></span>
+                </span>
+                <span class="tally__count">{{ tally.count }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  </div>
 }

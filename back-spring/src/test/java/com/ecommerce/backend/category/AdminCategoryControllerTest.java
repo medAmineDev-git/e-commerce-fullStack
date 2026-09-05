@@ -106,7 +106,21 @@ class AdminCategoryControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.validationErrors.name").exists())
-                .andExpect(jsonPath("$.validationErrors.description").exists());
+                // La description est facultative : l'exiger faisait echouer toute creation
+                // depuis le formulaire, qui ne la demandait pas.
+                .andExpect(jsonPath("$.validationErrors.description").doesNotExist());
+    }
+
+    @Test
+    void createShouldAcceptACategoryWithoutDescription() throws Exception {
+        CategoryRequest request = new CategoryRequest("Sneakers", null);
+        when(categoryService.createCategory(store, request)).thenReturn(response(10L, "Sneakers"));
+
+        mockMvc.perform(post("/api/admin/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Sneakers"));
     }
 
     @Test

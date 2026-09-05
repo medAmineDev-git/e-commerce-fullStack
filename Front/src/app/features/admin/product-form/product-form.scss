@@ -67,7 +67,7 @@ h1 {
 .form-card {
   border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: var(--bg-surface);
+  background: var(--surface);
   box-shadow: var(--shadow-soft);
   padding: 24px;
 }
@@ -118,7 +118,7 @@ select {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--bg-surface);
+  background: var(--surface);
   color: var(--text-main);
   font: inherit;
   font-weight: 400;
@@ -184,7 +184,7 @@ select:focus {
 .color-list button {
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--bg-surface);
+  background: var(--surface);
   color: var(--text-main);
   cursor: pointer;
   font: inherit;
@@ -278,11 +278,23 @@ figcaption {
   padding: 8px 12px;
 }
 
+/* Selection remplie : un fond pale se confond avec les puces inactives, alors que
+   le vendeur doit voir d'un coup d'oeil les tailles et saisons deja retenues. */
 .size-list button.selected {
   border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 700;
+}
+
+.size-list button.selected:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+
+.size-list button:not(.selected):hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .color-form {

@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { OrderService, AdminOrder } from '../../../core/services/order';
 import { AdminOrderDetail, ORDER_STATUSES, OrderStatus } from '../../../core/services/order';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -58,6 +58,14 @@ export class OrderList {
       this.selectedNote.set(order.note ?? '');
     } catch {
       this.snackBar.open('Impossible de charger le détail de la commande.', 'Fermer', { duration: 3500 });
+    }
+  }
+
+  /** La touche Echap ferme la fiche : un modal doit pouvoir se quitter au clavier. */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.selectedOrder()) {
+      this.closeDetails();
     }
   }
 

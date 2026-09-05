@@ -12,12 +12,10 @@ public record ProductRequest(
         @NotBlank(message = "name is required")
         String name,
 
-        @NotBlank(message = "category is required")
         String category,
 
         String subcategory,
 
-        @NotBlank(message = "description is required")
         String description,
 
         @NotNull(message = "price is required")

@@ -41,13 +41,15 @@ public class Product {
     @Column(nullable = false, length = 120)
     private String name;
 
-    @Column(nullable = false, length = 80)
+    /** Facultative : un article peut etre publie avant toute taxonomie. */
+    @Column(length = 80)
     private String category;
 
     @Column(length = 80)
     private String subcategory;
 
-    @Column(nullable = false, length = 1500)
+    /** Facultative : le texte de vente peut venir apres la mise en ligne. */
+    @Column(length = 1500)
     private String description;
 
     @Column(nullable = false, precision = 12, scale = 2)

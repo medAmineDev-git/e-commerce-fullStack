@@ -272,3 +272,234 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Back-office
+   ---------------------------------------------------------------
+   Le back-office est un outil, pas une vitrine : il se parcourt du
+   regard et s'opère, il n'a pas à s'effacer. Il reçoit donc son propre
+   jeu de valeurs — une surface distincte du fond, une couleur d'accent
+   assumée, et des états sémantiques lisibles d'un coup d'œil.
+
+   Ces valeurs étaient jusqu'ici définies par l'ancien thème de la
+   vitrine. Sa refonte les a emportées, laissant des boutons sans fond
+   et des panneaux transparents.
+   --------------------------------------------------------------- */
+:root {
+  --ground: #f2f4f4;
+  --surface: #ffffff;
+  --surface-alt: #f8faf9;
+  --surface-sunk: #eceff0;
+
+  --text-main: #14201f;
+  --text-muted: #5d6b6a;
+  --text-faint: #8b9897;
+
+  --line-soft: #e6eaea;
+  --border: #d5dcdb;
+
+  --accent: #0f6e66;
+  --accent-strong: #0a534d;
+  --accent-soft: #e3f1ef;
+  --accent-ink: #ffffff;
+
+  --danger: #b03325;
+  --danger-soft: #fbeae7;
+  --warning: #8a6410;
+  --warning-soft: #fbf1dc;
+  --success: #276b46;
+  --success-soft: #e2f1e9;
+
+  --shadow-soft: 0 1px 2px rgba(20, 32, 31, 0.05), 0 8px 24px rgba(20, 32, 31, 0.06);
+  --shadow-raised: 0 2px 4px rgba(20, 32, 31, 0.07), 0 16px 40px rgba(20, 32, 31, 0.12);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+/* Le back-office reste clair : un tableau de bord se lit longtemps, et
+   la cohérence des captures d'écran compte plus que la préférence système. */
+.admin-scope {
+  color-scheme: light;
+  background: var(--ground);
+  color: var(--text-main);
+}
+
+/* ---------------------------------------------------------- primitives outil */
+
+.a-card {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.a-title {
+  font-family: var(--f-display, 'Archivo', sans-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.a-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0;
+}
+
+/* Les boutons portent un fond explicite : sans lui ils disparaissaient. */
+.a-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.625rem 1.125rem;
+  min-height: 2.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.a-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+
+  &:hover:not(:disabled) {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+  }
+}
+
+.a-btn--outline {
+  background: var(--surface);
+  border-color: var(--border);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.a-btn--danger {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--danger);
+
+  &:hover:not(:disabled) {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+  }
+}
+
+.a-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  padding-inline: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-sunk);
+    color: var(--text-main);
+  }
+}
+
+.a-input,
+.a-select,
+.a-textarea {
+  font: inherit;
+  font-size: 0.9375rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-main);
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+    border-color: var(--accent);
+  }
+}
+
+.a-textarea {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+/* Une pastille selectionnee doit se voir sans comparer : couleur pleine,
+   pas une nuance de gris de plus. */
+.a-chip {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4375rem 0.875rem;
+  min-height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 140ms ease;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  &.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+}
+
+.a-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 3px;
+  background: var(--surface-sunk);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.a-badge--ok { background: var(--success-soft); color: var(--success); }
+.a-badge--warn { background: var(--warning-soft); color: var(--warning); }
+.a-badge--danger { background: var(--danger-soft); color: var(--danger); }
+.a-badge--accent { background: var(--accent-soft); color: var(--accent); }

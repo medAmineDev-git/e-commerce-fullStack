@@ -24,14 +24,13 @@
         @if (submitted() && errors().name) { <small class="error">{{ errors().name }}</small> }
       </label>
       <label class="field">
-        <span>Catalogue *</span>
+        <span>Catalogue <em>facultatif</em></span>
         <select [value]="model().category" (change)="updateTextField('category', $any($event.target).value)">
-          <option value="">Sélectionner</option>
+          <option value="">Aucun catalogue</option>
           @for (category of categories(); track category.id) {
             <option [value]="category.name">{{ category.name }}</option>
           }
         </select>
-        @if (submitted() && errors().category) { <small class="error">{{ errors().category }}</small> }
       </label>
       <label class="field">
         <span>Sous-catégorie</span>
@@ -47,9 +46,8 @@
         <input [value]="model().sku" (input)="updateTextField('sku', $any($event.target).value)" placeholder="VD-ATELIER-001" />
       </label>
       <label class="field field-wide">
-        <span>Description *</span>
+        <span>Description <em>facultatif</em></span>
         <textarea rows="5" [value]="model().description" (input)="updateTextField('description', $any($event.target).value)" placeholder="Décrivez les matières, la coupe, les usages et bénéfices produit."></textarea>
-        @if (submitted() && errors().description) { <small class="error">{{ errors().description }}</small> }
       </label>
     </div>
   </section>

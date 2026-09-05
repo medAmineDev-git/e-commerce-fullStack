@@ -21,7 +21,7 @@
   min-width: 180px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--bg-surface);
+  background: var(--surface);
   color: var(--text-main);
   font: inherit;
   padding: 8px 10px;
@@ -52,7 +52,7 @@ h1 {
   overflow: auto;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: var(--bg-surface);
+  background: var(--surface);
   box-shadow: var(--shadow-soft);
 }
 
@@ -120,7 +120,9 @@ button {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: rgba(20, 17, 13, 0.35);
+  /* Assombri franchement : le voile doit detacher la fiche du tableau qui la porte. */
+  background: rgba(20, 17, 13, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .order-dialog {
@@ -136,7 +138,7 @@ button {
   transform: translate(-50%, -50%);
   border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: var(--bg-surface);
+  background: var(--surface);
   box-shadow: 0 20px 60px rgba(20, 17, 13, 0.25);
   padding: 24px;
 }
@@ -197,7 +199,7 @@ button {
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 10px;
-  background: var(--bg-surface);
+  background: var(--surface);
   color: var(--text-main);
   font: inherit;
 }

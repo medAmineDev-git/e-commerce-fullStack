@@ -121,9 +121,22 @@ class AdminProductControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.validationErrors.name").exists())
-                .andExpect(jsonPath("$.validationErrors.category").exists())
-                .andExpect(jsonPath("$.validationErrors.description").exists())
-                .andExpect(jsonPath("$.validationErrors.stockQuantity").exists());
+                .andExpect(jsonPath("$.validationErrors.stockQuantity").exists())
+                // Categorie et description vides sont acceptees : elles sont facultatives.
+                .andExpect(jsonPath("$.validationErrors.category").doesNotExist())
+                .andExpect(jsonPath("$.validationErrors.description").doesNotExist());
+    }
+
+    @Test
+    void createShouldAcceptAProductWithoutCategoryNorDescription() throws Exception {
+        ProductRequest request = new ProductRequest("Cap", null, null, new BigDecimal("19.90"), 5);
+        when(productService.createProduct(store, request)).thenReturn(response(10L, "Cap"));
+
+        mockMvc.perform(post("/api/admin/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Cap"));
     }
 
     @Test

@@ -6,7 +6,7 @@ public record CategoryRequest(
         @NotBlank(message = "name is required")
         String name,
 
-        @NotBlank(message = "description is required")
+        /** Facultative. Le formulaire ne l exigeait deja pas. */
         String description,
 
         Long parentId

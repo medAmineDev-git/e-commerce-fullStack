@@ -63,7 +63,12 @@
 
 @if (selectedOrder(); as order) {
   <div class="dialog-backdrop" (click)="closeDetails()"></div>
-  <section class="order-dialog" aria-label="Détail de la commande">
+  <section
+    class="order-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Détail de la commande"
+  >
     <header>
       <div>
         <p class="eyebrow">Commande</p>

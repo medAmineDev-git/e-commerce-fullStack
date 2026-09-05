@@ -36,7 +36,8 @@ public class Category {
     @Column(nullable = false, length = 120)
     private String name;
 
-    @Column(nullable = false, length = 1200)
+    /** Facultative : le formulaire ne l'a jamais demandee. */
+    @Column(length = 1200)
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
