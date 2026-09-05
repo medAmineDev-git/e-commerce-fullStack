@@ -8,9 +8,10 @@ export interface ProductColor {
 export interface Product {
   id: number;
   name: string;
-  category: string;
+  /** Facultatifs depuis la mise en ligne sans taxonomie : le serveur renvoie null. */
+  category: string | null;
   subcategory?: string;
-  description: string;
+  description: string | null;
   price: number;
   stockQuantity: number;
   sku?: string;

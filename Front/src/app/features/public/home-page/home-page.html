@@ -85,7 +85,9 @@
               </span>
 
               <span class="card-body">
-                <span class="u-label">{{ product.category }}</span>
+                @if (product.category) {
+                  <span class="u-label">{{ product.category }}</span>
+                }
                 <span class="card-name">{{ product.name }}</span>
 
                 <span class="card-price">

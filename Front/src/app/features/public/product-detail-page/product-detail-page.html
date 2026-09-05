@@ -35,7 +35,7 @@
       <nav class="crumbs" aria-label="Fil d'Ariane">
         <a [routerLink]="storeContext.link()">Boutique</a>
         <span aria-hidden="true">/</span>
-        <span>{{ product()!.category }}</span>
+        <span>{{ product()!.category ?? product()!.name }}</span>
       </nav>
 
       <header class="title-block">
@@ -138,15 +138,17 @@
       <section class="specs">
         <h2 class="u-label">Caractéristiques</h2>
         <dl>
-          <div>
-            <dt>Catégorie</dt>
-            <dd>
-              {{ product()!.category }}
-              @if (product()!.subcategory) {
-                &middot; {{ product()!.subcategory }}
-              }
-            </dd>
-          </div>
+          @if (product()!.category) {
+            <div>
+              <dt>Catégorie</dt>
+              <dd>
+                {{ product()!.category }}
+                @if (product()!.subcategory) {
+                  &middot; {{ product()!.subcategory }}
+                }
+              </dd>
+            </div>
+          }
           @if ((product()!.sizes?.length ?? 0) > 0) {
             <div>
               <dt>Tailles</dt>

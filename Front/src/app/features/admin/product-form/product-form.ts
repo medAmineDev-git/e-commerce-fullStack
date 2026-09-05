@@ -258,9 +258,11 @@ export class ProductForm {
 
     this.model.set({
       name: product.name,
-      category: product.category,
+      // Le formulaire travaille sur des chaines : un champ absent y est une chaine
+      // vide, et redevient null au moment de l'envoi.
+      category: product.category ?? '',
       subcategory: product.subcategory ?? '',
-      description: product.description,
+      description: product.description ?? '',
       sku: product.sku ?? '',
       price: product.price,
       compareAtPrice: product.compareAtPrice ?? null,

@@ -87,6 +87,13 @@ export class ProductDetailPage {
   }
 
   private async loadRelatedProducts(product: PublicProduct): Promise<void> {
+    // Sans categorie, il n'y a pas de parente a etablir : deux articles non
+    // classes ne se ressemblent pas parce qu'ils partagent une absence.
+    if (!product.category) {
+      this.relatedProducts.set([]);
+      return;
+    }
+
     const all = await this.catalogService.listProducts();
     const related = all
       .filter((candidate) => candidate.id !== product.id && candidate.category === product.category)

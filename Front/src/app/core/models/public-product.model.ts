@@ -20,7 +20,11 @@ export interface PublicProduct {
   name: string;
   shortDescription: string;
   longDescription: string;
-  category: PublicCategory;
+  /**
+   * Libre et facultative : chaque boutique nomme ses propres rayons, et un
+   * article peut etre publie sans en avoir.
+   */
+  category: string | null;
   subcategory?: string;
   seasons?: string[];
   /** Reference interne, affichee sur la fiche produit quand elle existe. */

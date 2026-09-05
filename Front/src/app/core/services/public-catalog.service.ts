@@ -10,9 +10,9 @@ import { StoreContextService } from './store-context.service';
 type BackendProduct = {
   id: number;
   name: string;
-  category: PublicCategory;
+  category: string | null;
   subcategory?: string;
-  description: string;
+  description: string | null;
   price: number;
   stockQuantity: number;
   compareAtPrice?: number | null;
@@ -179,8 +179,8 @@ export class PublicCatalogService {
       id: product.id,
       slug: this.slugify(product.name),
       name: product.name,
-      shortDescription: this.truncate(product.description, 96),
-      longDescription: product.description,
+      shortDescription: this.truncate(product.description ?? '', 96),
+      longDescription: product.description ?? '',
       category: product.category,
       subcategory: product.subcategory,
       seasons: product.seasons ?? [],

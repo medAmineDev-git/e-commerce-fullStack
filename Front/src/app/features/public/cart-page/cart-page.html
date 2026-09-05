@@ -22,7 +22,9 @@
 
             <div class="item-body">
               <h2 class="item-name">{{ item.product.name }}</h2>
-              <p class="u-label">{{ item.product.category }}</p>
+              @if (item.product.category) {
+                <p class="u-label">{{ item.product.category }}</p>
+              }
 
               <div class="item-controls">
                 <div class="stepper">

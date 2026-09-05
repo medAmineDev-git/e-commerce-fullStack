@@ -35,7 +35,10 @@
             <div class="preview">
               <span>Aperçu du produit sélectionné</span>
               <strong>{{ product.name }}</strong>
-              <small>{{ product.category }} · {{ product.stockQuantity }} en stock</small>
+              <small>
+                @if (product.category) { {{ product.category }} · }
+                {{ product.stockQuantity }} en stock
+              </small>
             </div>
           }
         }
