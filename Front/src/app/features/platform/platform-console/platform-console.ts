@@ -151,9 +151,7 @@ export class PlatformConsole {
         this.detail.set(null);
       }
     } catch {
-      this.error.set(
-        `Impossible de supprimer ${store.name}. Une boutique dont vous êtes propriétaire ne peut pas être supprimée depuis cette console.`,
-      );
+      this.error.set(`Impossible de supprimer ${store.name}.`);
     } finally {
       this.deleting.set(false);
     }

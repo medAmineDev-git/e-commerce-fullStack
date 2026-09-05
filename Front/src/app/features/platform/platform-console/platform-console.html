@@ -78,9 +78,7 @@
                 <button type="button" class="link" (click)="toggleActive(store)">
                   {{ store.active ? 'Désactiver' : 'Réactiver' }}
                 </button>
-                @if (!isOwnStore(store)) {
-                  <button type="button" class="link danger" (click)="startDelete(store)">Supprimer</button>
-                }
+                <button type="button" class="link danger" (click)="startDelete(store)">Supprimer</button>
               </td>
             </tr>
 
@@ -145,8 +143,13 @@
                     <h2 class="delete-title">Supprimer « {{ store.name }} » définitivement</h2>
                     <p class="delete-text">
                       Cette action efface la boutique, ses produits, ses catégories,
-                      <strong>ses commandes</strong>, ses visuels et le compte
-                      <strong>{{ store.ownerUsername }}</strong>. Elle est irréversible.
+                      <strong>ses commandes</strong> et ses visuels. Elle est irréversible.
+                      @if (isOwnStore(store)) {
+                        Votre compte <strong>{{ store.ownerUsername }}</strong> est conservé :
+                        vous gardez l'accès à la plateforme.
+                      } @else {
+                        Le compte <strong>{{ store.ownerUsername }}</strong> est supprimé également.
+                      }
                       Pour fermer une boutique sans perdre son historique, préférez
                       <em>Désactiver</em>.
                     </p>

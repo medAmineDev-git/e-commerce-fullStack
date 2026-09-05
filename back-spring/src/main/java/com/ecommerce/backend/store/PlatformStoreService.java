@@ -104,12 +104,16 @@ public class PlatformStoreService {
 
         AdminUser owner = store.getOwner();
 
-        // Un exploitant qui tient aussi une boutique ne doit pas pouvoir
-        // supprimer la sienne par cet ecran : il se retirerait son propre compte.
-        if (owner != null && owner.getUsername().equalsIgnoreCase(requestedBy)) {
-            throw new IllegalArgumentException(
-                    "Vous ne pouvez pas supprimer votre propre boutique depuis la console.");
-        }
+        /*
+         * Le compte proprietaire est supprime avec sa boutique — sauf s'il
+         * s'agit de l'exploitant lui-meme.
+         *
+         * Un exploitant promu depuis un compte proprietaire traine une boutique
+         * dont il n'a plus l'usage. Lui interdire de la supprimer l'enfermait ;
+         * supprimer son compte avec elle l'aurait deconnecte de la plateforme.
+         * On efface donc la boutique et son contenu, et on lui laisse son compte.
+         */
+        boolean ownStore = owner != null && owner.getUsername().equalsIgnoreCase(requestedBy);
 
         List<CustomerOrder> orders = orderRepository.findAllByStore(store);
         long orderCount = orders.size();
@@ -121,7 +125,7 @@ public class PlatformStoreService {
         storeRepository.delete(store);
         storeRepository.flush();
 
-        if (owner != null) {
+        if (owner != null && !ownStore) {
             adminUserRepository.delete(owner);
         }
 
@@ -129,6 +133,8 @@ public class PlatformStoreService {
 
         log.warn("Boutique '{}' supprimee par '{}' : {} produit(s), {} commande(s), compte '{}'.",
                 store.getSlug(), requestedBy, productCount, orderCount,
-                owner != null ? owner.getUsername() : "sans proprietaire");
+                owner == null ? "sans proprietaire"
+                        : ownStore ? owner.getUsername() + " (conserve)"
+                        : owner.getUsername() + " (supprime)");
     }
 }
