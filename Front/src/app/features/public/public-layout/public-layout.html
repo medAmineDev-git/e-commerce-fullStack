@@ -24,6 +24,10 @@
   <router-outlet />
 </main>
 
+@if (bottomHighlights().length > 0) {
+  <app-highlight-bar class="footer-highlights" [items]="bottomHighlights()" [quiet]="true" />
+}
+
 <footer class="shell-footer">
   <div class="footer-inner u-shell">
     <section class="footer-brand">

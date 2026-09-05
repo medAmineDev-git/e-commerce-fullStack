@@ -53,6 +53,14 @@ public class Store {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    /** Bandeau de reassurance affiche sous la banniere. */
+    @Column(name = "highlights_top_enabled", nullable = false)
+    private boolean highlightsTopEnabled = true;
+
+    /** Le meme bandeau, repris juste avant le pied de page. */
+    @Column(name = "highlights_bottom_enabled", nullable = false)
+    private boolean highlightsBottomEnabled = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

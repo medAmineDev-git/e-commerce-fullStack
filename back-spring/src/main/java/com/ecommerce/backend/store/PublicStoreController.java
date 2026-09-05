@@ -7,6 +7,8 @@ import com.ecommerce.backend.home.dto.HomeConfigurationResponse;
 import com.ecommerce.backend.order.OrderService;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
+import com.ecommerce.backend.highlight.StoreHighlightService;
+import com.ecommerce.backend.highlight.dto.StoreHighlightsResponse;
 import com.ecommerce.backend.page.StorePageService;
 import com.ecommerce.backend.page.dto.StorePageResponse;
 import com.ecommerce.backend.page.dto.StorePageSummary;
@@ -33,6 +35,7 @@ public class PublicStoreController {
     private final OrderService orderService;
     private final HomeConfigurationService homeConfigurationService;
     private final StorePageService storePageService;
+    private final StoreHighlightService storeHighlightService;
 
     public PublicStoreController(
             StoreService storeService,
@@ -40,7 +43,8 @@ public class PublicStoreController {
             CategoryService categoryService,
             OrderService orderService,
             HomeConfigurationService homeConfigurationService,
-            StorePageService storePageService
+            StorePageService storePageService,
+            StoreHighlightService storeHighlightService
     ) {
         this.storeService = storeService;
         this.productService = productService;
@@ -48,6 +52,7 @@ public class PublicStoreController {
         this.orderService = orderService;
         this.homeConfigurationService = homeConfigurationService;
         this.storePageService = storePageService;
+        this.storeHighlightService = storeHighlightService;
     }
 
     @GetMapping("/{slug}")
@@ -124,6 +129,13 @@ public class PublicStoreController {
     public HomeConfigurationResponse getStoreHomeConfiguration(@PathVariable String slug) {
         Store store = storeService.getStoreEntityBySlug(slug);
         return homeConfigurationService.getConfiguration(store);
+    }
+
+    /** Bandeau de reassurance : emplacements actifs et lignes visibles. */
+    @GetMapping("/{slug}/highlights")
+    public StoreHighlightsResponse getStoreHighlights(@PathVariable String slug) {
+        Store store = storeService.getStoreEntityBySlug(slug);
+        return storeHighlightService.getVisibleHighlights(store);
     }
 
     /** Liens du pied de page : libelles et adresses, sans les textes. */

@@ -1,0 +1,95 @@
+:host {
+  display: block;
+}
+
+/* Une ligne d'arguments, jamais des cartes : ces promesses accompagnent la
+   page, elles ne sont pas des objets a cliquer. Les filets verticaux les
+   separent sans les enfermer. */
+.bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0;
+  margin: 0;
+  padding-block: 1.5rem;
+  list-style: none;
+  border-block: 1px solid var(--line);
+}
+
+.bar--quiet {
+  border-bottom: 0;
+  color: var(--muted);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 1.25rem;
+  border-left: 1px solid var(--line);
+
+  /* Le premier de chaque rangee ne porte pas de filet : sur une grille qui se
+     replie, la regle :first-child ne suffirait pas. */
+  &:nth-child(1) {
+    border-left: 0;
+  }
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    color: var(--ink);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  &__label {
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  &__detail {
+    color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+}
+
+.bar--quiet .item__icon,
+.bar--quiet .item__label {
+  color: var(--ink-soft);
+}
+
+/* Sous 1000px la grille tombe a deux colonnes : le filet de la troisieme
+   ligne devient celui de gauche, il faut donc le reprendre par rangee. */
+@media (max-width: 62rem) {
+  .bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1.25rem;
+  }
+
+  .item:nth-child(odd) {
+    border-left: 0;
+  }
+}
+
+@media (max-width: 34rem) {
+  .bar {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1rem;
+    padding-block: 1.25rem;
+  }
+
+  .item {
+    padding-inline: 0;
+    border-left: 0;
+  }
+}

@@ -3,6 +3,7 @@ package com.ecommerce.backend.common.exception;
 import com.ecommerce.backend.common.api.ApiErrorResponse;
 import com.ecommerce.backend.auth.InvalidCredentialsException;
 import com.ecommerce.backend.category.CategoryNotFoundException;
+import com.ecommerce.backend.highlight.StoreHighlightNotFoundException;
 import com.ecommerce.backend.page.StorePageNotFoundException;
 import com.ecommerce.backend.order.OrderNotFoundException;
 import com.ecommerce.backend.store.StoreNotFoundException;
@@ -26,6 +27,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleProductNotFound(
             ProductNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(StoreHighlightNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleStoreHighlightNotFound(
+            StoreHighlightNotFoundException exception,
             HttpServletRequest request
     ) {
         return buildErrorResponse(

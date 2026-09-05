@@ -1,6 +1,7 @@
 package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.auth.AdminUser;
+import com.ecommerce.backend.highlight.StoreHighlightService;
 import com.ecommerce.backend.page.StorePageService;
 import com.ecommerce.backend.store.dto.*;
 import org.springframework.stereotype.Service;
@@ -29,15 +30,18 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final StoreMapper storeMapper;
     private final StorePageService storePageService;
+    private final StoreHighlightService storeHighlightService;
 
     public StoreService(
             StoreRepository storeRepository,
             StoreMapper storeMapper,
-            StorePageService storePageService
+            StorePageService storePageService,
+            StoreHighlightService storeHighlightService
     ) {
         this.storeRepository = storeRepository;
         this.storeMapper = storeMapper;
         this.storePageService = storePageService;
+        this.storeHighlightService = storeHighlightService;
     }
 
     public Store getStoreEntityBySlug(String slug) {
@@ -140,6 +144,7 @@ public class StoreService {
         // Mentions legales, livraison, retours : la vitrine ne s'ouvre pas sur un
         // pied de page vide. Le proprietaire les reecrit ou les supprime ensuite.
         storePageService.installDefaults(created);
+        storeHighlightService.installDefaultsIfEmpty(created);
 
         return created;
     }

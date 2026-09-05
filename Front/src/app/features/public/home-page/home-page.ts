@@ -8,6 +8,8 @@ import { PublicCategory, PublicProduct } from '../../../core/models/public-produ
 import { CatalogSortField, PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { SortDirection } from '../../../core/stores/crud-list.helpers';
 import { DEFAULT_BANNER } from '../../../core/models/default-banner';
+import { StoreHighlightService } from '../../../core/services/store-highlight.service';
+import { HighlightBar } from '../../../shared/highlight-bar/highlight-bar';
 
 type StoreHome = { title: string; text: string; featuredProductId: number | null };
 
@@ -19,7 +21,7 @@ type StoreHome = { title: string; text: string; featuredProductId: number | null
  */
 @Component({
   selector: 'app-home-page',
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, HighlightBar],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
@@ -60,6 +62,14 @@ export class HomePage {
    * meme boutique selon la taille de l'ecran.
    */
   readonly hasOwnBanner = computed(() => !!(this.bannerDesktop() || this.bannerMobile()));
+
+  private readonly highlightService = inject(StoreHighlightService);
+
+  /** Le bandeau sous la banniere, si le vendeur a retenu cet emplacement. */
+  readonly topHighlights = computed(() => {
+    const highlights = this.highlightService.highlights();
+    return highlights?.topEnabled ? highlights.items : [];
+  });
   readonly defaultBanner = DEFAULT_BANNER;
 
   readonly sortOptions = [

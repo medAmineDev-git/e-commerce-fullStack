@@ -8,10 +8,12 @@ import { PublisherReferenceService } from '../../../core/services/publisher-refe
 import { SeoService } from '../../../core/seo/seo.service';
 import { StorePageService } from '../../../core/services/store-page.service';
 import { StorePageSummary } from '../../../core/models/store-page.model';
+import { StoreHighlightService } from '../../../core/services/store-highlight.service';
+import { HighlightBar } from '../../../shared/highlight-bar/highlight-bar';
 
 @Component({
   selector: 'app-public-layout',
-  imports: [RouterOutlet, RouterLink, CurrencyPipe],
+  imports: [RouterOutlet, RouterLink, CurrencyPipe, HighlightBar],
   templateUrl: './public-layout.html',
   styleUrl: './public-layout.scss',
 })
@@ -22,6 +24,7 @@ export class PublicLayout {
   private readonly publisherReferenceService = inject(PublisherReferenceService);
   private readonly seo = inject(SeoService);
   private readonly storePageService = inject(StorePageService);
+  private readonly highlightService = inject(StoreHighlightService);
 
   /** L'identité affichée vient de la boutique, jamais d'un nom écrit en dur. */
   readonly store = this.storeContext.store;
@@ -34,6 +37,12 @@ export class PublicLayout {
     return !!(store?.address || store?.phone || store?.email);
   });
 
+  /** Le bandeau repris avant le pied de page, si le vendeur l'a demande. */
+  readonly bottomHighlights = computed(() => {
+    const highlights = this.highlightService.highlights();
+    return highlights?.bottomEnabled ? highlights.items : [];
+  });
+
   /** Liens de pied de page, vides tant que la boutique n'a aucune page. */
   readonly pages = signal<StorePageSummary[]>([]);
 
@@ -42,6 +51,7 @@ export class PublicLayout {
       const store = this.store();
       if (store) {
         void this.loadPages();
+        void this.highlightService.loadPublicHighlights();
         this.seo.apply({
           title: store.name,
           description: store.description ?? `Découvrez la sélection de ${store.name}.`,

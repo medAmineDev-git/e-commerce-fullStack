@@ -1,0 +1,191 @@
+<header class="page-head">
+  <div>
+    <p class="a-label">Vitrine</p>
+    <h1 class="a-title">Bandeau de réassurance</h1>
+    <p class="page-head__lead">
+      Les arguments courts qui répondent aux questions du visiteur avant l'achat :
+      délais, assistance, retours, paiement.
+    </p>
+  </div>
+  <button type="button" class="a-btn a-btn--primary" (click)="startCreate()">
+    Ajouter un argument
+  </button>
+</header>
+
+<p class="notice">
+  <strong>Ce sont des engagements, pas des décorations.</strong>
+  Les valeurs de départ reprennent les usages les plus répandus. Vérifiez qu'elles
+  correspondent à vos délais et à vos conditions réelles avant d'ouvrir votre boutique :
+  vos clients les liront comme une promesse.
+</p>
+
+@if (error()) {
+  <p class="a-card error">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="state">Chargement du bandeau…</p>
+} @else {
+  <section class="a-card placements" aria-label="Emplacements">
+    <h2 class="section-title">Où l'afficher</h2>
+
+    <label class="switch">
+      <input
+        type="checkbox"
+        [checked]="topEnabled()"
+        (change)="togglePlacement('top')"
+      />
+      <span class="switch__body">
+        <span class="switch__label">En haut de la page d'accueil</span>
+        <span class="switch__hint">Juste sous la bannière, avant le catalogue.</span>
+      </span>
+    </label>
+
+    <label class="switch">
+      <input
+        type="checkbox"
+        [checked]="bottomEnabled()"
+        (change)="togglePlacement('bottom')"
+      />
+      <span class="switch__body">
+        <span class="switch__label">En bas de page</span>
+        <span class="switch__hint">
+          Au-dessus du pied de page, sur toutes les pages de la vitrine.
+        </span>
+      </span>
+    </label>
+
+    @if (isHidden()) {
+      <p class="placements__warning">
+        Les deux emplacements sont désactivés : le bandeau n'apparaît nulle part.
+      </p>
+    }
+  </section>
+
+  <section class="a-card preview" aria-label="Aperçu">
+    <h2 class="section-title">Aperçu</h2>
+    @if (visibleItems().length === 0) {
+      <p class="preview__empty">Aucun argument actif : le bandeau n'apparaîtra pas.</p>
+    } @else {
+      <ul class="preview__bar">
+        @for (item of visibleItems(); track item.id) {
+          <li class="preview__item">
+            <span class="preview__icon"><app-highlight-icon [name]="item.iconKey" /></span>
+            <span class="preview__text">
+              <span class="preview__label">{{ item.label }}</span>
+              @if (item.detail) {
+                <span class="preview__detail">{{ item.detail }}</span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="a-card list" aria-label="Arguments">
+    <h2 class="section-title">Arguments</h2>
+
+    @if (items().length === 0) {
+      <p class="list__empty">Aucun argument. Ajoutez-en un pour composer votre bandeau.</p>
+    } @else {
+      <ul class="list__items">
+        @for (item of items(); track item.id) {
+          <li class="row" [class.row--off]="!item.enabled">
+            <span class="row__icon"><app-highlight-icon [name]="item.iconKey" /></span>
+
+            <button type="button" class="row__main" (click)="startEdit(item)">
+              <span class="row__label">{{ item.label }}</span>
+              <span class="row__detail">
+                {{ item.detail || 'Sans seconde ligne' }} · {{ iconLabel(item.iconKey) }}
+              </span>
+            </button>
+
+            <label class="row__toggle">
+              <input type="checkbox" [checked]="item.enabled" (change)="toggleItem(item)" />
+              <span class="u-sr-only">
+                {{ item.enabled ? 'Masquer' : 'Afficher' }} {{ item.label }}
+              </span>
+              <span aria-hidden="true" class="row__toggle-text">
+                {{ item.enabled ? 'Affiché' : 'Masqué' }}
+              </span>
+            </label>
+
+            @if (deletingId() === item.id) {
+              <span class="row__confirm">
+                <span>Supprimer&nbsp;?</span>
+                <button type="button" class="a-btn a-btn--danger" (click)="confirmDelete(item)">
+                  Oui
+                </button>
+                <button type="button" class="a-btn a-btn--ghost" (click)="cancelDelete()">
+                  Non
+                </button>
+              </span>
+            } @else {
+              <button type="button" class="row__delete" (click)="askDelete(item)">
+                <span class="u-sr-only">Supprimer {{ item.label }}</span>
+                <span aria-hidden="true">Supprimer</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (editing()) {
+    <section class="a-card editor" aria-label="Édition de l'argument">
+      <h2 class="section-title">
+        {{ isCreating() ? 'Nouvel argument' : 'Modifier l’argument' }}
+      </h2>
+
+      <fieldset class="icons">
+        <legend class="a-label">Icône</legend>
+        <div class="icons__grid">
+          @for (key of iconKeys; track key) {
+            <label class="icons__choice" [class.icons__choice--on]="iconDraft() === key">
+              <input
+                type="radio"
+                name="iconKey"
+                [value]="key"
+                [checked]="iconDraft() === key"
+                (change)="iconDraft.set(key)"
+              />
+              <app-highlight-icon [name]="key" />
+              <span class="icons__name">{{ iconLabel(key) }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span class="a-label">Texte</span>
+        <input
+          class="a-input"
+          [value]="labelDraft()"
+          (input)="labelDraft.set($any($event.target).value)"
+          placeholder="Livraison en 48 h"
+          maxlength="80"
+        />
+      </label>
+
+      <label class="field">
+        <span class="a-label">Seconde ligne <em>facultative</em></span>
+        <input
+          class="a-input"
+          [value]="detailDraft()"
+          (input)="detailDraft.set($any($event.target).value)"
+          placeholder="Expédition le jour même"
+          maxlength="160"
+        />
+      </label>
+
+      <div class="editor__actions">
+        <button type="button" class="a-btn a-btn--primary" [disabled]="!canSave()" (click)="save()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        <button type="button" class="a-btn a-btn--ghost" (click)="cancelEdit()">Annuler</button>
+      </div>
+    </section>
+  }
+}

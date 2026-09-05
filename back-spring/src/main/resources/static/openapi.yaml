@@ -322,6 +322,22 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/HomeConfiguration' }
 
+  /api/public/stores/{slug}/highlights:
+    get:
+      tags: [Vitrine]
+      summary: Bandeau de réassurance
+      description: |
+        Emplacements retenus par la boutique et lignes visibles. Les lignes
+        désactivées ne sont pas renvoyées.
+      security: []
+      parameters: [{ : '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Emplacements et lignes actives
+          content:
+            application/json:
+              schema: { : '#/components/schemas/StoreHighlights' }
+
   /api/public/stores/{slug}/pages:
     get:
       tags: [Vitrine]
@@ -592,6 +608,95 @@ paths:
       responses:
         '204': { description: Supprimée }
         '404': { description: Inconnue, ou appartenant à une autre boutique }
+
+  /api/admin/highlights:
+    get:
+      tags: [Back-office]
+      summary: Mon bandeau de réassurance
+      description: Toutes les lignes, y compris celles qui sont masquées.
+      responses:
+        '200':
+          description: Emplacements et lignes
+          content:
+            application/json:
+              schema: { : '#/components/schemas/StoreHighlights' }
+    post:
+      tags: [Back-office]
+      summary: Ajouter un argument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { : '#/components/schemas/StoreHighlightRequest' }
+      responses:
+        '201':
+          description: Argument créé
+          content:
+            application/json:
+              schema: { : '#/components/schemas/StoreHighlight' }
+        '400': { description: Clé d'icône hors catalogue }
+
+  /api/admin/highlights/icons:
+    get:
+      tags: [Back-office]
+      summary: Icônes disponibles
+      description: |
+        Catalogue fermé de clés. Les tracés sont livrés avec la vitrine : le
+        serveur ne stocke jamais de balisage.
+      responses:
+        '200':
+          description: Clés d'icônes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+
+  /api/admin/highlights/settings:
+    put:
+      tags: [Back-office]
+      summary: Choisir les emplacements du bandeau
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topEnabled, bottomEnabled]
+              properties:
+                topEnabled: { type: boolean, description: Sous la bannière, sur l'accueil }
+                bottomEnabled: { type: boolean, description: Au-dessus du pied de page }
+      responses:
+        '200':
+          description: Bandeau après modification
+          content:
+            application/json:
+              schema: { : '#/components/schemas/StoreHighlights' }
+
+  /api/admin/highlights/{id}:
+    put:
+      tags: [Back-office]
+      summary: Modifier un argument
+      parameters: [{ : '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { : '#/components/schemas/StoreHighlightRequest' }
+      responses:
+        '200':
+          description: Argument modifié
+          content:
+            application/json:
+              schema: { : '#/components/schemas/StoreHighlight' }
+        '404': { description: Inconnu, ou appartenant à une autre boutique }
+    delete:
+      tags: [Back-office]
+      summary: Supprimer un argument
+      parameters: [{ : '#/components/parameters/Id' }]
+      responses:
+        '204': { description: Supprimé }
+        '404': { description: Inconnu, ou appartenant à une autre boutique }
 
   /api/admin/pages:
     get:
@@ -1087,6 +1192,37 @@ components:
         title: { type: string }
         text: { type: string }
         featuredProductId: { type: integer, format: int64, nullable: true }
+
+    StoreHighlight:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        iconKey:
+          type: string
+          description: Clé du catalogue fermé, jamais du balisage.
+        label: { type: string }
+        detail: { type: string, nullable: true, description: Seconde ligne facultative }
+        enabled: { type: boolean, description: Masqué sans être supprimé lorsque faux }
+        position: { type: integer }
+
+    StoreHighlightRequest:
+      type: object
+      required: [iconKey, label]
+      properties:
+        iconKey: { type: string, maxLength: 40 }
+        label: { type: string, maxLength: 80 }
+        detail: { type: string, maxLength: 160, nullable: true }
+        enabled: { type: boolean, nullable: true }
+        position: { type: integer, nullable: true }
+
+    StoreHighlights:
+      type: object
+      properties:
+        topEnabled: { type: boolean }
+        bottomEnabled: { type: boolean }
+        items:
+          type: array
+          items: { : '#/components/schemas/StoreHighlight' }
 
     StorePageSummary:
       type: object

@@ -30,6 +30,10 @@
   </div>
 </section>
 
+@if (topHighlights().length > 0) {
+  <app-highlight-bar [items]="topHighlights()" />
+}
+
 <section id="catalogue" class="catalogue" aria-labelledby="catalogue-title">
   <div class="u-shell">
     <header class="catalogue-head">
