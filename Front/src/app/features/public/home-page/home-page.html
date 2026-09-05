@@ -22,12 +22,19 @@
     }
   </div>
 
-  <div class="hero-copy u-shell">
-    <h1 class="u-display">{{ heroTitle() }}</h1>
-    @if (heroText()) {
-      <p class="hero-text">{{ heroText() }}</p>
-    }
-  </div>
+  @if (showWelcome()) {
+    <div class="hero-copy u-shell">
+      <h1 class="u-display">{{ heroTitle() }}</h1>
+      @if (heroText()) {
+        <p class="hero-text">{{ heroText() }}</p>
+      }
+    </div>
+  } @else {
+    <!-- Le titre reste dans la structure du document : masquer le bloc
+         d'accueil ne doit pas laisser la page sans titre de niveau 1, ni pour
+         un lecteur d'écran ni pour un moteur de recherche. -->
+    <h1 class="u-sr-only">{{ store()?.name ?? heroTitle() }}</h1>
+  }
 </section>
 
 @if (topHighlights().length > 0) {

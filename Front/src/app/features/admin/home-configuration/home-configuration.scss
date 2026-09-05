@@ -60,18 +60,44 @@ textarea {
   resize: vertical;
 }
 
-.preview {
-  display: grid;
-  gap: 4px;
-  border-left: 3px solid var(--accent);
-  padding: 12px 14px;
-  background: var(--accent-soft);
-}
-
-.preview span,
-.preview small,
 .state {
   color: var(--text-muted);
+}
+
+/* L'interrupteur ouvre la carte : il commande tout ce qui suit, et se lit donc
+   avant les champs plutot qu'apres. */
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding-bottom: 4px;
+  cursor: pointer;
+
+  input {
+    margin-top: 0.15rem;
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: none;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__label {
+    color: var(--text-main);
+    font-weight: 600;
+  }
+
+  &__hint {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
 }
 
 .form-card > button {

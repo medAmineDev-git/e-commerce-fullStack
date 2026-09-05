@@ -11,7 +11,7 @@ import { DEFAULT_BANNER } from '../../../core/models/default-banner';
 import { StoreHighlightService } from '../../../core/services/store-highlight.service';
 import { HighlightBar } from '../../../shared/highlight-bar/highlight-bar';
 
-type StoreHome = { title: string; text: string; featuredProductId: number | null };
+type StoreHome = { title: string; text: string; welcomeEnabled: boolean };
 
 /**
  * Page unique de la vitrine : presentation de la boutique et catalogue complet.
@@ -40,6 +40,12 @@ export class HomePage {
   /** Bornes de prix en cours de saisie, appliquees a la validation du panneau. */
   readonly draftMinPrice = signal<number | null>(null);
   readonly draftMaxPrice = signal<number | null>(null);
+
+  /**
+   * Le vendeur peut retirer ce bloc de sa vitrine sans effacer son texte. Sans
+   * configuration enregistrée, il reste affiché : c'est l'état d'origine.
+   */
+  readonly showWelcome = computed(() => this.homeConfiguration()?.welcomeEnabled ?? true);
 
   readonly heroTitle = computed(
     () => this.homeConfiguration()?.title ?? this.store()?.name ?? 'La sélection',

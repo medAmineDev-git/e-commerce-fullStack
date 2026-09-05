@@ -1,7 +1,6 @@
 package com.ecommerce.backend.home.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public record HomeConfigurationRequest(
         @NotBlank(message = "title is required")
@@ -10,7 +9,10 @@ public record HomeConfigurationRequest(
         @NotBlank(message = "text is required")
         String text,
 
-        @NotNull(message = "featuredProductId is required")
-        Long featuredProductId
+        /**
+         * Facultatif : absent, le texte reste affiche. Un client d API qui
+         * ignore ce champ ne doit pas faire disparaitre le bloc sans le vouloir.
+         */
+        Boolean welcomeEnabled
 ) {
 }

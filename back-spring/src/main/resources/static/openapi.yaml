@@ -1191,7 +1191,11 @@ components:
       properties:
         title: { type: string }
         text: { type: string }
-        featuredProductId: { type: integer, format: int64, nullable: true }
+        welcomeEnabled:
+          type: boolean
+          description: |
+            Faux : le texte reste enregistré, mais la vitrine ne l'affiche pas.
+            Omis dans une requête, l'état courant est conservé.
 
     StoreHighlight:
       type: object

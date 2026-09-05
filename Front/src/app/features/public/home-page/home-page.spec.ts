@@ -70,7 +70,7 @@ describe('HomePage', () => {
     getHomeConfiguration: vi.fn().mockResolvedValue({
       title: 'Titre',
       text: 'Texte',
-      featuredProductId: 1,
+      welcomeEnabled: true,
     }),
   };
 
@@ -117,6 +117,28 @@ describe('HomePage', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should show the welcome text by default', () => {
+    expect(component.showWelcome()).toBe(true);
+  });
+
+  /**
+   * Le vendeur peut retirer ce bloc sans effacer son texte : la configuration
+   * garde le titre et l'accroche, la vitrine ne les rend plus.
+   */
+  it('should hide the welcome text when the seller turned it off', async () => {
+    mockCatalogService.getHomeConfiguration.mockResolvedValue({
+      title: 'Titre',
+      text: 'Texte',
+      welcomeEnabled: false,
+    });
+
+    const fresh = TestBed.createComponent(HomePage);
+    await fresh.whenStable();
+
+    expect(fresh.componentInstance.showWelcome()).toBe(false);
+    expect(fresh.componentInstance.heroTitle()).toBe('Titre');
   });
 
   /** L'accueil porte desormais le catalogue : il applique l'etat de l'URL. */

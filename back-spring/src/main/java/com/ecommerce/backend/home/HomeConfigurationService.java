@@ -2,15 +2,17 @@ package com.ecommerce.backend.home;
 
 import com.ecommerce.backend.home.dto.HomeConfigurationRequest;
 import com.ecommerce.backend.home.dto.HomeConfigurationResponse;
-import com.ecommerce.backend.product.Product;
-import com.ecommerce.backend.product.ProductNotFoundException;
-import com.ecommerce.backend.product.ProductRepository;
 import com.ecommerce.backend.store.Store;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Configuration de la page d'accueil, propre a chaque boutique.
+ * Texte d'accueil de la vitrine, propre a chaque boutique.
+ *
+ * Le produit mis en avant a ete retire : la tete de page ne porte plus qu'une
+ * banniere, et la vitrine ne le lisait donc plus. Il restait pourtant exige a
+ * l'enregistrement, ce qui empechait une boutique sans aucun produit de
+ * sauvegarder son texte.
  */
 @Service
 @Transactional(readOnly = true)
@@ -19,14 +21,9 @@ public class HomeConfigurationService {
     private static final String CONFIG_KEY = "home";
 
     private final HomeConfigurationRepository configurationRepository;
-    private final ProductRepository productRepository;
 
-    public HomeConfigurationService(
-            HomeConfigurationRepository configurationRepository,
-            ProductRepository productRepository
-    ) {
+    public HomeConfigurationService(HomeConfigurationRepository configurationRepository) {
         this.configurationRepository = configurationRepository;
-        this.productRepository = productRepository;
     }
 
     public HomeConfigurationResponse getConfiguration(Store store) {
@@ -38,11 +35,6 @@ public class HomeConfigurationService {
 
     @Transactional
     public HomeConfigurationResponse saveConfiguration(Store store, HomeConfigurationRequest request) {
-        // Le produit mis en avant est cherche dans la boutique elle-meme : une boutique
-        // ne peut pas afficher en vitrine le produit d'une autre.
-        Product product = productRepository.findByIdAndStore(request.featuredProductId(), store)
-                .orElseThrow(() -> new ProductNotFoundException(request.featuredProductId()));
-
         HomeConfiguration configuration = configurationRepository.findByStoreAndConfigKey(store, CONFIG_KEY)
                 .orElseGet(() -> {
                     HomeConfiguration config = new HomeConfiguration();
@@ -53,7 +45,11 @@ public class HomeConfigurationService {
 
         configuration.setTitle(request.title().trim());
         configuration.setText(request.text().trim());
-        configuration.setFeaturedProductId(product.getId());
+        // Champ absent : on garde l'etat courant plutot que de masquer un texte
+        // que personne n'a demande a cacher.
+        if (request.welcomeEnabled() != null) {
+            configuration.setWelcomeEnabled(request.welcomeEnabled());
+        }
 
         return toResponse(configurationRepository.save(configuration));
     }
@@ -66,12 +62,7 @@ public class HomeConfigurationService {
         configuration.setText(store.getDescription() != null
                 ? store.getDescription()
                 : "Decouvre notre selection.");
-        configuration.setFeaturedProductId(
-                productRepository.findAllByStoreOrderByIdDesc(store).stream()
-                        .findFirst()
-                        .map(Product::getId)
-                        .orElse(null)
-        );
+        configuration.setWelcomeEnabled(true);
         return configuration;
     }
 
@@ -79,7 +70,7 @@ public class HomeConfigurationService {
         return new HomeConfigurationResponse(
                 configuration.getTitle(),
                 configuration.getText(),
-                configuration.getFeaturedProductId()
+                configuration.isWelcomeEnabled()
         );
     }
 }

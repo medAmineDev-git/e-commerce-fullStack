@@ -41,6 +41,7 @@ public class HomeConfiguration {
     @Column(nullable = false, length = 1200)
     private String text;
 
-    @Column(nullable = false)
-    private Long featuredProductId;
+    /** Le texte peut rester redige sans etre affiche sur la vitrine. */
+    @Column(name = "welcome_enabled", nullable = false)
+    private boolean welcomeEnabled = true;
 }

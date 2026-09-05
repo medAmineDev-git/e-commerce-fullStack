@@ -154,9 +154,9 @@ export class PublicCatalogService {
     };
   }
 
-  async getHomeConfiguration(): Promise<{ title: string; text: string; featuredProductId: number | null }> {
+  async getHomeConfiguration(): Promise<{ title: string; text: string; welcomeEnabled: boolean }> {
     return firstValueFrom(
-      this.http.get<{ title: string; text: string; featuredProductId: number | null }>(
+      this.http.get<{ title: string; text: string; welcomeEnabled: boolean }>(
         `${this.storeContext.requireStoreApiUrl()}/home`,
       ),
     );

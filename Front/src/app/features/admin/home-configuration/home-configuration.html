@@ -1,8 +1,8 @@
 <section class="page-header">
   <div>
     <p class="eyebrow">Boutique</p>
-    <h1>Configuration de la home</h1>
-    <p>Personnalisez le texte d’accueil et le produit mis en avant.</p>
+    <h1>Texte d'accueil</h1>
+    <p>Le titre et l'accroche affichés sous la bannière de votre vitrine.</p>
   </div>
 </section>
 
@@ -11,42 +11,51 @@
 } @else {
   <form class="configuration-form" (submit)="$event.preventDefault()">
     <section class="form-card">
-      <label class="field">
-        <span>Titre *</span>
-        <input [value]="title()" (input)="title.set($any($event.target).value)" maxlength="160" required />
-      </label>
-      <label class="field">
-        <span>Texte *</span>
-        <textarea rows="5" [value]="text()" (input)="text.set($any($event.target).value)" maxlength="1200" required></textarea>
-      </label>
-      <label class="field">
-        <span>Produit affiché à droite *</span>
-        <select [value]="selectedProductValue()" (change)="selectFeaturedProduct($any($event.target).value)" required>
-          <option value="">Sélectionner un produit</option>
-          @for (product of products(); track product.id) {
-            <option [value]="product.id" [selected]="product.id === featuredProductId()">{{ product.name }} - {{ product.price | number: '1.2-2' }} €</option>
-          }
-        </select>
+      <!-- Le texte reste enregistré quand il est masqué : le retirer de la
+           vitrine ne doit pas obliger à le ressaisir pour le remettre. -->
+      <label class="toggle">
+        <input type="checkbox" [checked]="welcomeEnabled()" (change)="toggleWelcome()" />
+        <span class="toggle__body">
+          <span class="toggle__label">Afficher ce texte sur la vitrine</span>
+          <span class="toggle__hint">
+            @if (welcomeEnabled()) {
+              Le titre et l'accroche paraissent sous la bannière.
+            } @else {
+              Le texte est conservé ici mais n'apparaît pas sur votre vitrine.
+            }
+          </span>
+        </span>
       </label>
 
-      @if (featuredProductId(); as productId) {
-        @for (product of products(); track product.id) {
-          @if (product.id === productId) {
-            <div class="preview">
-              <span>Aperçu du produit sélectionné</span>
-              <strong>{{ product.name }}</strong>
-              <small>
-                @if (product.category) { {{ product.category }} · }
-                {{ product.stockQuantity }} en stock
-              </small>
-            </div>
-          }
-        }
-      }
+      <label class="field">
+        <span>Titre *</span>
+        <input
+          [value]="title()"
+          (input)="title.set($any($event.target).value)"
+          maxlength="160"
+          placeholder="Bienvenue à l'Atelier"
+          required
+        />
+      </label>
+
+      <label class="field">
+        <span>Texte *</span>
+        <textarea
+          rows="5"
+          [value]="text()"
+          (input)="text.set($any($event.target).value)"
+          maxlength="1200"
+          placeholder="Une sélection choisie avec soin, expédiée depuis notre atelier."
+          required
+        ></textarea>
+      </label>
 
       @if (message()) { <p class="success">{{ message() }}</p> }
       @if (error()) { <p class="error">{{ error() }}</p> }
-      <button type="button" (click)="save()" [disabled]="!canSave()">{{ saving() ? 'Enregistrement...' : 'Enregistrer la configuration' }}</button>
+
+      <button type="button" (click)="save()" [disabled]="!canSave()">
+        {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
     </section>
   </form>
 }
