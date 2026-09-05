@@ -59,6 +59,11 @@ export const routes: Routes = [
           import('./features/admin/store-settings/store-settings').then((m) => m.StoreSettings),
       },
       {
+        path: 'pages',
+        loadComponent: () =>
+          import('./features/admin/page-manager/page-manager').then((m) => m.PageManager),
+      },
+      {
         path: 'products',
         loadComponent: () =>
           import('./features/admin/product-list/product-list').then((m) => m.ProductList),
@@ -136,6 +141,12 @@ export const routes: Routes = [
           import('./features/public/order-success-page/order-success-page').then(
             (m) => m.OrderSuccessPage,
           ),
+      },
+      // Pages de contenu du vendeur : mentions légales, livraison, retours.
+      {
+        path: 'page/:pageSlug',
+        loadComponent: () =>
+          import('./features/public/store-page/store-page').then((m) => m.StorePageView),
       },
     ],
   },

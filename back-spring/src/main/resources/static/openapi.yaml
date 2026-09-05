@@ -322,6 +322,45 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/HomeConfiguration' }
 
+  /api/public/stores/{slug}/pages:
+    get:
+      tags: [Vitrine]
+      summary: Pages de contenu de la boutique
+      description: |
+        Libellés et adresses des pages affichées dans le pied de page. Les
+        textes ne sont pas renvoyés : ils sont chargés page par page.
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200':
+          description: Liste ordonnée des pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StorePageSummary' }
+
+  /api/public/stores/{slug}/pages/{pageSlug}:
+    get:
+      tags: [Vitrine]
+      summary: Contenu d'une page
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Slug' }
+        - name: pageSlug
+          in: path
+          required: true
+          schema: { type: string }
+          description: Adresse de la page dans la boutique, par exemple `livraison`.
+      responses:
+        '200':
+          description: Titre et texte de la page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StorePage' }
+        '404':
+          description: Aucune page à cette adresse dans cette boutique
+
   /api/public/stores/{slug}/orders:
     post:
       tags: [Vitrine]
@@ -549,6 +588,88 @@ paths:
     delete:
       tags: [Back-office]
       summary: Supprimer une catégorie
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '204': { description: Supprimée }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+
+  /api/admin/pages:
+    get:
+      tags: [Back-office]
+      summary: Mes pages de contenu
+      responses:
+        '200':
+          description: Pages de la boutique, texte compris
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StorePage' }
+    post:
+      tags: [Back-office]
+      summary: Créer une page
+      description: |
+        L'adresse publique se déduit du titre quand `slug` n'est pas fourni.
+        Une adresse déjà prise dans la boutique est suffixée plutôt que refusée.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StorePageRequest' }
+      responses:
+        '201':
+          description: Page créée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StorePage' }
+
+  /api/admin/pages/defaults:
+    post:
+      tags: [Back-office]
+      summary: Remettre les pages proposées
+      description: |
+        Réinstalle les pages livrées absentes de la boutique. Sans effet sur
+        celles qui existent : un texte déjà retouché n'est jamais écrasé.
+      responses:
+        '200':
+          description: Pages de la boutique après réinstallation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StorePage' }
+
+  /api/admin/pages/{id}:
+    get:
+      tags: [Back-office]
+      summary: Lire une page
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StorePage' }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+    put:
+      tags: [Back-office]
+      summary: Modifier une page
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StorePageRequest' }
+      responses:
+        '200':
+          description: Page modifiée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StorePage' }
+        '404': { description: Inconnue, ou appartenant à une autre boutique }
+    delete:
+      tags: [Back-office]
+      summary: Supprimer une page
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses:
         '204': { description: Supprimée }
@@ -966,6 +1087,39 @@ components:
         title: { type: string }
         text: { type: string }
         featuredProductId: { type: integer, format: int64, nullable: true }
+
+    StorePageSummary:
+      type: object
+      properties:
+        slug: { type: string, description: Adresse de la page dans la boutique }
+        title: { type: string }
+
+    StorePage:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        slug: { type: string }
+        title: { type: string }
+        content:
+          type: string
+          description: |
+            Texte brut, jamais du balisage. La vitrine le rend paragraphe par
+            paragraphe, en conservant les retours à la ligne.
+        position: { type: integer, description: Rang dans le pied de page }
+        updatedAt: { type: string, format: date-time }
+
+    StorePageRequest:
+      type: object
+      required: [title, content]
+      properties:
+        title: { type: string, maxLength: 160 }
+        slug:
+          type: string
+          maxLength: 80
+          nullable: true
+          description: Déduit du titre s'il est absent.
+        content: { type: string }
+        position: { type: integer, nullable: true }
 
     OrderItemRequest:
       type: object

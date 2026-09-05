@@ -1,0 +1,23 @@
+<article class="page u-shell">
+  @if (loading()) {
+    <p class="state">Chargement…</p>
+  } @else if (notFound()) {
+    <header class="page-head">
+      <h1 class="u-display">Page introuvable</h1>
+      <p class="page-lead">Cette page n'existe pas ou a été retirée par la boutique.</p>
+    </header>
+    <a class="u-btn u-btn--outline" [routerLink]="storeContext.link()">Retour à la boutique</a>
+  } @else if (page(); as content) {
+    <header class="page-head">
+      <h1 class="u-display">{{ content.title }}</h1>
+    </header>
+
+    <div class="page-body">
+      @for (paragraph of paragraphs(); track $index) {
+        <p>{{ paragraph }}</p>
+      }
+    </div>
+
+    <a class="page-back" [routerLink]="storeContext.link()">Retour à la boutique</a>
+  }
+</article>

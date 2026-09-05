@@ -1,0 +1,139 @@
+<header class="page-head">
+  <div>
+    <p class="a-label">Contenu</p>
+    <h1 class="a-title">Pages de la boutique</h1>
+    <p class="page-head__lead">
+      Ces pages sont accessibles depuis le pied de page de votre vitrine.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <button type="button" class="a-btn a-btn--outline" (click)="restoreDefaults()">
+      Remettre les pages proposées
+    </button>
+    <button type="button" class="a-btn a-btn--primary" (click)="startCreate()">
+      Nouvelle page
+    </button>
+  </div>
+</header>
+
+<p class="notice">
+  <strong>Ces pages vous appartiennent.</strong>
+  Les textes fournis sont des modèles à compléter : remplacez ce qui figure entre
+  crochets par vos informations, réécrivez ce qui ne vous convient pas, et
+  supprimez sans hésiter une page dont vous n'avez pas l'usage.
+</p>
+
+@if (error()) {
+  <p class="a-card error">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="state">Chargement des pages…</p>
+} @else {
+  <div class="layout">
+    <section class="a-card list" aria-label="Pages existantes">
+      @if (pages().length === 0) {
+        <p class="list__empty">
+          Aucune page. Créez-en une, ou remettez les pages proposées.
+        </p>
+      } @else {
+        <ul class="list__items">
+          @for (page of pages(); track page.id) {
+            <li class="row" [class.row--active]="selectedId() === page.id">
+              <button type="button" class="row__main" (click)="startEdit(page)">
+                <span class="row__title">{{ page.title }}</span>
+                <span class="row__meta">
+                  /page/{{ page.slug }} · modifiée le {{ page.updatedAt | date: 'd MMMM y' : '' : 'fr' }}
+                </span>
+              </button>
+
+              @if (deletingId() === page.id) {
+                <span class="row__confirm">
+                  <span>Supprimer&nbsp;?</span>
+                  <button type="button" class="a-btn a-btn--danger" (click)="confirmDelete(page)">
+                    Oui
+                  </button>
+                  <button type="button" class="a-btn a-btn--ghost" (click)="cancelDelete()">
+                    Non
+                  </button>
+                </span>
+              } @else {
+                <button type="button" class="row__delete" (click)="askDelete(page)">
+                  <span class="u-sr-only">Supprimer {{ page.title }}</span>
+                  <span aria-hidden="true">Supprimer</span>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (editing()) {
+      <section class="a-card editor" aria-label="Édition de la page">
+        <header class="editor__head">
+          <h2 class="editor__title">
+            {{ isCreating() ? 'Nouvelle page' : 'Modifier la page' }}
+          </h2>
+          @if (previewSlug()) {
+            <p class="editor__address">
+              Adresse publique : <code>/page/{{ previewSlug() }}</code>
+            </p>
+          }
+        </header>
+
+        <label class="field">
+          <span class="a-label">Titre</span>
+          <input
+            class="a-input"
+            [value]="titleDraft()"
+            (input)="titleDraft.set($any($event.target).value)"
+            placeholder="Livraison"
+            maxlength="160"
+          />
+        </label>
+
+        <label class="field">
+          <span class="a-label">Contenu</span>
+          <textarea
+            class="a-textarea"
+            rows="18"
+            [value]="contentDraft()"
+            (input)="contentDraft.set($any($event.target).value)"
+            placeholder="Décrivez vos délais, vos tarifs et vos zones de livraison."
+          ></textarea>
+          <small class="field__hint">
+            Texte simple. Laissez une ligne vide entre deux paragraphes ; les
+            retours à la ligne sont conservés tels quels sur la vitrine.
+          </small>
+        </label>
+
+        <div class="editor__actions">
+          <button
+            type="button"
+            class="a-btn a-btn--primary"
+            [disabled]="!canSave()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+          <button type="button" class="a-btn a-btn--ghost" (click)="cancelEdit()">Annuler</button>
+          @if (!isCreating() && storeSlug()) {
+            <a
+              class="editor__view"
+              [href]="'/boutique/' + storeSlug() + '/page/' + previewSlug()"
+              target="_blank"
+              rel="noopener"
+            >
+              Voir sur la vitrine
+            </a>
+          }
+        </div>
+      </section>
+    } @else {
+      <section class="a-card editor editor--idle">
+        <p>Choisissez une page à modifier, ou créez-en une nouvelle.</p>
+      </section>
+    }
+  </div>
+}

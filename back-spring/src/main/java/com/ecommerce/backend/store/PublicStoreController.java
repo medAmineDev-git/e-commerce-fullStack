@@ -7,6 +7,9 @@ import com.ecommerce.backend.home.dto.HomeConfigurationResponse;
 import com.ecommerce.backend.order.OrderService;
 import com.ecommerce.backend.order.dto.OrderRequest;
 import com.ecommerce.backend.order.dto.OrderResponse;
+import com.ecommerce.backend.page.StorePageService;
+import com.ecommerce.backend.page.dto.StorePageResponse;
+import com.ecommerce.backend.page.dto.StorePageSummary;
 import com.ecommerce.backend.product.ProductService;
 import com.ecommerce.backend.product.dto.ProductFacetsResponse;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
@@ -29,19 +32,22 @@ public class PublicStoreController {
     private final CategoryService categoryService;
     private final OrderService orderService;
     private final HomeConfigurationService homeConfigurationService;
+    private final StorePageService storePageService;
 
     public PublicStoreController(
             StoreService storeService,
             ProductService productService,
             CategoryService categoryService,
             OrderService orderService,
-            HomeConfigurationService homeConfigurationService
+            HomeConfigurationService homeConfigurationService,
+            StorePageService storePageService
     ) {
         this.storeService = storeService;
         this.productService = productService;
         this.categoryService = categoryService;
         this.orderService = orderService;
         this.homeConfigurationService = homeConfigurationService;
+        this.storePageService = storePageService;
     }
 
     @GetMapping("/{slug}")
@@ -118,6 +124,19 @@ public class PublicStoreController {
     public HomeConfigurationResponse getStoreHomeConfiguration(@PathVariable String slug) {
         Store store = storeService.getStoreEntityBySlug(slug);
         return homeConfigurationService.getConfiguration(store);
+    }
+
+    /** Liens du pied de page : libelles et adresses, sans les textes. */
+    @GetMapping("/{slug}/pages")
+    public List<StorePageSummary> getStorePages(@PathVariable String slug) {
+        Store store = storeService.getStoreEntityBySlug(slug);
+        return storePageService.getPageSummaries(store);
+    }
+
+    @GetMapping("/{slug}/pages/{pageSlug}")
+    public StorePageResponse getStorePage(@PathVariable String slug, @PathVariable String pageSlug) {
+        Store store = storeService.getStoreEntityBySlug(slug);
+        return storePageService.getPageBySlug(store, pageSlug);
     }
 
     @PostMapping("/{slug}/orders")

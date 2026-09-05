@@ -62,14 +62,21 @@
       </section>
     }
 
-    <section class="footer-info">
-      <h2 class="u-label">Commande</h2>
-      <ul class="footer-list">
-        <li>Paiement à la livraison ou par virement</li>
-        <li>Livraison en 48 à 72 heures</li>
-        <li>Retour possible sous 7 jours</li>
-      </ul>
-    </section>
+    <!-- Les pages du vendeur remplacent des promesses ecrites en dur qui
+         n'engageaient personne : delais et conditions vivent desormais dans un
+         texte qu'il maitrise. -->
+    @if (pages().length > 0) {
+      <nav class="footer-info" aria-labelledby="footer-pages-title">
+        <h2 id="footer-pages-title" class="u-label">Informations pratiques</h2>
+        <ul class="footer-list">
+          @for (page of pages(); track page.slug) {
+            <li>
+              <a [routerLink]="storeContext.link('page', page.slug)">{{ page.title }}</a>
+            </li>
+          }
+        </ul>
+      </nav>
+    }
   </div>
 
   <p class="footer-legal u-shell">&copy; {{ currentYear }} {{ store()?.name }}</p>

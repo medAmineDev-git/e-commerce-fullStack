@@ -6,6 +6,8 @@ import { StoreContextService } from '../../../core/services/store-context.servic
 import { CartStore } from '../../../core/stores/cart.store';
 import { PublisherReferenceService } from '../../../core/services/publisher-reference';
 import { SeoService } from '../../../core/seo/seo.service';
+import { StorePageService } from '../../../core/services/store-page.service';
+import { StorePageSummary } from '../../../core/models/store-page.model';
 
 @Component({
   selector: 'app-public-layout',
@@ -19,6 +21,7 @@ export class PublicLayout {
   private readonly router = inject(Router);
   private readonly publisherReferenceService = inject(PublisherReferenceService);
   private readonly seo = inject(SeoService);
+  private readonly storePageService = inject(StorePageService);
 
   /** L'identité affichée vient de la boutique, jamais d'un nom écrit en dur. */
   readonly store = this.storeContext.store;
@@ -31,10 +34,14 @@ export class PublicLayout {
     return !!(store?.address || store?.phone || store?.email);
   });
 
+  /** Liens de pied de page, vides tant que la boutique n'a aucune page. */
+  readonly pages = signal<StorePageSummary[]>([]);
+
   constructor() {
     effect(() => {
       const store = this.store();
       if (store) {
+        void this.loadPages();
         this.seo.apply({
           title: store.name,
           description: store.description ?? `Découvrez la sélection de ${store.name}.`,
@@ -62,6 +69,15 @@ export class PublicLayout {
 
   closeCartDrawer(): void {
     this.cartDrawerOpen.set(false);
+  }
+
+  /** Un pied de page sans liens vaut mieux qu'un pied de page en erreur. */
+  private async loadPages(): Promise<void> {
+    try {
+      this.pages.set(await this.storePageService.listPublicPages());
+    } catch {
+      this.pages.set([]);
+    }
   }
 
   private captureReference(): void {

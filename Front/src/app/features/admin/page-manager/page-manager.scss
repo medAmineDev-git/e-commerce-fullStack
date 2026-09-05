@@ -1,0 +1,251 @@
+:host {
+  display: block;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
+
+  &__lead {
+    margin: 0.35rem 0 0;
+    max-width: 52ch;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+}
+
+/* Le vendeur doit savoir des l'arrivee qu'il peut tout reecrire et tout
+   supprimer : sans cela, des textes livres passent pour des mentions imposees
+   par la plateforme. */
+.notice {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--text-main);
+  font-size: 0.89rem;
+  line-height: 1.6;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.error {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1.1rem;
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.89rem;
+}
+
+.state {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.list {
+  padding: 0.5rem;
+
+  &__empty {
+    margin: 0;
+    padding: 1.25rem;
+    color: var(--text-faint);
+    font-size: 0.89rem;
+  }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-sm);
+
+  &--active {
+    background: var(--accent-soft);
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    padding: 0.45rem 0.5rem;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+
+  &__title {
+    overflow: hidden;
+    color: var(--text-main);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__delete {
+    flex: none;
+    border: 0;
+    background: none;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-faint);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8rem;
+
+    &:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+  }
+
+  &__confirm {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+
+    .a-btn {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+
+  &--idle {
+    color: var(--text-faint);
+    font-size: 0.89rem;
+
+    p {
+      margin: 0;
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+  }
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  &__address {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: 0.8rem;
+
+    code {
+      background: var(--surface-sunk);
+      border-radius: 3px;
+      padding: 0.05rem 0.3rem;
+      font-size: 0.78rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  &__view {
+    margin-left: auto;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  &__hint {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  textarea {
+    /* Un texte legal se relit d'un bloc : une police a chasse fixe et des
+       lignes aerees valent mieux qu'un champ compact. */
+    line-height: 1.65;
+    resize: vertical;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor--idle {
+    display: none;
+  }
+}

@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+/* Une colonne de lecture : au-dela d'environ 70 signes, l'oeil perd sa ligne. */
+.page {
+  max-width: 46rem;
+  padding-block: 2.5rem 4rem;
+}
+
+.page-head {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+    text-wrap: balance;
+  }
+}
+
+.page-lead {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+}
+
+.page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+
+  p {
+    margin: 0;
+    /* Les retours a la ligne du vendeur sont conserves : une adresse postale ou
+       une grille tarifaire perdrait tout sens reflowee en un seul bloc. */
+    white-space: pre-line;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+}
+
+.page-back {
+  display: inline-block;
+  margin-top: 2.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+
+  &:hover {
+    color: var(--ink);
+  }
+}
+
+.state {
+  padding-block: 3rem;
+  color: var(--muted);
+}

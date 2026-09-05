@@ -1,6 +1,7 @@
 package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.auth.AdminUser;
+import com.ecommerce.backend.page.StorePageService;
 import com.ecommerce.backend.store.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +28,16 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final StoreMapper storeMapper;
+    private final StorePageService storePageService;
 
-    public StoreService(StoreRepository storeRepository, StoreMapper storeMapper) {
+    public StoreService(
+            StoreRepository storeRepository,
+            StoreMapper storeMapper,
+            StorePageService storePageService
+    ) {
         this.storeRepository = storeRepository;
         this.storeMapper = storeMapper;
+        this.storePageService = storePageService;
     }
 
     public Store getStoreEntityBySlug(String slug) {
@@ -124,7 +131,13 @@ public class StoreService {
         store.setActive(true);
         store.setOwner(owner);
 
-        return storeRepository.save(store);
+        Store created = storeRepository.save(store);
+
+        // Mentions legales, livraison, retours : la vitrine ne s'ouvre pas sur un
+        // pied de page vide. Le proprietaire les reecrit ou les supprime ensuite.
+        storePageService.installDefaults(created);
+
+        return created;
     }
 
     @Transactional
