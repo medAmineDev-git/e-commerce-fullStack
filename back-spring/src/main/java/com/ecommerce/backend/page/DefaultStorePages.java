@@ -23,10 +23,10 @@ public final class DefaultStorePages {
             Cette page rassemble les informations légales de la boutique.
 
             Éditeur du site
-            [Raison sociale], [forme juridique] au capital de [montant] dinars.
+            [Raison sociale], [forme juridique] au capital de [montant] euros.
             Siège social : [adresse complète].
-            Immatriculation : [numéro au registre du commerce].
-            Identifiant fiscal : [numéro].
+            Immatriculation : [numéro SIRET ou RCS].
+            Numéro de TVA intracommunautaire : [numéro].
             Directeur de la publication : [nom].
 
             Contact
@@ -50,7 +50,7 @@ public final class DefaultStorePages {
             détail de votre engagement.
 
             Prix
-            Les prix sont indiqués en dinars tunisiens, toutes taxes comprises, hors frais de
+            Les prix sont indiqués en euros, toutes taxes comprises, hors frais de
             livraison. Ces derniers sont annoncés avant la validation de la
             commande.
 
@@ -64,7 +64,7 @@ public final class DefaultStorePages {
             remboursé.
 
             Droit applicable
-            Les présentes conditions sont soumises au droit [pays].
+            Les présentes conditions sont soumises au droit français.
             """;
 
     private static final String SHIPPING = """
@@ -74,12 +74,12 @@ public final class DefaultStorePages {
             Les commandes sont préparées sous [1 à 2] jours ouvrés après validation.
 
             Modes et délais de livraison
-            Livraison standard : [3 à 5] jours ouvrés, [montant] dinars.
-            Livraison express : [24 à 48] heures, [montant] dinars.
+            Livraison standard : [3 à 5] jours ouvrés, [montant] euros.
+            Livraison express : [24 à 48] heures, [montant] euros.
             Retrait en boutique : gratuit, sous [24] heures.
 
             Frais offerts
-            Les frais de livraison sont offerts à partir de [montant] dinars
+            Les frais de livraison sont offerts à partir de [montant] euros
             d'achat.
 
             Zones desservies
@@ -94,7 +94,7 @@ public final class DefaultStorePages {
             Un article ne vous convient pas ? Voici la marche à suivre.
 
             Délai de rétractation
-            Vous disposez de [quatorze] jours à compter de la réception pour nous
+            Vous disposez de quatorze jours à compter de la réception pour nous
             informer de votre souhait de retour, sans avoir à vous justifier.
 
             État des articles
@@ -110,7 +110,7 @@ public final class DefaultStorePages {
             de notre part ou d'article défectueux, ils sont à notre charge.
 
             Remboursement
-            Le remboursement intervient sous [quatorze] jours après réception du
+            Le remboursement intervient sous quatorze jours après réception du
             retour, sur le moyen de paiement utilisé lors de la commande.
             """;
 

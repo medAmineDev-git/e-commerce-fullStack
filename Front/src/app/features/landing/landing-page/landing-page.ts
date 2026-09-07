@@ -104,7 +104,7 @@ export class LandingPage {
         offers: {
           '@type': 'Offer',
           price: '0',
-          priceCurrency: 'TND',
+          priceCurrency: 'EUR',
           description: 'Création de boutique gratuite, sans carte bancaire.',
         },
       },

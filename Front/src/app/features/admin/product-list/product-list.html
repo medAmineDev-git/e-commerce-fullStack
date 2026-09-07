@@ -45,7 +45,7 @@
 
     <ng-container matColumnDef="price">
       <th mat-header-cell *matHeaderCellDef>Prix</th>
-      <td mat-cell *matCellDef="let product">{{ product.price | currency: 'TND' : 'symbol' : '1.3-3' : 'fr' }}</td>
+      <td mat-cell *matCellDef="let product">{{ product.price | number: '1.2-2' }} €</td>
     </ng-container>
 
     <ng-container matColumnDef="stockQuantity">
