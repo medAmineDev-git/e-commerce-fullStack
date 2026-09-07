@@ -35,6 +35,14 @@ export type StoreSettingsInput = {
   domain: string | null;
 };
 
+/** Identifiants du propriétaire, modifiés depuis la console plateforme. */
+export type StoreOwnerInput = {
+  username: string;
+  email: string;
+  /** Vide ou absent : le mot de passe actuel est conservé. */
+  password?: string;
+};
+
 /** Vue plateforme : l'inventaire, sans le détail de chaque vitrine. */
 export type StoreSummary = {
   id: number;

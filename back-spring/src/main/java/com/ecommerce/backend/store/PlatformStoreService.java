@@ -2,6 +2,8 @@ package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.auth.AdminUser;
 import com.ecommerce.backend.auth.AdminUserRepository;
+import com.ecommerce.backend.store.dto.StoreOwnerRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.ecommerce.backend.category.CategoryRepository;
 import com.ecommerce.backend.order.CustomerOrder;
 import com.ecommerce.backend.order.OrderRepository;
@@ -35,6 +37,7 @@ public class PlatformStoreService {
     private final CategoryRepository categoryRepository;
     private final OrderRepository orderRepository;
     private final ProductImageStorageService imageStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public PlatformStoreService(
             StoreRepository storeRepository,
@@ -42,7 +45,8 @@ public class PlatformStoreService {
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             OrderRepository orderRepository,
-            ProductImageStorageService imageStorageService
+            ProductImageStorageService imageStorageService,
+            PasswordEncoder passwordEncoder
     ) {
         this.storeRepository = storeRepository;
         this.adminUserRepository = adminUserRepository;
@@ -50,6 +54,51 @@ public class PlatformStoreService {
         this.categoryRepository = categoryRepository;
         this.orderRepository = orderRepository;
         this.imageStorageService = imageStorageService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    /**
+     * Modifie les identifiants du proprietaire d une boutique.
+     *
+     * L exploitant n a pas a connaitre l ancien mot de passe : c est justement
+     * le cas ou l on s adresse a lui, celui d un proprietaire qui a perdu le
+     * sien. Le mot de passe est facultatif, et reste inchange s il est absent.
+     */
+    @Transactional
+    public StoreDetailResponse updateOwner(Long storeId, StoreOwnerRequest request, String requestedBy) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new StoreNotFoundException(storeId));
+
+        AdminUser owner = store.getOwner();
+        if (owner == null) {
+            throw new IllegalArgumentException("Cette boutique n'a pas de compte proprietaire.");
+        }
+
+        String username = request.username().trim();
+        String email = request.email().trim();
+
+        if (adminUserRepository.existsByUsernameIgnoreCaseAndIdNot(username, owner.getId())) {
+            throw new IllegalArgumentException("Ce nom d'utilisateur est deja pris.");
+        }
+        if (adminUserRepository.existsByEmailIgnoreCaseAndIdNot(email, owner.getId())) {
+            throw new IllegalArgumentException("Cette adresse e-mail est deja prise.");
+        }
+
+        owner.setUsername(username);
+        owner.setEmail(email);
+
+        boolean passwordChanged = request.password() != null && !request.password().isBlank();
+        if (passwordChanged) {
+            owner.setPasswordHash(passwordEncoder.encode(request.password()));
+        }
+
+        adminUserRepository.save(owner);
+
+        log.warn("Identifiants de '{}' (boutique '{}') modifies par '{}'{}.",
+                username, store.getSlug(), requestedBy,
+                passwordChanged ? ", mot de passe reinitialise" : "");
+
+        return getDetail(storeId);
     }
 
     public StoreDetailResponse getDetail(Long storeId) {

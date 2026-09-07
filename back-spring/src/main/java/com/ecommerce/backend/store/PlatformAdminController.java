@@ -2,6 +2,7 @@ package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.store.dto.StoreDetailResponse;
 import com.ecommerce.backend.store.dto.StoreDomainRequest;
+import com.ecommerce.backend.store.dto.StoreOwnerRequest;
 import com.ecommerce.backend.store.dto.StoreSummaryResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,19 @@ public class PlatformAdminController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteStore(@PathVariable Long id, Authentication authentication) {
         platformStoreService.deleteStore(id, authentication.getName());
+    }
+
+    /**
+     * Modifie les identifiants du proprietaire. Le mot de passe est facultatif :
+     * absent, il reste inchange.
+     */
+    @PutMapping("/{id}/owner")
+    public StoreDetailResponse updateOwner(
+            @PathVariable Long id,
+            @Valid @RequestBody StoreOwnerRequest request,
+            Authentication authentication
+    ) {
+        return platformStoreService.updateOwner(id, request, authentication.getName());
     }
 
     @PatchMapping("/{id}/toggle-active")

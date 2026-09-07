@@ -92,11 +92,71 @@
                     <div class="detail">
                       <section class="detail-block">
                         <h2 class="detail-title">Propriétaire</h2>
-                        <dl>
-                          <div><dt>Compte</dt><dd>{{ d.ownerUsername ?? '—' }}</dd></div>
-                          <div><dt>E-mail</dt><dd>{{ d.ownerEmail ?? '—' }}</dd></div>
-                          <div><dt>Rôle</dt><dd class="mono">{{ d.ownerRole ?? '—' }}</dd></div>
-                        </dl>
+
+                        @if (editingOwner()) {
+                          <div class="owner-form">
+                            <label class="owner-field">
+                              <span>Compte</span>
+                              <input
+                                [value]="ownerUsernameDraft()"
+                                (input)="ownerUsernameDraft.set($any($event.target).value)"
+                                autocomplete="off"
+                              />
+                            </label>
+                            <label class="owner-field">
+                              <span>E-mail</span>
+                              <input
+                                type="email"
+                                [value]="ownerEmailDraft()"
+                                (input)="ownerEmailDraft.set($any($event.target).value)"
+                                autocomplete="off"
+                              />
+                            </label>
+                            <label class="owner-field">
+                              <span>Nouveau mot de passe</span>
+                              <input
+                                type="password"
+                                [value]="ownerPasswordDraft()"
+                                (input)="ownerPasswordDraft.set($any($event.target).value)"
+                                placeholder="Laisser vide pour ne pas le changer"
+                                autocomplete="new-password"
+                              />
+                              <small>
+                                Huit caractères au moins. Vous n'avez pas besoin de connaître
+                                l'ancien.
+                              </small>
+                            </label>
+
+                            @if (ownerError()) {
+                              <p class="owner-error">{{ ownerError() }}</p>
+                            }
+
+                            <div class="owner-actions">
+                              <button
+                                type="button"
+                                class="owner-save"
+                                [disabled]="!canSaveOwner()"
+                                (click)="saveOwner(store)"
+                              >
+                                {{ savingOwner() ? 'Enregistrement…' : 'Enregistrer' }}
+                              </button>
+                              <button type="button" class="owner-cancel" (click)="cancelOwnerEdit()">
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        } @else {
+                          <dl>
+                            <div><dt>Compte</dt><dd>{{ d.ownerUsername ?? '—' }}</dd></div>
+                            <div><dt>E-mail</dt><dd>{{ d.ownerEmail ?? '—' }}</dd></div>
+                            <div><dt>Rôle</dt><dd class="mono">{{ d.ownerRole ?? '—' }}</dd></div>
+                          </dl>
+                          @if (d.ownerUsername) {
+                            <button type="button" class="owner-edit" (click)="startOwnerEdit(d)">
+                              Modifier les identifiants
+                            </button>
+                          }
+                        }
                       </section>
 
                       <section class="detail-block">

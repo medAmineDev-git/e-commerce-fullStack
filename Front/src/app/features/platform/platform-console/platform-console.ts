@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -46,6 +46,80 @@ export class PlatformConsole {
 
   readonly currentUsername = this.authService.username;
 
+  /**
+   * Modification des identifiants du proprietaire.
+   *
+   * Le mot de passe se remplace sans connaitre l ancien : c est precisement le
+   * cas ou l exploitant intervient, celui d un proprietaire qui a perdu le
+   * sien. Laisse vide, il n est pas touche.
+   */
+  readonly editingOwner = signal(false);
+  readonly ownerUsernameDraft = signal('');
+  readonly ownerEmailDraft = signal('');
+  readonly ownerPasswordDraft = signal('');
+  readonly savingOwner = signal(false);
+  readonly ownerError = signal<string | null>(null);
+
+  readonly canSaveOwner = computed(
+    () =>
+      !!this.ownerUsernameDraft().trim() &&
+      !!this.ownerEmailDraft().trim() &&
+      // Vide : on ne change pas le mot de passe. Rempli : il doit tenir la regle.
+      (this.ownerPasswordDraft().length === 0 || this.ownerPasswordDraft().length >= 8) &&
+      !this.savingOwner(),
+  );
+
+  startOwnerEdit(detail: StoreDetail): void {
+    this.ownerUsernameDraft.set(detail.ownerUsername ?? '');
+    this.ownerEmailDraft.set(detail.ownerEmail ?? '');
+    this.ownerPasswordDraft.set('');
+    this.ownerError.set(null);
+    this.editingOwner.set(true);
+  }
+
+  cancelOwnerEdit(): void {
+    this.editingOwner.set(false);
+    this.ownerPasswordDraft.set('');
+    this.ownerError.set(null);
+  }
+
+  async saveOwner(store: StoreSummary): Promise<void> {
+    if (!this.canSaveOwner()) {
+      return;
+    }
+
+    this.savingOwner.set(true);
+    this.ownerError.set(null);
+
+    const password = this.ownerPasswordDraft();
+
+    try {
+      const updated = await this.storeAdminService.updateOwner(store.id, {
+        username: this.ownerUsernameDraft().trim(),
+        email: this.ownerEmailDraft().trim(),
+        ...(password ? { password } : {}),
+      });
+      this.detail.set(updated);
+      // La liste affiche le nom du compte : elle doit suivre la fiche.
+      this.stores.update((stores) =>
+        stores.map((one) =>
+          one.id === store.id ? { ...one, ownerUsername: updated.ownerUsername } : one,
+        ),
+      );
+      this.cancelOwnerEdit();
+    } catch (error) {
+      this.ownerError.set(this.readableOwnerError(error));
+    } finally {
+      this.savingOwner.set(false);
+    }
+  }
+
+  /** Le serveur nomme le conflit ; le reste reste generique. */
+  private readableOwnerError(error: unknown): string {
+    const response = error as { error?: { message?: string } };
+    return response?.error?.message ?? "L'enregistrement a échoué. Réessayez dans un instant.";
+  }
+
   constructor() {
     this.seo.apply({
       title: 'Console plateforme',
@@ -70,6 +144,10 @@ export class PlatformConsole {
   }
 
   async toggleDetail(store: StoreSummary): Promise<void> {
+    // Changer de fiche referme l'edition : sinon les champs saisis pour une
+    // boutique se retrouveraient au-dessus de la suivante.
+    this.cancelOwnerEdit();
+
     if (this.openDetailId() === store.id) {
       this.openDetailId.set(null);
       this.detail.set(null);

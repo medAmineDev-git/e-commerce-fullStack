@@ -944,6 +944,39 @@ paths:
               schema: { type: array, items: { $ref: '#/components/schemas/StoreSummary' } }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /api/platform/stores/{id}/owner:
+    put:
+      tags: [Plateforme]
+      summary: Modifier les identifiants du propriétaire
+      description: |
+        Le mot de passe est facultatif : omis ou vide, il reste inchangé.
+        L'exploitant n'a pas à connaître l'ancien — c'est le cas d'usage même
+        de cette route, un propriétaire ayant perdu le sien.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email]
+              properties:
+                username: { type: string, minLength: 3, maxLength: 80 }
+                email: { type: string, format: email, maxLength: 160 }
+                password:
+                  type: string
+                  nullable: true
+                  minLength: 8
+                  maxLength: 100
+      responses:
+        '200':
+          description: Fiche de la boutique après modification
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoreDetail' }
+        '400': { description: Nom ou e-mail déjà pris, ou boutique sans propriétaire }
+        '404': { description: Boutique inconnue }
+
   /api/platform/stores/{id}/toggle-active:
     patch:
       tags: [Plateforme]
