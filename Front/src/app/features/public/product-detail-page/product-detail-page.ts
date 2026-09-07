@@ -179,7 +179,7 @@ export class ProductDetailPage {
   formatPrice(amount: number): string {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'EUR',
+      currency: 'TND',
       minimumFractionDigits: 2,
     }).format(amount);
   }

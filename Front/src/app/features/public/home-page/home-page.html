@@ -114,10 +114,10 @@
                 <span class="card-name">{{ product.name }}</span>
 
                 <span class="card-price">
-                  <span class="u-price">{{ product.price | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</span>
+                  <span class="u-price">{{ product.price | currency: 'TND' : 'symbol' : '1.3-3' : 'fr' }}</span>
                   @if (product.originalPrice) {
                     <span class="u-price-was">
-                      {{ product.originalPrice | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                      {{ product.originalPrice | currency: 'TND' : 'symbol' : '1.3-3' : 'fr' }}
                     </span>
                   }
                 </span>

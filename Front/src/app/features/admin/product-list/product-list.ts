@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
@@ -10,7 +10,7 @@ import { ProductStore } from '../../../core/stores/product.store';
 
 @Component({
   selector: 'app-product-list',
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, DecimalPipe],
+  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, CurrencyPipe],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss',
 })
