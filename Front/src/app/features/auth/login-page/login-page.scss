@@ -15,6 +15,29 @@
   padding: 32px;
 }
 
+/* L'enseigne se pose au-dessus du titre, separee par un filet : elle situe la
+   page sans concurrencer le mot Connexion. */
+.store-mark {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6ebe7;
+}
+
+.store-logo {
+  max-height: 44px;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.store-name {
+  color: #1c2e24;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: #306745;

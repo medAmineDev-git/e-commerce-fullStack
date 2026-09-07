@@ -113,6 +113,24 @@ export const routes: Routes = [
       },
     ],
   },
+  /*
+   * Connexion depuis l'adresse de la boutique.
+   *
+   * Declaree avant `boutique/:slug` pour etre reconnue en premier, et hors de
+   * la mise en page publique : l'en-tete panier et le pied de page s'adressent
+   * aux clients, pas au proprietaire qui vient administrer sa boutique. La
+   * boutique est tout de meme resolue, pour que la page porte son nom.
+   */
+  {
+    path: 'boutique/:slug/connexion',
+    canActivate: [storeResolverGuard, anonymousOnlyGuard],
+    loadComponent: () => import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
+  },
+  // Adresse en anglais, courante par habitude, menant a la meme page.
+  {
+    path: 'boutique/:slug/login',
+    redirectTo: 'boutique/:slug/connexion',
+  },
   {
     path: 'boutique/:slug',
     canActivate: [storeResolverGuard],
