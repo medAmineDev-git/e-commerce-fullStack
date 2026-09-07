@@ -81,9 +81,9 @@
   <section class="metrics" aria-label="Indicateurs clés">
     <article class="metric">
       <p class="metric__label">Chiffre d'affaires</p>
-      <p class="metric__value">{{ revenue() | currency: 'EUR' : 'symbol' : '1.0-0' : 'fr' }}</p>
+      <p class="metric__value">{{ revenue() | currency: 'TND' : 'symbol' : '1.0-0' : 'fr' }}</p>
       <p class="metric__note">
-        Panier moyen {{ averageOrder() | currency: 'EUR' : 'symbol' : '1.0-0' : 'fr' }}
+        Panier moyen {{ averageOrder() | currency: 'TND' : 'symbol' : '1.0-0' : 'fr' }}
       </p>
     </article>
     <article class="metric">
@@ -136,7 +136,7 @@
                 {{ statusLabel(order.status) }}
               </span>
               <span class="orders__total">
-                {{ order.total | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}
+                {{ order.total | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}
               </span>
             </li>
           }
