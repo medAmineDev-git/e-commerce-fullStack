@@ -177,6 +177,58 @@
   <section class="form-card">
     <div class="section-heading">
       <div>
+        <h2>Livraison et retours</h2>
+        <p>
+          Ces lignes s'affichent sur la fiche de ce produit. Supprimez-les toutes
+          pour que le bloc n'apparaisse pas.
+        </p>
+      </div>
+      <button type="button" class="ghost-action" (click)="restoreServiceTerms()">
+        Remettre les valeurs proposées
+      </button>
+    </div>
+
+    @if (model().serviceTerms.length === 0) {
+      <p class="terms-empty">
+        Aucune condition : le bloc « Livraison et retours » ne paraîtra pas sur la fiche.
+      </p>
+    } @else {
+      <div class="terms-list">
+        @for (term of model().serviceTerms; track $index) {
+          <div class="terms-row">
+            <input
+              class="terms-label"
+              [value]="term.label"
+              (input)="updateServiceTerm($index, 'label', $any($event.target).value)"
+              placeholder="Retour"
+              maxlength="60"
+              [attr.aria-label]="'Intitulé de la ligne ' + ($index + 1)"
+            />
+            <input
+              class="terms-value"
+              [value]="term.value"
+              (input)="updateServiceTerm($index, 'value', $any($event.target).value)"
+              placeholder="Sous 7 jours"
+              maxlength="160"
+              [attr.aria-label]="'Valeur de la ligne ' + ($index + 1)"
+            />
+            <button type="button" class="terms-remove" (click)="removeServiceTerm($index)">
+              <span class="u-sr-only">Supprimer la ligne {{ term.label || $index + 1 }}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="add-row">
+      <button type="button" (click)="addServiceTerm()">Ajouter une ligne</button>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <div class="section-heading">
+      <div>
         <h2>Référencement</h2>
         <p>Optimisez la présentation dans les moteurs de recherche.</p>
       </div>

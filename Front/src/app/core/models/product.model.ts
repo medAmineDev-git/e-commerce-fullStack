@@ -1,5 +1,11 @@
 export type ProductStatus = 'ACTIVE' | 'DRAFT';
 
+/** Une ligne du bloc « Livraison et retours » de la fiche produit. */
+export interface ProductServiceTerm {
+  label: string;
+  value: string;
+}
+
 export interface ProductColor {
   name: string;
   hex: string;
@@ -21,6 +27,8 @@ export interface Product {
   sizes?: string[];
   seasons?: string[];
   colors?: ProductColor[];
+  /** Liste vide : le bloc « Livraison et retours » ne paraît pas sur la fiche. */
+  serviceTerms?: ProductServiceTerm[];
   seoTitle?: string;
   seoDescription?: string;
 }

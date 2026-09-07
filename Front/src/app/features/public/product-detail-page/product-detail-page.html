@@ -176,23 +176,21 @@
         </dl>
       </section>
 
-      <section class="assurances-block">
-        <h2 class="u-label">Livraison et retours</h2>
-        <dl class="assurances">
-        <div>
-          <dt>Livraison</dt>
-          <dd>48 à 72 heures</dd>
-        </div>
-        <div>
-          <dt>Paiement</dt>
-          <dd>À la livraison ou par virement</dd>
-        </div>
-        <div>
-          <dt>Retour</dt>
-          <dd>Sous 7 jours</dd>
-        </div>
-        </dl>
-      </section>
+      <!-- Le vendeur peut retirer toutes les lignes : le bloc disparaît alors,
+           plutôt que de laisser un titre suivi de rien. -->
+      @if (serviceTerms().length > 0) {
+        <section class="assurances-block">
+          <h2 class="u-label">Livraison et retours</h2>
+          <dl class="assurances">
+            @for (term of serviceTerms(); track $index) {
+              <div>
+                <dt>{{ term.label }}</dt>
+                <dd>{{ term.value }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+      }
 
       @if (relatedProducts().length > 0) {
         <section class="related">

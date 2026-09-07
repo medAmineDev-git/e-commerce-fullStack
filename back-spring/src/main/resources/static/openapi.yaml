@@ -1105,6 +1105,13 @@ components:
         ownerUsername: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
 
+    ProductServiceTerm:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string, maxLength: 60, example: Retour }
+        value: { type: string, maxLength: 160, example: Sous 7 jours }
+
     ProductColor:
       type: object
       properties:
@@ -1128,6 +1135,10 @@ components:
         sizes: { type: array, items: { type: string } }
         seasons: { type: array, items: { type: string } }
         colors: { type: array, items: { $ref: '#/components/schemas/ProductColor' } }
+        serviceTerms:
+          type: array
+          description: Bloc « Livraison et retours » de la fiche. Vide, le bloc ne paraît pas.
+          items: { $ref: '#/components/schemas/ProductServiceTerm' }
         seoTitle: { type: string, nullable: true }
         seoDescription: { type: string, nullable: true }
 
@@ -1148,6 +1159,14 @@ components:
         sizes: { type: array, items: { type: string } }
         seasons: { type: array, items: { type: string } }
         colors: { type: array, items: { $ref: '#/components/schemas/ProductColor' } }
+        serviceTerms:
+          type: array
+          nullable: true
+          description: |
+            Absent : le produit reçoit les conditions proposées, celles qui
+            figuraient jusqu'ici en dur dans la fiche.
+            Liste vide : le bloc « Livraison et retours » ne paraît pas.
+          items: { $ref: '#/components/schemas/ProductServiceTerm' }
         seoTitle: { type: string }
         seoDescription: { type: string }
 

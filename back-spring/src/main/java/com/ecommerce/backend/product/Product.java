@@ -94,4 +94,10 @@ public class Product {
     @ElementCollection
     @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))
     private List<ProductColor> colors = new ArrayList<>();
+
+    /** Bloc « Livraison et retours » de la fiche, propre a chaque article. */
+    @ElementCollection
+    @CollectionTable(name = "product_service_terms", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "position")
+    private List<ProductServiceTerm> serviceTerms = new ArrayList<>();
 }

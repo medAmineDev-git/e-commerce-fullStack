@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +41,17 @@ public record ProductRequest(
 
         List<ProductColorRequest> colors,
 
+        /**
+         * Absent : le produit recoit les conditions proposees.
+         * Liste vide : le bloc Livraison et retours ne parait pas sur la fiche.
+         *
+         * {@code @Valid} est indispensable : sans lui les contraintes portees par
+         * chaque ligne ne sont pas evaluees, et un intitule sans valeur
+         * s'afficherait sur la fiche suivi de rien.
+         */
+        @Valid
+        List<ProductServiceTermRequest> serviceTerms,
+
         String seoTitle,
 
         String seoDescription
@@ -65,6 +77,7 @@ public record ProductRequest(
                 List.of(),
                 List.of(),
                 List.of(),
+                null,
                 "",
                 ""
         );

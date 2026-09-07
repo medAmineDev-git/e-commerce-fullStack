@@ -369,3 +369,81 @@ figcaption {
     min-height: 42px;
   }
 }
+
+/* ------------------------------------------------- livraison et retours */
+
+/* Deux champs par ligne : un intitule court, une valeur plus longue. Le vendeur
+   corrige surtout un delai, il n'a pas a ouvrir un formulaire pour cela. */
+.terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.terms-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.terms-remove {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+
+  &:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}
+
+.terms-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Action secondaire de l'en-tete de section : elle repare une suppression,
+   elle ne doit pas rivaliser avec Enregistrer. */
+.ghost-action {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 12px;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+}
+
+@media (max-width: 640px) {
+  .terms-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 6px;
+  }
+
+  .terms-value {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* La liste et son bouton d'ajout respirent, sans quoi le bouton semble
+   appartenir a la derniere ligne. */
+.terms-list + .add-row,
+.terms-empty + .add-row {
+  margin-top: 14px;
+}

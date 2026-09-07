@@ -18,6 +18,7 @@ public record ProductResponse(
         List<String> sizes,
         List<String> seasons,
         List<ProductColorResponse> colors,
+        List<ProductServiceTermResponse> serviceTerms,
         String seoTitle,
         String seoDescription
 ) {
@@ -40,6 +41,7 @@ public record ProductResponse(
                 "",
                 null,
                 "ACTIVE",
+                List.of(),
                 List.of(),
                 List.of(),
                 List.of(),

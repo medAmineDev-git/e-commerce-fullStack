@@ -3,9 +3,11 @@ package com.ecommerce.backend.product;
 import com.ecommerce.backend.product.dto.ProductRequest;
 import com.ecommerce.backend.product.dto.ProductResponse;
 import com.ecommerce.backend.product.dto.ProductColorResponse;
+import com.ecommerce.backend.product.dto.ProductServiceTermResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 import java.util.List;
 
 @Component
@@ -51,6 +53,9 @@ public class ProductMapper {
                 product.getColors().stream()
                         .map(color -> new ProductColorResponse(color.getName(), color.getHex()))
                         .toList(),
+                product.getServiceTerms().stream()
+                        .map(term -> new ProductServiceTermResponse(term.getLabel(), term.getValue()))
+                        .toList(),
                 product.getSeoTitle(),
                 product.getSeoDescription()
         );
@@ -69,6 +74,24 @@ public class ProductMapper {
                 .stream()
                 .map(color -> new ProductColor(color.name(), color.hex()))
                 .toList()));
+        product.setServiceTerms(resolveServiceTerms(request));
+    }
+
+    /**
+     * Champ absent : le produit recoit les conditions proposees, celles qui
+     * figuraient jusqu ici en dur dans la fiche. Liste vide : le vendeur a
+     * retire le bloc, il ne doit pas revenir au prochain enregistrement.
+     */
+    private List<ProductServiceTerm> resolveServiceTerms(ProductRequest request) {
+        if (request.serviceTerms() == null) {
+            return DefaultProductServiceTerms.TEMPLATES.stream()
+                    .map(template -> new ProductServiceTerm(template.label(), template.value()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        return request.serviceTerms().stream()
+                .map(term -> new ProductServiceTerm(term.label().trim(), term.value().trim()))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private String blankToNull(String value) {

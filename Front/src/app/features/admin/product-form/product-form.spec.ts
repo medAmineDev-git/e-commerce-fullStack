@@ -85,6 +85,13 @@ describe('ProductForm', () => {
       sizes: [],
       seasons: [],
       colors: [],
+      // Conditions proposees, pre-remplies a la creation : le vendeur voit ce
+      // qui sera enregistre plutot que des champs vides.
+      serviceTerms: [
+        { label: 'Livraison', value: '48 à 72 heures' },
+        { label: 'Paiement', value: 'À la livraison ou par virement' },
+        { label: 'Retour', value: 'Sous 7 jours' },
+      ],
       sku: '',
       compareAtPrice: null,
       seoTitle: '',
@@ -107,6 +114,66 @@ describe('ProductForm', () => {
     expect(mockStore.createProduct).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Pull', category: '', description: '' }),
     );
+  });
+
+  /**
+   * Le vendeur retire toutes les lignes : le bloc « Livraison et retours »
+   * disparait de la fiche. Une liste vide part au serveur, qui la distingue
+   * d'un champ absent et ne reinstalle donc pas les valeurs proposees.
+   */
+  it('should send an empty list when every service term is removed', async () => {
+    component.updateTextField('name', 'Pull');
+    component.updateNumberField('price', '35');
+    component.updateNumberField('stockQuantity', '12');
+    component.imageDraft.set('https://example.com/pull.jpg');
+    await component.addImage();
+
+    component.removeServiceTerm(2);
+    component.removeServiceTerm(1);
+    component.removeServiceTerm(0);
+    await component.save();
+
+    expect(mockStore.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({ serviceTerms: [] }),
+    );
+  });
+
+  it('should drop a service term left incomplete', async () => {
+    component.updateTextField('name', 'Pull');
+    component.updateNumberField('price', '35');
+    component.updateNumberField('stockQuantity', '12');
+    component.imageDraft.set('https://example.com/pull.jpg');
+    await component.addImage();
+
+    component.addServiceTerm();
+    component.updateServiceTerm(3, 'label', 'Garantie');
+    // La valeur reste vide : le serveur la refuserait sur un message obscur.
+    await component.save();
+
+    expect(mockStore.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serviceTerms: expect.not.arrayContaining([
+          expect.objectContaining({ label: 'Garantie' }),
+        ]),
+      }),
+    );
+  });
+
+  it('should edit a service term in place', async () => {
+    component.updateServiceTerm(2, 'value', 'Sous 30 jours');
+
+    expect(component.model().serviceTerms[2]).toEqual({
+      label: 'Retour',
+      value: 'Sous 30 jours',
+    });
+  });
+
+  it('should restore the proposed service terms', async () => {
+    component.removeServiceTerm(0);
+    component.restoreServiceTerms();
+
+    expect(component.model().serviceTerms).toHaveLength(3);
+    expect(component.model().serviceTerms[0].label).toBe('Livraison');
   });
 
   it('should move a selected gallery image to the primary position', async () => {

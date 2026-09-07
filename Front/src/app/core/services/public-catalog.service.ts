@@ -21,6 +21,7 @@ type BackendProduct = {
   sizes?: string[];
   seasons?: string[];
   colors?: Array<{ name: string; hex: string }>;
+  serviceTerms?: Array<{ label: string; value: string }>;
 };
 
 type BackendProductPageResponse = {
@@ -193,6 +194,9 @@ export class PublicCatalogService {
       imageUrl,
       gallery: resolvedGallery,
       colors: product.colors?.length ? [...product.colors] : [...FALLBACK_COLORS],
+      // Aucune valeur de repli : une liste vide veut dire que le vendeur a
+      // retire le bloc de la fiche.
+      serviceTerms: [...(product.serviceTerms ?? [])],
       sizes: sizes.length ? sizes : [...FALLBACK_SIZES],
       reviews: [],
     };

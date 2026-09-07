@@ -14,6 +14,12 @@ export interface ProductReview {
 
 export type ProductSizeOption = 'XS' | 'S' | 'M' | 'L' | 'XL';
 
+/** Une ligne du bloc « Livraison et retours » de la fiche. */
+export interface ProductServiceTerm {
+  label: string;
+  value: string;
+}
+
 export interface PublicProduct {
   id: number;
   slug: string;
@@ -41,4 +47,6 @@ export interface PublicProduct {
   sizes?: ProductSizeOption[];
   sizeGuide?: Array<{ size: ProductSizeOption; chest: string; length: string }>;
   reviews?: ProductReview[];
+  /** Vide : le vendeur a retiré le bloc « Livraison et retours » de la fiche. */
+  serviceTerms?: ProductServiceTerm[];
 }

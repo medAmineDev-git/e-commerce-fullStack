@@ -4,10 +4,25 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { Category } from '../../../core/models/category.model';
-import { ProductColor, ProductInput, ProductStatus } from '../../../core/models/product.model';
+import {
+  ProductColor,
+  ProductInput,
+  ProductServiceTerm,
+  ProductStatus,
+} from '../../../core/models/product.model';
 import { CategoryService } from '../../../core/services/category';
 import { ProductService } from '../../../core/services/product';
 import { ProductStore } from '../../../core/stores/product.store';
+
+/**
+ * Conditions proposees a la creation, identiques a celles du serveur : le
+ * vendeur voit ce qui sera enregistre plutot que des champs vides.
+ */
+const DEFAULT_SERVICE_TERMS: ProductServiceTerm[] = [
+  { label: 'Livraison', value: '48 à 72 heures' },
+  { label: 'Paiement', value: 'À la livraison ou par virement' },
+  { label: 'Retour', value: 'Sous 7 jours' },
+];
 
 type ProductFormModel = {
   name: string;
@@ -23,6 +38,7 @@ type ProductFormModel = {
   sizes: string[];
   seasons: string[];
   colors: ProductColor[];
+  serviceTerms: ProductServiceTerm[];
   seoTitle: string;
   seoDescription: string;
 };
@@ -170,6 +186,44 @@ export class ProductForm {
     this.colorHexDraft.set('#000000');
   }
 
+  /**
+   * Conditions de la fiche : ajout, modification, suppression.
+   *
+   * Les lignes se modifient en place plutot que par un formulaire separe. Il
+   * s'agit de deux courts champs de texte, et le vendeur veut surtout corriger
+   * un delai, pas composer une structure.
+   */
+  addServiceTerm(): void {
+    this.model.update((current) => ({
+      ...current,
+      serviceTerms: [...current.serviceTerms, { label: '', value: '' }],
+    }));
+  }
+
+  updateServiceTerm(index: number, field: 'label' | 'value', value: string): void {
+    this.model.update((current) => ({
+      ...current,
+      serviceTerms: current.serviceTerms.map((term, position) =>
+        position === index ? { ...term, [field]: value } : term,
+      ),
+    }));
+  }
+
+  removeServiceTerm(index: number): void {
+    this.model.update((current) => ({
+      ...current,
+      serviceTerms: current.serviceTerms.filter((_, position) => position !== index),
+    }));
+  }
+
+  /** Remet les conditions proposees, pour revenir en arriere sans les retaper. */
+  restoreServiceTerms(): void {
+    this.model.update((current) => ({
+      ...current,
+      serviceTerms: DEFAULT_SERVICE_TERMS.map((term) => ({ ...term })),
+    }));
+  }
+
   removeColor(name: string): void {
     this.model.update((current) => ({
       ...current,
@@ -272,6 +326,7 @@ export class ProductForm {
       sizes: [...(product.sizes ?? [])],
       seasons: [...(product.seasons ?? [])],
       colors: [...(product.colors ?? [])],
+      serviceTerms: [...(product.serviceTerms ?? [])],
       seoTitle: product.seoTitle ?? '',
       seoDescription: product.seoDescription ?? '',
     });
@@ -291,6 +346,7 @@ export class ProductForm {
       imageUrls: [],
       sizes: [],
       seasons: [],
+      serviceTerms: DEFAULT_SERVICE_TERMS.map((term) => ({ ...term })),
       colors: [],
       seoTitle: '',
       seoDescription: '',
@@ -308,6 +364,11 @@ export class ProductForm {
       imageUrls: [...model.imageUrls],
       sizes: [...model.sizes],
       colors: [...model.colors],
+      // Une ligne ajoutee puis laissee vide n'est pas une condition : le serveur
+      // la refuserait, et l'erreur ne dirait rien au vendeur.
+      serviceTerms: model.serviceTerms
+        .map((term) => ({ label: term.label.trim(), value: term.value.trim() }))
+        .filter((term) => term.label && term.value),
     };
   }
 

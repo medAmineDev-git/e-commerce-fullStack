@@ -86,6 +86,9 @@ export class ProductDetailPage {
     }
   }
 
+  /** Les conditions de la fiche, telles que le vendeur les a composees. */
+  readonly serviceTerms = computed(() => this.product()?.serviceTerms ?? []);
+
   private async loadRelatedProducts(product: PublicProduct): Promise<void> {
     // Sans categorie, il n'y a pas de parente a etablir : deux articles non
     // classes ne se ressemblent pas parce qu'ils partagent une absence.
