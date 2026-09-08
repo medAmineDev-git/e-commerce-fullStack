@@ -3,6 +3,7 @@ import localeFr from '@angular/common/locales/fr';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { PublicCatalogService } from '../../../core/services/public-catalog.service';
 import { PublicCatalogStore } from '../../../core/stores/public-catalog.store';
@@ -13,6 +14,7 @@ describe('HomePage', () => {
   let fixture: ComponentFixture<HomePage>;
   let router: Router;
   let navigateSpy: ReturnType<typeof vi.spyOn>;
+  let replaceStateSpy: ReturnType<typeof vi.spyOn>;
 
   const product = {
     id: 1,
@@ -109,6 +111,7 @@ describe('HomePage', () => {
 
     router = TestBed.inject(Router);
     navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    replaceStateSpy = vi.spyOn(TestBed.inject(Location), 'replaceState');
 
     fixture = TestBed.createComponent(HomePage);
     component = fixture.componentInstance;
@@ -154,12 +157,29 @@ describe('HomePage', () => {
     component.setCategory('Homme');
 
     expect(mockCatalogStore.setCategory).toHaveBeenCalledWith('Homme');
-    expect(navigateSpy).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ category: 'Homme' }),
-      }),
-    );
+    expect(replaceStateSpy).toHaveBeenCalledWith(expect.stringContaining('category=Homme'));
+  });
+
+  /*
+   * Le routeur remonte en haut de page a chaque navigation, restauration de
+   * position activee. Filtrer reecrit donc l'adresse au lieu de naviguer :
+   * sans cela, choisir une categorie renvoyait le visiteur sous la banniere,
+   * loin des articles qu'il venait de filtrer.
+   */
+  it('should not navigate when a filter changes', () => {
+    component.setCategory('Homme');
+    component.setSeason('Été');
+    component.applyPriceRange();
+
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(replaceStateSpy).toHaveBeenCalled();
+  });
+
+  /** Ouvrir un produit reste une navigation : c'est un changement de page. */
+  it('should still navigate when opening a product', () => {
+    component.openProduct({ id: 1 } as never);
+
+    expect(navigateSpy).toHaveBeenCalled();
   });
 
   /** Les bornes inversees sont remises dans l'ordre plutot qu'ignorees. */

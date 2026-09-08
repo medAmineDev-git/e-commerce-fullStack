@@ -1,4 +1,4 @@
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, Location } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -31,6 +31,7 @@ export class HomePage {
   private readonly catalogService = inject(PublicCatalogService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly store = this.storeContext.store;
@@ -230,11 +231,24 @@ export class HomePage {
       return;
     }
 
-    void this.router.navigate([], {
+    /*
+     * L'adresse est reecrite sans navigation.
+     *
+     * Le routeur remonte en haut de page a chaque navigation, restauration de
+     * position activee : choisir une categorie renvoyait le visiteur sous la
+     * banniere, loin des articles qu'il venait de filtrer. Ces changements
+     * portaient deja replaceUrl, donc n'ajoutaient aucune entree d'historique :
+     * reecrire l'adresse revient au meme, sans le saut.
+     *
+     * L'etat a deja ete applique au magasin par l'appelant ; la souscription
+     * aux parametres d'URL ne sert qu'aux arrivees directes et aux boutons
+     * precedent et suivant du navigateur.
+     */
+    const tree = this.router.createUrlTree([], {
       relativeTo: this.route,
       queryParams: changes,
       queryParamsHandling: 'merge',
-      replaceUrl: true,
     });
+    this.location.replaceState(this.router.serializeUrl(tree));
   }
 }
