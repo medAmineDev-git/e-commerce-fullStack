@@ -2,13 +2,16 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Créez votre boutique en ligne en quelques minutes</title>
+    <title>Chargement…</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Ouvrez votre boutique de vêtements en ligne en quelques minutes : catalogue, panier, commandes et paiement à la livraison."
-    />
+    <!--
+      Titre et description neutres : le prerendu impose ceux de la page
+      d accueil dans index.html, et ceux-ci ne subsistent que dans la coque,
+      servie aux domaines de boutique. Y laisser le discours de la plateforme
+      affichait « Creez votre boutique en ligne » dans l onglet d une vitrine.
+    -->
+    <meta name="description" content="Chargement de la boutique en cours." />
     <meta name="theme-color" content="#0f6e66" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,6 +23,61 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   </head>
   <body>
-    <app-root></app-root>
+    <!--
+      Chargeur d'attente, visible seulement dans la coque index.csr.html : le
+      prérendu remplace le contenu de <app-root> par celui de la page, donc
+      index.html ne le porte pas. Angular l'efface dès qu'il prend la main.
+
+      Les styles sont ici, en ligne, plutôt que dans une feuille : ils doivent
+      s'appliquer avant que quoi que ce soit d'autre ne soit chargé.
+    -->
+    <app-root>
+      <div class="boot">
+        <span class="boot-ring" aria-hidden="true"></span>
+        <span class="boot-text">Chargement de la boutique…</span>
+      </div>
+    </app-root>
+    <style>
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: #f6f5f3;
+        font-family: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+
+      .boot-ring {
+        width: 34px;
+        height: 34px;
+        border: 2px solid #d9d6d1;
+        border-top-color: #0f6e66;
+        border-radius: 50%;
+        animation: boot-spin 0.9s linear infinite;
+      }
+
+      .boot-text {
+        color: #79756f;
+        font-size: 0.9rem;
+        letter-spacing: 0.01em;
+      }
+
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Une animation qui tourne indéfiniment est exactement ce que ce réglage
+         demande d'éviter : le texte suffit à dire que la page travaille. */
+      @media (prefers-reduced-motion: reduce) {
+        .boot-ring {
+          animation: none;
+        }
+      }
+    </style>
   </body>
 </html>

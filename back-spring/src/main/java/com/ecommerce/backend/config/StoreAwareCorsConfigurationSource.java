@@ -1,6 +1,5 @@
 package com.ecommerce.backend.config;
 
-import com.ecommerce.backend.store.StoreRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,7 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +21,9 @@ import java.util.stream.Collectors;
  * Tant que le routage se fait par sous-chemin, seules les origines de base sont
  * utiles. Le jour ou une boutique amene son propre domaine, elle est acceptee
  * sans redeploiement : c'est ce qui rend la greffe du domaine propre indolore.
+ *
+ * La liste des domaines vient de {@link StoreDomainRegistry}, partagee avec le
+ * choix du fichier HTML servi a la racine.
  */
 /*
  * Le nom du bean est porteur : http.cors(withDefaults()) cherche un bean
@@ -33,19 +34,14 @@ import java.util.stream.Collectors;
 @Component("corsConfigurationSource")
 public class StoreAwareCorsConfigurationSource implements CorsConfigurationSource {
 
-    private static final long CACHE_TTL_MILLIS = 60_000L;
-
-    private final StoreRepository storeRepository;
+    private final StoreDomainRegistry storeDomains;
     private final Set<String> staticOrigins;
 
-    private final ConcurrentHashMap<String, Boolean> knownOrigins = new ConcurrentHashMap<>();
-    private volatile long lastRefresh;
-
     public StoreAwareCorsConfigurationSource(
-            StoreRepository storeRepository,
+            StoreDomainRegistry storeDomains,
             @Value("${app.cors.allowed-origins:http://localhost:4200}") String configuredOrigins
     ) {
-        this.storeRepository = storeRepository;
+        this.storeDomains = storeDomains;
         this.staticOrigins = Arrays.stream(configuredOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
@@ -80,13 +76,7 @@ public class StoreAwareCorsConfigurationSource implements CorsConfigurationSourc
             return true;
         }
 
-        String host = hostOf(normalized);
-        if (host == null) {
-            return false;
-        }
-
-        refreshIfStale();
-        return knownOrigins.containsKey(host);
+        return storeDomains.isStoreDomain(hostOf(normalized));
     }
 
     private String hostOf(String origin) {
@@ -94,33 +84,6 @@ public class StoreAwareCorsConfigurationSource implements CorsConfigurationSourc
             return new URI(origin).getHost();
         } catch (URISyntaxException exception) {
             return null;
-        }
-    }
-
-    /**
-     * Les domaines changent rarement : une minute de cache evite une requete par
-     * appel en preflight, sans imposer un redemarrage apres un rattachement.
-     */
-    private void refreshIfStale() {
-        long now = System.currentTimeMillis();
-        if (now - lastRefresh < CACHE_TTL_MILLIS && !knownOrigins.isEmpty()) {
-            return;
-        }
-
-        synchronized (this) {
-            if (now - lastRefresh < CACHE_TTL_MILLIS && !knownOrigins.isEmpty()) {
-                return;
-            }
-
-            knownOrigins.clear();
-            storeRepository.findAll().stream()
-                    .filter(store -> store.isActive() && store.getDomain() != null && !store.getDomain().isBlank())
-                    .forEach(store -> {
-                        String domain = store.getDomain().trim().toLowerCase(Locale.ROOT);
-                        knownOrigins.put(domain, Boolean.TRUE);
-                        knownOrigins.put("www." + domain, Boolean.TRUE);
-                    });
-            lastRefresh = now;
         }
     }
 }
