@@ -32,8 +32,11 @@ const NOVA: PublicStore = {
  */
 describe('Routage de la vitrine', () => {
   let router: Router;
+  let resolveByDomain: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    resolveByDomain = vi.fn().mockResolvedValue(null);
+
     await TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
@@ -43,6 +46,8 @@ describe('Routage de la vitrine', () => {
           useValue: {
             store: signal(NOVA),
             resolveBySlug: vi.fn().mockResolvedValue(NOVA),
+            // Aucune boutique derriere ce nom d'hote : on est sur la plateforme.
+            resolveByDomain: resolveByDomain,
             slug: signal('nova'),
             link: (...segments: string[]) => ['/boutique', 'nova', ...segments],
           },
@@ -61,6 +66,16 @@ describe('Routage de la vitrine', () => {
 
     router = TestBed.inject(Router);
   });
+
+  /**
+   * Les deux routes racines repondent a la meme adresse : seule leur forme les
+   * distingue. Celle de la vitrine porte des enfants, celle de la plateforme
+   * non.
+   */
+  function matchedRootHasChildren(): boolean {
+    const config = router.routerState.snapshot.root.firstChild?.routeConfig;
+    return (config?.children?.length ?? 0) > 0;
+  }
 
   it('should open the login page from the store address', async () => {
     await router.navigateByUrl('/boutique/nova/connexion');
@@ -89,5 +104,42 @@ describe('Routage de la vitrine', () => {
     await router.navigateByUrl('/connexion');
 
     expect(router.url).toBe('/connexion');
+  });
+
+  /*
+   * Domaine propre a une boutique.
+   *
+   * Le DNS amene le visiteur a la racine, sans slug : c'est le nom d'hote qui
+   * designe la boutique. Le meme chemin doit donc servir deux pages selon le
+   * domaine par lequel on arrive.
+   */
+  it('should open the storefront at the root of a store domain', async () => {
+    resolveByDomain.mockResolvedValue(NOVA);
+
+    await router.navigateByUrl('/');
+
+    expect(resolveByDomain).toHaveBeenCalled();
+    expect(router.url).toBe('/');
+    // L'adresse seule ne distingue rien : c'est la branche empruntee qui compte.
+    expect(matchedRootHasChildren()).toBe(true);
+  });
+
+  it('should reach an inner page of the storefront on a store domain', async () => {
+    resolveByDomain.mockResolvedValue(NOVA);
+
+    await router.navigateByUrl('/cart');
+
+    expect(router.url).toBe('/cart');
+  });
+
+  /** Aucune boutique derriere ce nom d'hote : la plateforme garde sa racine. */
+  it('should keep the landing page when the host matches no store', async () => {
+    resolveByDomain.mockResolvedValue(null);
+
+    await router.navigateByUrl('/');
+
+    expect(resolveByDomain).toHaveBeenCalled();
+    expect(router.url).toBe('/');
+    expect(matchedRootHasChildren()).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { anonymousOnlyGuard, platformGuard, storeOwnerGuard } from './core/auth/auth.guard';
 import { storeResolverGuard } from './core/services/store.resolver';
+import { customDomainGuard } from './core/services/custom-domain.guard';
 
 /**
  * Quatre espaces distincts :
@@ -13,7 +14,66 @@ import { storeResolverGuard } from './core/services/store.resolver';
  * La racine appartient au site vitrine : c'est le choix du routage par
  * sous-chemin qui la libère, les boutiques vivant sous /boutique/:slug.
  */
+/*
+ * Pages d'une vitrine, partagees par ses deux adresses : le sous-chemin
+ * /boutique/<slug> de la plateforme, et le domaine propre de la boutique, ou
+ * elles occupent la racine. Les dupliquer les aurait laissees diverger.
+ */
+const storefrontRoutes: Routes = [
+      {
+        path: '',
+        loadComponent: () => import('./features/public/home-page/home-page').then((m) => m.HomePage),
+      },
+      {
+        path: 'product/:id',
+        loadComponent: () =>
+          import('./features/public/product-detail-page/product-detail-page').then(
+            (m) => m.ProductDetailPage,
+          ),
+      },
+      // La page boutique a fusionne avec l'accueil : les anciens liens y menent.
+      { path: 'shop', redirectTo: '', pathMatch: 'full' },
+      { path: 'category/:category', redirectTo: '', pathMatch: 'full' },
+      {
+        path: 'cart',
+        loadComponent: () => import('./features/public/cart-page/cart-page').then((m) => m.CartPage),
+      },
+      {
+        path: 'checkout',
+        loadComponent: () =>
+          import('./features/public/checkout-page/checkout-page').then((m) => m.CheckoutPage),
+      },
+      {
+        path: 'order-success',
+        loadComponent: () =>
+          import('./features/public/order-success-page/order-success-page').then(
+            (m) => m.OrderSuccessPage,
+          ),
+      },
+      // Pages de contenu du vendeur : mentions légales, livraison, retours.
+      {
+        path: 'page/:pageSlug',
+        loadComponent: () =>
+          import('./features/public/store-page/store-page').then((m) => m.StorePageView),
+      },
+];
+
 export const routes: Routes = [
+  /*
+   * Racine d'un domaine propre a une boutique.
+   *
+   * Le DNS ne connait que des noms de serveurs : yomna-fashion.com arrive ici,
+   * sans slug dans l'adresse. Le garde interroge le serveur sur le nom d'hote ;
+   * s'il ne designe aucune boutique, la route suivante prend la main et la page
+   * de presentation de la plateforme s'affiche.
+   */
+  {
+    path: '',
+    canMatch: [customDomainGuard],
+    loadComponent: () =>
+      import('./features/public/public-layout/public-layout').then((m) => m.PublicLayout),
+    children: storefrontRoutes,
+  },
   {
     path: '',
     pathMatch: 'full',
@@ -136,44 +196,7 @@ export const routes: Routes = [
     canActivate: [storeResolverGuard],
     loadComponent: () =>
       import('./features/public/public-layout/public-layout').then((m) => m.PublicLayout),
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/public/home-page/home-page').then((m) => m.HomePage),
-      },
-      {
-        path: 'product/:id',
-        loadComponent: () =>
-          import('./features/public/product-detail-page/product-detail-page').then(
-            (m) => m.ProductDetailPage,
-          ),
-      },
-      // La page boutique a fusionne avec l'accueil : les anciens liens y menent.
-      { path: 'shop', redirectTo: '', pathMatch: 'full' },
-      { path: 'category/:category', redirectTo: '', pathMatch: 'full' },
-      {
-        path: 'cart',
-        loadComponent: () => import('./features/public/cart-page/cart-page').then((m) => m.CartPage),
-      },
-      {
-        path: 'checkout',
-        loadComponent: () =>
-          import('./features/public/checkout-page/checkout-page').then((m) => m.CheckoutPage),
-      },
-      {
-        path: 'order-success',
-        loadComponent: () =>
-          import('./features/public/order-success-page/order-success-page').then(
-            (m) => m.OrderSuccessPage,
-          ),
-      },
-      // Pages de contenu du vendeur : mentions légales, livraison, retours.
-      {
-        path: 'page/:pageSlug',
-        loadComponent: () =>
-          import('./features/public/store-page/store-page').then((m) => m.StorePageView),
-      },
-    ],
+    children: storefrontRoutes,
   },
   // Anciennes adresses de connexion, conservées le temps que les signets suivent.
   { path: 'login', redirectTo: 'connexion' },

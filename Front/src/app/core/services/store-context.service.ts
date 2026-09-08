@@ -18,9 +18,19 @@ export class StoreContextService {
 
   private readonly currentStore = signal<PublicStore | null>(null);
 
+  /**
+   * Vrai quand la boutique a ete atteinte par son propre domaine.
+   *
+   * Change la forme de tous les liens internes : sur yomna-fashion.com, la
+   * vitrine est a la racine, et prefixer par /boutique/yomna-fashion
+   * renverrait le visiteur sur l'adresse de la plateforme.
+   */
+  private readonly reachedByOwnDomain = signal(false);
+
   readonly store = this.currentStore.asReadonly();
   readonly slug = computed(() => this.currentStore()?.slug ?? null);
   readonly isResolved = computed(() => this.currentStore() !== null);
+  readonly isOwnDomain = this.reachedByOwnDomain.asReadonly();
 
   /** URL de base des routes publiques de la boutique courante. */
   readonly storeApiUrl = computed(() => {
@@ -48,8 +58,39 @@ export class StoreContextService {
     }
   }
 
+  /**
+   * Cherche la boutique rattachée à ce nom d'hôte.
+   *
+   * Appelée à la racine, avant tout rendu : l'adresse ne porte alors aucun
+   * slug, c'est le domaine seul qui désigne la boutique.
+   */
+  async resolveByDomain(hostname: string): Promise<PublicStore | null> {
+    // Le garde s'exécute à chaque tentative de correspondance de route : sans
+    // cette mémoire, chaque navigation interne relancerait un appel réseau.
+    const alreadyResolved = this.currentStore();
+    if (alreadyResolved && this.reachedByOwnDomain()) {
+      return alreadyResolved;
+    }
+
+    try {
+      const store = await firstValueFrom(
+        this.http.get<PublicStore>(`${this.baseUrl}/resolve`, {
+          params: { domain: hostname },
+        }),
+      );
+      this.currentStore.set(store);
+      this.reachedByOwnDomain.set(true);
+      return store;
+    } catch {
+      // Aucun domaine rattaché : le visiteur est sur la plateforme elle-même.
+      this.reachedByOwnDomain.set(false);
+      return null;
+    }
+  }
+
   clear(): void {
     this.currentStore.set(null);
+    this.reachedByOwnDomain.set(false);
   }
 
   /**
@@ -59,6 +100,12 @@ export class StoreContextService {
    * enverrait le visiteur hors de sa boutique, sur une route qui n'existe plus.
    */
   link(...segments: (string | number)[]): unknown[] {
+    // Sur son propre domaine, la boutique occupe la racine : y prefixer
+    // /boutique/<slug> renverrait le visiteur sur l'adresse de la plateforme.
+    if (this.reachedByOwnDomain()) {
+      return ['/', ...segments];
+    }
+
     const slug = this.slug();
     return slug ? ['/boutique', slug, ...segments] : ['/'];
   }
