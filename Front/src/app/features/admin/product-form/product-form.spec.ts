@@ -67,7 +67,7 @@ describe('ProductForm', () => {
     component.updateTextField('name', 'Pull');
     component.updateTextField('category', 'Homme');
     component.updateTextField('description', 'Laine');
-    component.updateNumberField('price', '35');
+    component.updatePrice('price', '35');
     component.updateNumberField('stockQuantity', '12');
     component.imageDraft.set('https://example.com/pull.jpg');
     await component.addImage();
@@ -104,7 +104,7 @@ describe('ProductForm', () => {
 
   it('should save a product without category nor description', async () => {
     component.updateTextField('name', 'Pull');
-    component.updateNumberField('price', '35');
+    component.updatePrice('price', '35');
     component.updateNumberField('stockQuantity', '12');
     component.imageDraft.set('https://example.com/pull.jpg');
     await component.addImage();
@@ -123,7 +123,7 @@ describe('ProductForm', () => {
    */
   it('should send an empty list when every service term is removed', async () => {
     component.updateTextField('name', 'Pull');
-    component.updateNumberField('price', '35');
+    component.updatePrice('price', '35');
     component.updateNumberField('stockQuantity', '12');
     component.imageDraft.set('https://example.com/pull.jpg');
     await component.addImage();
@@ -140,7 +140,7 @@ describe('ProductForm', () => {
 
   it('should drop a service term left incomplete', async () => {
     component.updateTextField('name', 'Pull');
-    component.updateNumberField('price', '35');
+    component.updatePrice('price', '35');
     component.updateNumberField('stockQuantity', '12');
     component.imageDraft.set('https://example.com/pull.jpg');
     await component.addImage();
@@ -174,6 +174,44 @@ describe('ProductForm', () => {
 
     expect(component.model().serviceTerms).toHaveLength(3);
     expect(component.model().serviceTerms[0].label).toBe('Livraison');
+  });
+
+  /*
+   * Le champ etait de type number : selon le navigateur, une virgule rend la
+   * valeur invalide, qui revient vide et efface la saisie. Le vendeur voyait
+   * son prix disparaitre en le tapant.
+   */
+  it('should accept a comma as decimal separator in prices', () => {
+    component.updatePrice('price', '35,90');
+    component.updatePrice('compareAtPrice', '49,90');
+
+    expect(component.model().price).toBe(35.9);
+    expect(component.model().compareAtPrice).toBe(49.9);
+  });
+
+  it('should still accept a dot', () => {
+    component.updatePrice('price', '35.90');
+
+    expect(component.model().price).toBe(35.9);
+  });
+
+  /**
+   * Le texte saisi est conserve tel quel : sans cela, la liaison reecrirait le
+   * champ pendant la frappe et « 35, » perdrait sa virgule sous les doigts.
+   */
+  it('should keep a half typed amount visible', () => {
+    component.updatePrice('price', '35,');
+
+    expect(component.priceText()).toBe('35,');
+    expect(component.model().price).toBe(35);
+  });
+
+  it('should treat an emptied price as zero, which validation refuses', () => {
+    component.updatePrice('price', '35,90');
+    component.updatePrice('price', '');
+
+    expect(component.model().price).toBe(0);
+    expect(component.errors().price).toBeTruthy();
   });
 
   it('should move a selected gallery image to the primary position', async () => {

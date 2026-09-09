@@ -50,10 +50,16 @@ export class AdminLayout {
   /** Un exploitant qui tient aussi une boutique doit pouvoir revenir a la console. */
   readonly isPlatformOperator = this.authService.isPlatformOperator;
 
-  /** Lien vers sa propre vitrine. Le slug vient de la session, pas d'une devinette. */
-  readonly storefrontLink = computed(() => {
+  /**
+   * Adresse de sa propre vitrine. Le slug vient de la session, pas d'une devinette.
+   *
+   * Une adresse et non un lien de routeur : la vitrine s'ouvre dans un autre
+   * onglet, pour que le proprietaire garde son back-office ouvert derriere. Y
+   * naviguer dans le meme onglet lui faisait perdre sa page en cours.
+   */
+  readonly storefrontUrl = computed(() => {
     const slug = this.authService.storeSlug();
-    return slug ? ['/boutique', slug] : ['/'];
+    return slug ? `/boutique/${slug}` : '/';
   });
 
   constructor() {

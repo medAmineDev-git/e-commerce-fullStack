@@ -62,12 +62,26 @@
     <div class="form-grid">
       <label class="field">
         <span>Prix de vente (TND) *</span>
-        <input type="number" min="0.01" step="0.01" [value]="model().price" (input)="updateNumberField('price', $any($event.target).value)" />
+        <!-- Champ textuel plutôt que numérique : la virgule y est acceptée.
+             inputmode conserve le pavé numérique sur téléphone. -->
+        <input
+          type="text"
+          inputmode="decimal"
+          placeholder="35,90"
+          [value]="priceText()"
+          (input)="updatePrice('price', $any($event.target).value)"
+        />
         @if (submitted() && errors().price) { <small class="error">{{ errors().price }}</small> }
       </label>
       <label class="field">
         <span>Prix avant remise (TND)</span>
-        <input type="number" min="0.01" step="0.01" [value]="model().compareAtPrice ?? ''" (input)="updateNumberField('compareAtPrice', $any($event.target).value)" />
+        <input
+          type="text"
+          inputmode="decimal"
+          placeholder="49,90"
+          [value]="compareAtPriceText()"
+          (input)="updatePrice('compareAtPrice', $any($event.target).value)"
+        />
         @if (submitted() && errors().compareAtPrice) { <small class="error">{{ errors().compareAtPrice }}</small> }
       </label>
       <label class="field">

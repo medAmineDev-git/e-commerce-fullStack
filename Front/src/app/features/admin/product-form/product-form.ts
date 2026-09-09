@@ -18,6 +18,23 @@ import { ProductStore } from '../../../core/stores/product.store';
  * Conditions proposees a la creation, identiques a celles du serveur : le
  * vendeur voit ce qui sera enregistre plutot que des champs vides.
  */
+/**
+ * Interprète un montant saisi à la main.
+ *
+ * La virgule est le séparateur décimal en français, et c'est elle que porte le
+ * pavé numérique d'un téléphone configuré en France ou en Tunisie. La refuser
+ * revenait à refuser la saisie naturelle.
+ */
+function parseAmount(value: string): number | null {
+  const normalized = value.trim().replace(',', '.');
+  if (normalized === '') {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 const DEFAULT_SERVICE_TERMS: ProductServiceTerm[] = [
   { label: 'Livraison', value: '48 à 72 heures' },
   { label: 'Paiement', value: 'À la livraison ou par virement' },
@@ -243,12 +260,44 @@ export class ProductForm {
     this.model.update((current) => ({ ...current, subcategory: value }));
   }
 
-  updateNumberField(field: 'price' | 'compareAtPrice' | 'stockQuantity', value: string): void {
+  /**
+   * Texte saisi pour les prix, conservé tel quel.
+   *
+   * Le champ était de type `number` : selon le navigateur, une virgule rend la
+   * valeur invalide, qui revient vide et efface la saisie. Il est désormais
+   * textuel, et c'est nous qui interprétons.
+   *
+   * Garder le texte à part évite que la liaison ne réécrive le champ pendant la
+   * frappe : sans cela, taper « 35, » donnerait 35, que la liaison réinjecterait
+   * aussitôt, faisant disparaître la virgule sous les doigts.
+   */
+  readonly priceText = signal('');
+  readonly compareAtPriceText = signal('');
+
+  updatePrice(field: 'price' | 'compareAtPrice', value: string): void {
+    if (field === 'price') {
+      this.priceText.set(value);
+    } else {
+      this.compareAtPriceText.set(value);
+    }
+
+    const amount = parseAmount(value);
+
+    this.model.update((current) =>
+      field === 'price'
+        ? // Le prix de vente n'est pas facultatif : un champ vide vaut zero, que
+          // la validation refuse avec un message explicite.
+          { ...current, price: amount ?? 0 }
+        : { ...current, compareAtPrice: amount },
+    );
+  }
+
+  /** Le stock est un entier : ni virgule, ni valeur absente. */
+  updateNumberField(field: 'stockQuantity', value: string): void {
     const parsed = Number(value);
-    this.model.update((current) => ({
-      ...current,
-      [field]: value === '' || !Number.isFinite(parsed) ? null : parsed,
-    }));
+    const quantity = value.trim() === '' || !Number.isFinite(parsed) ? 0 : Math.floor(parsed);
+
+    this.model.update((current) => ({ ...current, [field]: quantity }));
   }
 
   updateStatus(value: string): void {
@@ -330,6 +379,15 @@ export class ProductForm {
       seoTitle: product.seoTitle ?? '',
       seoDescription: product.seoDescription ?? '',
     });
+
+    // Les champs de prix sont textuels : ils reçoivent la valeur enregistrée,
+    // qu'ils garderont ensuite telle que le vendeur la retape.
+    this.priceText.set(String(product.price));
+    this.compareAtPriceText.set(
+      product.compareAtPrice === null || product.compareAtPrice === undefined
+        ? ''
+        : String(product.compareAtPrice),
+    );
   }
 
   private emptyModel(): ProductFormModel {
