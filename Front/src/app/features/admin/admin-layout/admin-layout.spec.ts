@@ -69,9 +69,11 @@ describe('AdminLayout', () => {
 
     component.toggleMenu();
     expect(component.menuOpen()).toBe(true);
+    expect(sidenav().opened).toBe(true);
 
     component.toggleMenu();
     expect(component.menuOpen()).toBe(false);
+    expect(sidenav().opened).toBe(false);
   });
 
   /** Rester ouvert apres un clic masquerait l'ecran qu'on vient de demander. */

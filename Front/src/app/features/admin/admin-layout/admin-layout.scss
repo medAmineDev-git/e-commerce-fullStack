@@ -97,6 +97,17 @@
      confortable sans jamais la remplir, pour qu'un appui a cote le referme. */
   .admin-sidenav {
     width: min(82vw, 280px);
+    /*
+     * Le contenu est fixe a z-index 100 et le panneau a 1. Cote a cote, en mode
+     * ancre, cet ordre n'a aucun effet visible. Superpose, il faisait s'ouvrir
+     * le panneau derriere la page : le bouton repondait, rien n'apparaissait.
+     */
+    z-index: 120;
+  }
+
+  /* Le contenu redescend, sans quoi il faudrait surencherir a chaque couche. */
+  .admin-content {
+    z-index: 0;
   }
 
   /* La barre du haut se resserre : le nom de la boutique et la deconnexion

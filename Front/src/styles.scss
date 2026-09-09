@@ -503,3 +503,18 @@ img {
 .a-badge--warn { background: var(--warning-soft); color: var(--warning); }
 .a-badge--danger { background: var(--danger-soft); color: var(--danger); }
 .a-badge--accent { background: var(--accent-soft); color: var(--accent); }
+
+/* ------------------------------------------------- menu du back-office */
+
+/*
+ * Le voile du menu superpose est rendu par Angular Material, hors du gabarit du
+ * composant : les styles portes par celui-ci ne l'atteignent pas.
+ *
+ * Il doit passer devant le contenu, sinon un appui a cote du menu ne le referme
+ * pas — le voile etant recouvert par la page qu'il est cense masquer.
+ */
+@media (max-width: 700px) {
+  .admin-container .mat-drawer-backdrop {
+    z-index: 110;
+  }
+}
