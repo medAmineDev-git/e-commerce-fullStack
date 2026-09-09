@@ -1,4 +1,12 @@
 <mat-toolbar color="primary">
+  <!-- Bouton d'ouverture du menu, sur telephone uniquement : sur grand ecran le
+       menu est ancre a gauche et n'a rien a basculer. -->
+  @if (isHandset()) {
+    <button type="button" class="menu-button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+      <span class="u-sr-only">{{ menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu' }}</span>
+      <mat-icon aria-hidden="true">{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  }
   <a class="brand" routerLink="/admin/dashboard">Atelier Commerce</a>
   <span class="toolbar-spacer"></span>
   <a class="shop-link" [routerLink]="storefrontLink()">Voir ma vitrine</a>
@@ -9,7 +17,12 @@
 </mat-toolbar>
 
 <mat-sidenav-container class="admin-container">
-  <mat-sidenav mode="side" opened class="admin-sidenav">
+  <mat-sidenav
+    class="admin-sidenav"
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="isHandset() ? menuOpen() : true"
+    (closedStart)="closeMenu()"
+  >
     <mat-nav-list>
       <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active-link">
         <mat-icon matListItemIcon>space_dashboard</mat-icon>

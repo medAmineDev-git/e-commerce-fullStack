@@ -66,3 +66,46 @@
     width: 210px;
   }
 }
+
+/* ------------------------------------------------- menu sur telephone */
+
+/* Le bouton n'existe que sur petit ecran : ailleurs le menu est ancre et n'a
+   rien a basculer. */
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 8px;
+  margin-left: -8px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  flex: none;
+}
+
+.menu-button:hover,
+.menu-button:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 700px) {
+  /* En mode « over » le menu se pose sur la page : il occupe une largeur
+     confortable sans jamais la remplir, pour qu'un appui a cote le referme. */
+  .admin-sidenav {
+    width: min(82vw, 280px);
+  }
+
+  /* La barre du haut se resserre : le nom de la boutique et la deconnexion
+     doivent tenir a cote du bouton de menu. */
+  .shop-link {
+    font-size: 0.82rem;
+  }
+
+  .brand {
+    font-size: 1.1rem;
+  }
+}

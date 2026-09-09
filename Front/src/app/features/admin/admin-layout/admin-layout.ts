@@ -1,5 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -16,6 +20,7 @@ import { AuthService } from '../../../core/services/auth';
     MatSidenavModule,
     MatListModule,
     MatIconModule,
+    MatButtonModule,
   ],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.scss',
@@ -23,6 +28,22 @@ import { AuthService } from '../../../core/services/auth';
 export class AdminLayout {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  private readonly breakpoints = inject(BreakpointObserver);
+
+  /**
+   * Sur telephone, le menu recouvre la zone de travail : il doit s'effacer et
+   * ne revenir qu'a la demande. Sur grand ecran il reste ancre a gauche, la
+   * place ne manquant pas.
+   */
+  readonly isHandset = toSignal(
+    this.breakpoints
+      .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
+      .pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
+
+  readonly menuOpen = signal(false);
 
   readonly username = this.authService.username;
 
@@ -34,6 +55,25 @@ export class AdminLayout {
     const slug = this.authService.storeSlug();
     return slug ? ['/boutique', slug] : ['/'];
   });
+
+  constructor() {
+    // Sur telephone, le menu recouvre la page : le laisser ouvert apres un clic
+    // masquerait justement l'ecran qu'on vient de demander.
+    this.router.events
+      .pipe(
+        takeUntilDestroyed(),
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      )
+      .subscribe(() => this.closeMenu());
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 
   logout(): void {
     this.authService.logout();
