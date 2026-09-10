@@ -54,32 +54,26 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #f2f0ed;
-    --ink-soft: #cbc7c1;
-    --muted: #97928b;
-    --faint: #6d6963;
-
-    --paper: #131211;
-    --mist: #1a1917;
-    --sunk: #232120;
-
-    --line: #2c2a27;
-    --line-strong: #413e3a;
-
-    --signal: #e0796c;
-    --signal-soft: #2a1a17;
-    --ok: #6fbb8f;
-  }
-}
-
+/*
+ * Le site reste clair, quel que soit le réglage de l'appareil. Le vendeur
+ * compose sa vitrine sur fond blanc : l'inverser changeait le rendu de ses
+ * photos et de ses couleurs sans qu'il le sache.
+ *
+ * « only » interdit aussi au navigateur d'assombrir la page de lui-même —
+ * ce que font le mode sombre forcé de Chrome et les navigateurs intégrés,
+ * comme celui de Messenger, dès qu'une page ne déclare rien. La balise
+ * color-scheme d'index.html le dit avant même que cette feuille arrive.
+ */
 html {
+  color-scheme: only light;
   height: 100%;
   // Le back-office reste sur Angular Material : ce thème ne concerne pas la vitrine.
+  // Sans theme-type, Material produit des couleurs light-dark() qui suivent le
+  // réglage système : les menus et dialogues passaient en sombre.
   @include mat.theme(
     (
       color: (
+        theme-type: light,
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
@@ -90,7 +84,6 @@ html {
 }
 
 body {
-  color-scheme: light dark;
   margin: 0;
   min-height: 100%;
   background: var(--paper);
@@ -317,10 +310,7 @@ img {
   --radius-md: 8px;
 }
 
-/* Le back-office reste clair : un tableau de bord se lit longtemps, et
-   la cohérence des captures d'écran compte plus que la préférence système. */
 .admin-scope {
-  color-scheme: light;
   background: var(--ground);
   color: var(--text-main);
 }
