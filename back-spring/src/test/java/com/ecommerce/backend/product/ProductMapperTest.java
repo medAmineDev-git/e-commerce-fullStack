@@ -88,7 +88,30 @@ class ProductMapperTest {
                 });
     }
 
+    /** Les tailles sont libres : vetements d'enfants, pointures, taille unique. */
+    @Test
+    void shouldKeepFreeSizesInTheSellerOrder() {
+        Product product = mapper.toEntity(requestWithSizes(List.of("4 ans", "6 ans", "38", "Taille unique")));
+
+        assertThat(product.getSizes()).containsExactly("4 ans", "6 ans", "38", "Taille unique");
+    }
+
+    @Test
+    void shouldTrimSizesAndDropBlanksAndDuplicates() {
+        Product product = mapper.toEntity(requestWithSizes(List.of(" M ", "m", "L", "  ", "M")));
+
+        assertThat(product.getSizes()).containsExactly("M", "L");
+    }
+
     private ProductRequest request(List<ProductServiceTermRequest> serviceTerms) {
+        return request(List.of(), serviceTerms);
+    }
+
+    private ProductRequest requestWithSizes(List<String> sizes) {
+        return request(sizes, null);
+    }
+
+    private ProductRequest request(List<String> sizes, List<ProductServiceTermRequest> serviceTerms) {
         return new ProductRequest(
                 "Pull",
                 null,
@@ -100,7 +123,7 @@ class ProductMapperTest {
                 null,
                 "ACTIVE",
                 List.of(),
-                List.of(),
+                sizes,
                 List.of(),
                 List.of(),
                 serviceTerms,

@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ProductSizeOption, PublicCategory, PublicProduct } from '../models/public-product.model';
+import { PublicCategory, PublicProduct } from '../models/public-product.model';
 import { Category } from '../models/category.model';
 import { SortDirection } from '../stores/crud-list.helpers';
 import { StoreContextService } from './store-context.service';
@@ -75,14 +75,6 @@ const IMAGE_POOL = [
   'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1100&q=80',
   'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1100&q=80',
 ];
-
-const FALLBACK_COLORS = [
-  { name: 'Sable', hex: '#dac4ab' },
-  { name: 'Carbone', hex: '#1f1f1f' },
-  { name: 'Ivoire', hex: '#f7efe3' },
-];
-
-const FALLBACK_SIZES = ['S', 'M', 'L'] as const;
 
 @Service()
 export class PublicCatalogService {
@@ -174,7 +166,6 @@ export class PublicCatalogService {
       : [];
     const imageUrl = gallery[0] ?? IMAGE_POOL[Math.abs(product.id) % IMAGE_POOL.length];
     const resolvedGallery = gallery.length ? gallery : [imageUrl];
-    const sizes = (product.sizes ?? []).filter(this.isProductSize);
 
     return {
       id: product.id,
@@ -193,21 +184,22 @@ export class PublicCatalogService {
       stockQuantity: product.stockQuantity,
       imageUrl,
       gallery: resolvedGallery,
-      colors: product.colors?.length ? [...product.colors] : [...FALLBACK_COLORS],
+      // Aucune valeur de repli, comme pour les tailles : afficher Sable, Carbone
+      // et Ivoire sur un article qui n'existe qu'en noir trompait le client.
+      colors: [...(product.colors ?? [])],
       // Aucune valeur de repli : une liste vide veut dire que le vendeur a
       // retire le bloc de la fiche.
       serviceTerms: [...(product.serviceTerms ?? [])],
-      sizes: sizes.length ? sizes : [...FALLBACK_SIZES],
+      // Tailles libres, reprises telles quelles. Aucune valeur de repli : un
+      // article sans taille (sac, bijou) se commande sans en choisir, au lieu
+      // de proposer S, M, L que le vendeur n'a jamais saisies.
+      sizes: [...(product.sizes ?? [])],
       reviews: [],
     };
   }
 
   private resolveImageUrl(image: string): string {
     return image.startsWith('/') ? `${this.apiOrigin}${image}` : image;
-  }
-
-  private isProductSize(value: string): value is ProductSizeOption {
-    return ['XS', 'S', 'M', 'L', 'XL'].includes(value);
   }
 
   private slugify(value: string): string {

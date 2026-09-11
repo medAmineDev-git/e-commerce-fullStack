@@ -8,6 +8,7 @@ import com.ecommerce.backend.order.dto.OrderResponse;
 import com.ecommerce.backend.order.dto.OrderSummaryResponse;
 import com.ecommerce.backend.order.dto.OrderUpdateRequest;
 import com.ecommerce.backend.product.Product;
+import com.ecommerce.backend.product.ProductColor;
 import com.ecommerce.backend.product.ProductNotFoundException;
 import com.ecommerce.backend.product.ProductRepository;
 import com.ecommerce.backend.store.Store;
@@ -101,16 +102,20 @@ public class OrderService {
         List<OrderItemResponse> items = request.items().stream()
                 .map(item -> addItem(order, item, store))
                 .toList();
-        BigDecimal total = items.stream()
+        BigDecimal subtotal = items.stream()
                 .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Un seul forfait pour toute la commande, pas un par article.
+        BigDecimal deliveryFee = DeliveryFeePolicy.feeFor(subtotal);
 
-        order.setTotal(total);
+        order.setDeliveryFee(deliveryFee);
+        order.setTotal(subtotal.add(deliveryFee));
         orderRepository.save(order);
 
         return new OrderResponse(
                 order.getOrderNumber(),
                 order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
+                order.getDeliveryFee(),
                 order.getTotal(),
                 order.getStatus(),
                 items
@@ -129,6 +134,14 @@ public class OrderService {
             throw new IllegalArgumentException("Insufficient stock for product: " + product.getId());
         }
 
+        String size = resolveVariant(item.size(), product.getSizes(), "size", product);
+        String color = resolveVariant(
+                item.color(),
+                product.getColors().stream().map(ProductColor::getName).toList(),
+                "color",
+                product
+        );
+
         product.setStockQuantity(product.getStockQuantity() - item.quantity());
 
         OrderItem orderItem = new OrderItem();
@@ -136,13 +149,45 @@ public class OrderService {
         orderItem.setProductName(product.getName());
         orderItem.setUnitPrice(product.getPrice());
         orderItem.setQuantity(item.quantity());
+        orderItem.setSize(size);
+        orderItem.setColor(color);
         order.addItem(orderItem);
 
+        return toItemResponse(orderItem);
+    }
+
+    /**
+     * Une declinaison proposee par le produit doit etre choisie, et parmi
+     * celles qu'il propose : sans cela, le vendeur recevrait une commande
+     * impossible a preparer. La valeur enregistree est celle du vendeur, pas la
+     * saisie du client (« m » devient « M »).
+     *
+     * Un produit sans declinaison ignore ce qui est envoye : il n'y a rien a choisir.
+     */
+    private String resolveVariant(String requested, List<String> offered, String kind, Product product) {
+        if (offered.isEmpty()) {
+            return null;
+        }
+        if (requested == null || requested.isBlank()) {
+            throw new IllegalArgumentException("A " + kind + " must be chosen for product: " + product.getId());
+        }
+
+        String wanted = requested.trim();
+        return offered.stream()
+                .filter(value -> value.equalsIgnoreCase(wanted))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown " + kind + " '" + wanted + "' for product: " + product.getId()));
+    }
+
+    private OrderItemResponse toItemResponse(OrderItem item) {
         return new OrderItemResponse(
-                product.getId(),
-                product.getName(),
-                product.getPrice(),
-                item.quantity()
+                item.getProductId(),
+                item.getProductName(),
+                item.getUnitPrice(),
+                item.getQuantity(),
+                item.getSize(),
+                item.getColor()
         );
     }
 
@@ -166,7 +211,7 @@ public class OrderService {
 
     private OrderDetailResponse toDetail(CustomerOrder order) {
         List<OrderItemResponse> items = order.getItems().stream()
-                .map(item -> new OrderItemResponse(item.getProductId(), item.getProductName(), item.getUnitPrice(), item.getQuantity()))
+                .map(this::toItemResponse)
                 .toList();
 
         return new OrderDetailResponse(
@@ -180,6 +225,7 @@ public class OrderService {
                 order.getPublisherRef(),
                 order.getStatus(),
                 order.getEstimatedDelivery().format(DELIVERY_FORMATTER),
+                order.getDeliveryFee(),
                 order.getTotal(),
                 items
         );

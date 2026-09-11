@@ -14,7 +14,7 @@
   } @else {
     <div class="cart-body">
       <ul class="items">
-        @for (item of cartStore.items(); track item.product.id) {
+        @for (item of cartStore.items(); track lineKey(item)) {
           <li class="item">
             <div class="item-media u-media">
               <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
@@ -22,6 +22,9 @@
 
             <div class="item-body">
               <h2 class="item-name">{{ item.product.name }}</h2>
+              @if (variantLabel(item)) {
+                <p class="item-variant">{{ variantLabel(item) }}</p>
+              }
               @if (item.product.category) {
                 <p class="u-label">{{ item.product.category }}</p>
               }

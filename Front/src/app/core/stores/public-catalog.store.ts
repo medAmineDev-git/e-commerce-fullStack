@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { PublicCategory, PublicProduct } from '../models/public-product.model';
 import { Category } from '../models/category.model';
+import { compareSizes } from '../models/size-order';
 import {
   CatalogFacets,
   CatalogSortField,
@@ -106,7 +107,7 @@ export const PublicCatalogStore = signalStore(
         .map((category) => category.name);
     }),
 
-    availableSizes: computed(() => state.facets()?.sizes ?? []),
+    availableSizes: computed(() => [...(state.facets()?.sizes ?? [])].sort(compareSizes)),
     priceBounds: computed(() => ({
       min: state.facets()?.minPrice ?? null,
       max: state.facets()?.maxPrice ?? null,

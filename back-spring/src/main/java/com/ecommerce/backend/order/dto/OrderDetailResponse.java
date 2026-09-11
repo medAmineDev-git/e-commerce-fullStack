@@ -14,6 +14,8 @@ public record OrderDetailResponse(
         String publisherRef,
         String status,
         String estimatedDelivery,
+        /** Deja inclus dans le total. */
+        BigDecimal deliveryFee,
         BigDecimal total,
         List<OrderItemResponse> items
 ) {

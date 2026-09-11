@@ -3,6 +3,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { OrderService, AdminOrder } from '../../../core/services/order';
 import { AdminOrderDetail, ORDER_STATUSES, OrderStatus } from '../../../core/services/order';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { variantLabel } from '../../../core/models/order.model';
 
 @Component({
   selector: 'app-order-list',
@@ -12,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class OrderList {
   private readonly orderService = inject(OrderService);
+  readonly variantLabel = variantLabel;
   private readonly snackBar = inject(MatSnackBar);
 
   readonly orders = signal<AdminOrder[]>([]);

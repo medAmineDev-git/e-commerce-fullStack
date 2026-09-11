@@ -2,7 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { Router, RouterLink } from '@angular/router';
-import { CartItem } from '../../../core/models/order.model';
+import { CartItem, cartLineKey, variantLabel } from '../../../core/models/order.model';
 import { CartStore } from '../../../core/stores/cart.store';
 
 @Component({
@@ -22,12 +22,15 @@ export class CartPage {
     if (!Number.isFinite(quantity)) {
       return;
     }
-    this.cartStore.setQuantity(item.product.id, Math.floor(quantity));
+    this.cartStore.setQuantity(cartLineKey(item), Math.floor(quantity));
   }
 
   remove(item: CartItem): void {
-    this.cartStore.removeItem(item.product.id);
+    this.cartStore.removeItem(cartLineKey(item));
   }
+
+  readonly lineKey = cartLineKey;
+  readonly variantLabel = variantLabel;
 
   proceedToCheckout(): void {
     if (this.cartStore.isEmpty()) {

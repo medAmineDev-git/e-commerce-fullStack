@@ -1189,7 +1189,11 @@ components:
         compareAtPrice: { type: number, format: double, nullable: true }
         status: { type: string }
         imageUrls: { type: array, items: { type: string } }
-        sizes: { type: array, items: { type: string } }
+        sizes:
+          type: array
+          maxItems: 30
+          items: { type: string, minLength: 1, maxLength: 20 }
+          description: Texte libre (« M », « 38 », « 4 ans »). Espaces et doublons retirés, sans égard à la casse.
         seasons: { type: array, items: { type: string } }
         colors: { type: array, items: { $ref: '#/components/schemas/ProductColor' } }
         serviceTerms:
@@ -1319,6 +1323,16 @@ components:
       properties:
         productId: { type: integer, format: int64 }
         quantity: { type: integer, minimum: 1 }
+        size:
+          type: string
+          maxLength: 20
+          nullable: true
+          description: Obligatoire si le produit propose des tailles, et parmi celles-ci. Ignorée sinon.
+        color:
+          type: string
+          maxLength: 80
+          nullable: true
+          description: Nom de la couleur. Obligatoire si le produit en propose, et parmi celles-ci. Ignorée sinon.
 
     OrderItem:
       type: object
@@ -1327,6 +1341,8 @@ components:
         productName: { type: string }
         unitPrice: { type: number, format: double }
         quantity: { type: integer }
+        size: { type: string, nullable: true, example: 12 mois }
+        color: { type: string, nullable: true, example: Bleu nuit }
 
     OrderRequest:
       type: object
@@ -1350,7 +1366,11 @@ components:
       properties:
         orderId: { type: string, example: CMD-B56B3437 }
         estimatedDelivery: { type: string, example: 07 septembre 2026 }
-        total: { type: number, format: double }
+        deliveryFee:
+          type: number
+          format: double
+          description: Forfait unique pour la commande, déjà inclus dans le total
+        total: { type: number, format: double, description: Articles et livraison }
         status: { type: string }
         items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
 
@@ -1374,6 +1394,10 @@ components:
             phone: { type: string }
             address: { type: string }
             note: { type: string, nullable: true }
+            deliveryFee:
+              type: number
+              format: double
+              description: Déjà inclus dans le total ; zéro pour les commandes antérieures à son enregistrement
             items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
 
 security:

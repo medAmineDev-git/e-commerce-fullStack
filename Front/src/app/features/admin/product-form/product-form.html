@@ -146,14 +146,38 @@
       <div class="section-heading">
         <div>
           <h2>Tailles</h2>
-          <p>Les déclinaisons proposées à l'achat.</p>
+          <p>Libres : M, 38, 4 ans, Taille unique… Séparez-les par des virgules pour en ajouter plusieurs.</p>
         </div>
       </div>
-      <div class="size-list">
-        @for (size of availableSizes; track size) {
-          <button type="button" [class.selected]="model().sizes.includes(size)" (click)="toggleSize(size)">{{ size }}</button>
-        }
+      <div class="size-form">
+        <input
+          [value]="sizeDraft()"
+          (input)="sizeDraft.set($any($event.target).value)"
+          (keydown.enter)="$event.preventDefault(); addSize()"
+          placeholder="Ex. 4 ans"
+          aria-label="Nouvelle taille"
+          data-testid="size-draft"
+        />
+        <button type="button" (click)="addSize()" data-testid="size-add">
+          <span class="u-sr-only">Ajouter la taille</span>
+          <span aria-hidden="true">+</span>
+        </button>
       </div>
+      @if (model().sizes.length) {
+        <div class="chip-list" data-testid="size-list">
+          @for (size of model().sizes; track size) {
+            <span>
+              {{ size }}
+              <button type="button" (click)="removeSize(size)">
+                <span class="u-sr-only">Retirer la taille {{ size }}</span>
+                <span aria-hidden="true">×</span>
+              </button>
+            </span>
+          }
+        </div>
+      } @else {
+        <p class="chip-empty">Aucune taille : le client commandera sans en choisir.</p>
+      }
     </div>
     <div>
       <div class="section-heading">
@@ -162,7 +186,7 @@
           <p>Les saisons pendant lesquelles le produit est disponible.</p>
         </div>
       </div>
-      <div class="size-list">
+      <div class="toggle-list">
         @for (season of availableSeasons; track season) {
           <button type="button" [class.selected]="model().seasons.includes(season)" (click)="toggleSeason(season)">{{ season }}</button>
         }
@@ -180,7 +204,7 @@
         <input [value]="colorNameDraft()" (input)="colorNameDraft.set($any($event.target).value)" placeholder="Ex. Bleu nuit" />
         <button type="button" (click)="addColor()">Ajouter</button>
       </div>
-      <div class="color-list">
+      <div class="chip-list">
         @for (color of model().colors; track color.name) {
           <span><i [style.background]="color.hex"></i>{{ color.name }}<button type="button" (click)="removeColor(color.name)">×</button></span>
         }

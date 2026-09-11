@@ -217,7 +217,7 @@
     <div class="buy-bar-inner u-shell">
       <div class="buy-total">
         <span class="u-label">Total</span>
-        <strong class="u-price">{{ orderTotal() | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        <strong class="u-price" data-testid="buy-total">{{ subTotal() | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}</strong>
       </div>
 
       @if (hasAddedToCart()) {
@@ -231,7 +231,7 @@
           [disabled]="!canAddToCart()"
           (click)="addToCart()"
         >
-          {{ requiresSizeSelection() ? 'Choisir une taille' : 'Ajouter au panier' }}
+          {{ missingChoice() ?? 'Ajouter au panier' }}
         </button>
       }
     </div>

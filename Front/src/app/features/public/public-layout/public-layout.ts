@@ -8,6 +8,7 @@ import { PublisherReferenceService } from '../../../core/services/publisher-refe
 import { SeoService } from '../../../core/seo/seo.service';
 import { StorePageService } from '../../../core/services/store-page.service';
 import { StorePageSummary } from '../../../core/models/store-page.model';
+import { cartLineKey, variantLabel } from '../../../core/models/order.model';
 import { StoreHighlightService } from '../../../core/services/store-highlight.service';
 import { HighlightBar } from '../../../shared/highlight-bar/highlight-bar';
 
@@ -20,6 +21,8 @@ import { HighlightBar } from '../../../shared/highlight-bar/highlight-bar';
 export class PublicLayout {
   readonly storeContext = inject(StoreContextService);
   readonly cartStore = inject(CartStore);
+  readonly lineKey = cartLineKey;
+  readonly variantLabel = variantLabel;
   private readonly router = inject(Router);
   private readonly publisherReferenceService = inject(PublisherReferenceService);
   private readonly seo = inject(SeoService);

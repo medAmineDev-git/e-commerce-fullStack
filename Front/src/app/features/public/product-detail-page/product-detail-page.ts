@@ -56,9 +56,12 @@ export class ProductDetailPage {
   readonly fallbackImage =
     'https://placehold.co/900x1200/f4ede4/5d4c3c?text=Image+Produit';
   readonly unitPrice = computed(() => this.product()?.price ?? 0);
+  /**
+   * Le prix des articles, et lui seul. La livraison n'a pas sa place ici :
+   * l'ajouter faisait afficher, à côté du bouton, un montant différent du prix
+   * annoncé en haut de la fiche.
+   */
   readonly subTotal = computed(() => this.unitPrice() * this.quantity());
-  readonly deliveryFee = computed(() => (this.subTotal() === 0 || this.subTotal() > 100 ? 0 : 6.9));
-  readonly orderTotal = computed(() => this.subTotal() + this.deliveryFee());
   readonly cartCount = computed(() => this.cartStore.totalItems());
 
   constructor() {
@@ -73,8 +76,11 @@ export class ProductDetailPage {
       const product = await this.catalogService.getProductById(id);
       this.product.set(product);
       this.currentImage.set(product.gallery[0] ?? product.imageUrl ?? this.fallbackImage);
-      this.selectedColor.set(product.colors?.[0] ?? null);
-      this.selectedSize.set(product.sizes?.[0] ?? null);
+      // Présélection seulement quand il n'y a pas de choix à faire. Retenir
+      // d'office la première taille faisait commander du « 3 mois » à qui
+      // n'avait rien sélectionné.
+      this.selectedColor.set(product.colors?.length === 1 ? product.colors[0] : null);
+      this.selectedSize.set(product.sizes?.length === 1 ? product.sizes[0] : null);
       this.addedToCart.set(false);
       await this.loadRelatedProducts(product);
     } catch {
@@ -152,11 +158,14 @@ export class ProductDetailPage {
 
   addToCart(): void {
     const product = this.product();
-    if (!product || this.requiresSizeSelection()) {
+    if (!product || this.missingChoice()) {
       return;
     }
 
-    this.cartStore.addItem(product, this.quantity());
+    this.cartStore.addItem(product, this.quantity(), {
+      size: this.selectedSize(),
+      color: this.selectedColor()?.name ?? null,
+    });
     this.addedToCart.set(true);
   }
 
@@ -169,7 +178,7 @@ export class ProductDetailPage {
   }
 
   canAddToCart(): boolean {
-    return !!this.product() && !this.addedToCart() && !this.requiresSizeSelection();
+    return !!this.product() && !this.addedToCart() && !this.missingChoice();
   }
 
   hasAddedToCart(): boolean {
@@ -190,5 +199,16 @@ export class ProductDetailPage {
 
   requiresSizeSelection(): boolean {
     return this.hasSizes() && !this.selectedSize();
+  }
+
+  requiresColorSelection(): boolean {
+    return (this.product()?.colors?.length ?? 0) > 0 && !this.selectedColor();
+  }
+
+  /** Ce qui manque encore avant l'ajout, dit sur le bouton ; null quand tout est choisi. */
+  missingChoice(): string | null {
+    if (this.requiresSizeSelection()) return 'Choisir une taille';
+    if (this.requiresColorSelection()) return 'Choisir une couleur';
+    return null;
   }
 }

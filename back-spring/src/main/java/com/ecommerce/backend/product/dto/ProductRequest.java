@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -35,7 +36,16 @@ public record ProductRequest(
 
         List<String> imageUrls,
 
-        List<String> sizes,
+        /**
+         * Texte libre : « M », « 38 », « 4 ans », « Taille unique ». La limite
+         * de longueur est celle de la colonne ; sans ce controle, une valeur trop
+         * longue sortait en erreur serveur au lieu d'un refus explicite.
+         */
+        @Size(max = MAX_SIZES, message = "a product accepts at most " + MAX_SIZES + " sizes")
+        List<
+                @NotBlank(message = "size must not be blank")
+                @Size(max = MAX_SIZE_LENGTH, message = "size must be at most " + MAX_SIZE_LENGTH + " characters")
+                String> sizes,
 
         List<String> seasons,
 
@@ -56,6 +66,10 @@ public record ProductRequest(
 
         String seoDescription
 ) {
+    public static final int MAX_SIZES = 30;
+    /** Longueur de product_sizes.size_value. */
+    public static final int MAX_SIZE_LENGTH = 20;
+
     public ProductRequest(
             String name,
             String category,

@@ -7,6 +7,9 @@ import com.ecommerce.backend.product.dto.ProductServiceTermResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -68,7 +71,7 @@ public class ProductMapper {
         product.setSeoTitle(blankToNull(request.seoTitle()));
         product.setSeoDescription(blankToNull(request.seoDescription()));
         product.setImageUrls(new ArrayList<>(request.imageUrls() == null ? List.of() : request.imageUrls()));
-        product.setSizes(new ArrayList<>(request.sizes() == null ? List.of() : request.sizes()));
+        product.setSizes(normalizeSizes(request.sizes()));
         product.setSeasons(new ArrayList<>(request.seasons() == null ? List.of() : request.seasons()));
         product.setColors(new ArrayList<>((request.colors() == null ? List.<com.ecommerce.backend.product.dto.ProductColorRequest>of() : request.colors())
                 .stream()
@@ -92,6 +95,28 @@ public class ProductMapper {
         return request.serviceTerms().stream()
                 .map(term -> new ProductServiceTerm(term.label().trim(), term.value().trim()))
                 .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * Les tailles sont libres : un vendeur pour enfants ecrit « 4 ans », un
+     * chausseur « 38 ». Espaces et doublons sont retires, sans egard a la casse —
+     * « m » et « M » proposeraient deux fois la meme taille. L'ordre du vendeur
+     * est conserve : c'est celui de la fiche.
+     */
+    private List<String> normalizeSizes(List<String> sizes) {
+        List<String> normalized = new ArrayList<>();
+        if (sizes == null) {
+            return normalized;
+        }
+
+        Set<String> seen = new HashSet<>();
+        for (String size : sizes) {
+            String trimmed = size == null ? "" : size.trim();
+            if (!trimmed.isEmpty() && seen.add(trimmed.toLowerCase(Locale.ROOT))) {
+                normalized.add(trimmed);
+            }
+        }
+        return normalized;
     }
 
     private String blankToNull(String value) {

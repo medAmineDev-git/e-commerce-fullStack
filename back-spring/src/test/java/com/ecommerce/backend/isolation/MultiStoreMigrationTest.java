@@ -115,6 +115,13 @@ class MultiStoreMigrationTest {
         assertEquals(2L, queryLong("SELECT COUNT(*) FROM products WHERE sku = 'SKU-1'"));
     }
 
+    /** V118 : une commande anterieure n'a jamais porte de frais, et son total ne bouge pas. */
+    @Test
+    void shouldLeaveExistingOrdersWithoutDeliveryFee() throws SQLException {
+        assertEquals("0.000", queryString("SELECT delivery_fee FROM orders WHERE order_number = 'CMD-LEGACY1'"));
+        assertEquals("89.900", queryString("SELECT total FROM orders WHERE order_number = 'CMD-LEGACY1'"));
+    }
+
     /** V110 : le compte historique etait un ROLE_ADMIN, il devient proprietaire. */
     @Test
     void shouldConvertTheLegacyAdminRoleToStoreOwner() throws SQLException {

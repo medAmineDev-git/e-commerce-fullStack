@@ -8,6 +8,7 @@ import { Router, RouterLink } from '@angular/router';
 import { startWith } from 'rxjs';
 import { CartStore } from '../../../core/stores/cart.store';
 import { OrderService } from '../../../core/services/order';
+import { cartLineKey, variantLabel } from '../../../core/models/order.model';
 
 @Component({
   selector: 'app-checkout-page',
@@ -23,6 +24,8 @@ export class CheckoutPage {
   private readonly orderService = inject(OrderService);
 
   readonly cartStore = inject(CartStore);
+  readonly lineKey = cartLineKey;
+  readonly variantLabel = variantLabel;
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showCartDetails = signal(false);

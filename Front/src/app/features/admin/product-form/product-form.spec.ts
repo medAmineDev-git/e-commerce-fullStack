@@ -214,6 +214,76 @@ describe('ProductForm', () => {
     expect(component.errors().price).toBeTruthy();
   });
 
+  describe('tailles libres', () => {
+    const typeSize = (value: string) => {
+      const input = fixture.nativeElement.querySelector('[data-testid="size-draft"]') as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    const clickPlus = () =>
+      (fixture.nativeElement.querySelector('[data-testid="size-add"]') as HTMLButtonElement).click();
+
+    it('retient la saisie au « + » et vide le champ pour la suivante', () => {
+      typeSize('4 ans');
+      clickPlus();
+      fixture.detectChanges();
+
+      expect(component.model().sizes).toEqual(['4 ans']);
+      expect(component.sizeDraft()).toBe('');
+      expect(fixture.nativeElement.querySelector('[data-testid="size-list"]').textContent).toContain('4 ans');
+
+      typeSize('6 ans');
+      clickPlus();
+
+      expect(component.model().sizes).toEqual(['4 ans', '6 ans']);
+    });
+
+    it('ajoute plusieurs tailles séparées par des virgules', () => {
+      component.sizeDraft.set('S, M , L,');
+      component.addSize();
+
+      expect(component.model().sizes).toEqual(['S', 'M', 'L']);
+    });
+
+    it('ignore une taille déjà présente, sans égard à la casse', () => {
+      component.sizeDraft.set('M');
+      component.addSize();
+      component.sizeDraft.set('m, L');
+      component.addSize();
+
+      expect(component.model().sizes).toEqual(['M', 'L']);
+    });
+
+    it('refuse une taille plus longue que ce que le serveur accepte', () => {
+      component.sizeDraft.set('Une taille beaucoup trop longue');
+
+      expect(component.addSize()).toBe(false);
+      expect(component.model().sizes).toEqual([]);
+      // La saisie reste là, pour être corrigée plutôt que retapée.
+      expect(component.sizeDraft()).toBe('Une taille beaucoup trop longue');
+    });
+
+    it('retire une taille', () => {
+      component.sizeDraft.set('S, M');
+      component.addSize();
+      component.removeSize('S');
+
+      expect(component.model().sizes).toEqual(['M']);
+    });
+
+    it('enregistre la taille tapée sans avoir pressé « + »', async () => {
+      component.updateTextField('name', 'Body');
+      component.updatePrice('price', '19');
+      component.imageDraft.set('https://example.com/body.jpg');
+      await component.addImage();
+      component.sizeDraft.set('3 mois');
+
+      await component.save();
+
+      expect(mockStore.createProduct).toHaveBeenCalledWith(expect.objectContaining({ sizes: ['3 mois'] }));
+    });
+  });
+
   it('should move a selected gallery image to the primary position', async () => {
     component.imageDraft.set('https://example.com/first.jpg');
     await component.addImage();

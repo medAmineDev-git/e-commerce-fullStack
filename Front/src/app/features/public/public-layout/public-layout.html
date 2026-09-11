@@ -106,13 +106,16 @@
       </div>
     } @else {
       <div class="drawer-items">
-        @for (item of cartStore.items(); track item.product.id) {
+        @for (item of cartStore.items(); track lineKey(item)) {
           <article class="drawer-item">
             <div class="drawer-thumb u-media">
               <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
             </div>
             <div class="drawer-item-body">
               <h3>{{ item.product.name }}</h3>
+              @if (variantLabel(item)) {
+                <p class="drawer-variant">{{ variantLabel(item) }}</p>
+              }
               <p class="u-label">{{ item.quantity }} &times; {{ item.product.price | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}</p>
             </div>
             <strong class="u-price">

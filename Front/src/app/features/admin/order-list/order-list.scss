@@ -192,6 +192,14 @@ button {
   padding: 6px 0;
 }
 
+/* La déclinaison est ce que le vendeur prépare : lisible, sous le nom. */
+.item-variant {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .field select,
 .field textarea {
   width: 100%;

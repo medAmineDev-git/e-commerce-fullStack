@@ -67,6 +67,10 @@ public class CustomerOrder {
     @Column(nullable = false)
     private LocalDate estimatedDelivery;
 
+    /** Forfait de livraison, compte une fois par commande et deja inclus dans le total. */
+    @Column(nullable = false, precision = 12, scale = 3)
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 

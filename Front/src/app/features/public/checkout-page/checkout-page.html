@@ -78,13 +78,18 @@
         <h2 class="u-label">Votre commande</h2>
 
         <ul class="summary-items">
-          @for (item of cartStore.items(); track item.product.id) {
+          @for (item of cartStore.items(); track lineKey(item)) {
             <li>
               <div class="summary-thumb u-media">
                 <img [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
                 <span class="summary-qty">{{ item.quantity }}</span>
               </div>
-              <span class="summary-name">{{ item.product.name }}</span>
+              <span class="summary-name">
+                {{ item.product.name }}
+                @if (variantLabel(item)) {
+                  <small class="summary-variant">{{ variantLabel(item) }}</small>
+                }
+              </span>
               <span class="u-price">
                 {{ item.product.price * item.quantity | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}
               </span>

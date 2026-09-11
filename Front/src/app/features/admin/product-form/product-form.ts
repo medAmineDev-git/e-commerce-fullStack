@@ -35,6 +35,10 @@ function parseAmount(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Limites du serveur (ProductRequest.java) : au-delà, il refuse l'enregistrement. */
+const MAX_SIZE_LENGTH = 20;
+const MAX_SIZES = 30;
+
 const DEFAULT_SERVICE_TERMS: ProductServiceTerm[] = [
   { label: 'Livraison', value: '48 à 72 heures' },
   { label: 'Paiement', value: 'À la livraison ou par virement' },
@@ -86,7 +90,8 @@ export class ProductForm {
   readonly imageDraft = signal('');
   readonly colorNameDraft = signal('');
   readonly colorHexDraft = signal('#000000');
-  readonly availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
+  readonly sizeDraft = signal('');
+  readonly maxSizeLength = MAX_SIZE_LENGTH;
   readonly availableSeasons = ['Printemps', 'Été', 'Automne', 'Hiver'] as const;
 
   readonly model = signal<ProductFormModel>(this.emptyModel());
@@ -169,12 +174,62 @@ export class ProductForm {
     });
   }
 
-  toggleSize(size: string): void {
+  /**
+   * Tailles libres : « M », « 38 », « 4 ans », « Taille unique ». Le « + »
+   * retient la saisie et vide le champ pour la suivante.
+   *
+   * Plusieurs tailles séparées par des virgules s'ajoutent d'un coup : taper
+   * « S, M, L » évite trois allers-retours pour une gamme adulte courante.
+   *
+   * @returns false si la saisie a été refusée, pour que l'enregistrement s'arrête.
+   */
+  addSize(): boolean {
+    const entries = this.sizeDraft()
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry !== '');
+    if (entries.length === 0) {
+      return true;
+    }
+
+    const tooLong = entries.find((entry) => entry.length > MAX_SIZE_LENGTH);
+    if (tooLong) {
+      this.snackBar.open(`Une taille compte au plus ${MAX_SIZE_LENGTH} caractères.`, 'Fermer', {
+        duration: 3000,
+      });
+      return false;
+    }
+
+    // « m » et « M » proposeraient deux fois la même taille au client.
+    const known = new Set(this.model().sizes.map((size) => size.toLowerCase()));
+    const fresh = entries.filter((entry) => {
+      const key = entry.toLowerCase();
+      if (known.has(key)) {
+        return false;
+      }
+      known.add(key);
+      return true;
+    });
+
+    if (this.model().sizes.length + fresh.length > MAX_SIZES) {
+      this.snackBar.open(`Un produit compte au plus ${MAX_SIZES} tailles.`, 'Fermer', { duration: 3000 });
+      return false;
+    }
+    if (fresh.length === 0) {
+      this.snackBar.open('Cette taille est déjà dans la liste.', 'Fermer', { duration: 3000 });
+      this.sizeDraft.set('');
+      return true;
+    }
+
+    this.model.update((current) => ({ ...current, sizes: [...current.sizes, ...fresh] }));
+    this.sizeDraft.set('');
+    return true;
+  }
+
+  removeSize(size: string): void {
     this.model.update((current) => ({
       ...current,
-      sizes: current.sizes.includes(size)
-        ? current.sizes.filter((item) => item !== size)
-        : [...current.sizes, size],
+      sizes: current.sizes.filter((item) => item !== size),
     }));
   }
 
@@ -305,6 +360,12 @@ export class ProductForm {
   }
 
   async save(): Promise<void> {
+    // Une taille tapée sans avoir pressé « + » est une taille voulue : la
+    // perdre à l'enregistrement surprendrait le vendeur.
+    if (!this.addSize()) {
+      return;
+    }
+
     this.submitted.set(true);
     if (!this.formValid()) {
       this.snackBar.open('Corrigez les champs indiqués avant de publier.', 'Fermer', { duration: 3000 });

@@ -9,6 +9,8 @@ import { StoreContextService } from './store-context.service';
 type BackendOrderItemRequest = {
   productId: number;
   quantity: number;
+  size: string | null;
+  color: string | null;
 };
 
 type BackendOrderRequest = {
@@ -28,11 +30,15 @@ type BackendOrderItemResponse = {
   productName: string;
   unitPrice: number;
   quantity: number;
+  size: string | null;
+  color: string | null;
 };
 
 type BackendOrderResponse = {
   orderId: string;
   estimatedDelivery: string;
+  /** Déjà inclus dans le total. */
+  deliveryFee: number;
   total: number;
   status: 'confirmed';
   items: BackendOrderItemResponse[];
@@ -54,12 +60,17 @@ export type AdminOrderItem = {
   productName: string;
   unitPrice: number;
   quantity: number;
+  /** Null si le produit n'en proposait pas, ou pour une commande antérieure. */
+  size: string | null;
+  color: string | null;
 };
 
 export type AdminOrderDetail = AdminOrder & {
   phone: string;
   address: string;
   note: string | null;
+  /** Déjà inclus dans le total. */
+  deliveryFee: number;
   items: AdminOrderItem[];
 };
 
@@ -103,7 +114,12 @@ export class OrderService {
       address: payload.address,
       note: payload.note,
       paymentMethod: payload.paymentMethod,
-      items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      items: items.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+      })),
       total,
       publisherRef: this.publisherReferenceService.reference(),
     };

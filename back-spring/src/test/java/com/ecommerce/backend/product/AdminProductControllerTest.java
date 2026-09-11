@@ -127,6 +127,21 @@ class AdminProductControllerTest {
                 .andExpect(jsonPath("$.validationErrors.description").doesNotExist());
     }
 
+    /** Au-dela de la colonne, un refus explicite plutot qu'une erreur serveur. */
+    @Test
+    void createShouldReturn400WhenASizeIsTooLong() throws Exception {
+        ProductRequest request = new ProductRequest(
+                "Body", null, null, null, new BigDecimal("19.90"), 5, null, null, "ACTIVE",
+                List.of(), List.of("3 mois", "Taille beaucoup trop longue"), List.of(), List.of(),
+                null, null, null);
+
+        mockMvc.perform(post("/api/admin/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed"));
+    }
+
     @Test
     void createShouldAcceptAProductWithoutCategoryNorDescription() throws Exception {
         ProductRequest request = new ProductRequest("Cap", null, null, new BigDecimal("19.90"), 5);

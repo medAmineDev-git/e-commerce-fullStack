@@ -40,4 +40,14 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    /**
+     * Declinaison choisie par le client, recopiee comme le nom et le prix : si
+     * le vendeur retire ensuite cette taille du produit, la commande la garde.
+     */
+    @Column(name = "size_value", length = 20)
+    private String size;
+
+    @Column(name = "color_name", length = 80)
+    private String color;
 }

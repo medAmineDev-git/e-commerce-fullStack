@@ -89,10 +89,25 @@
 
     <h3>Articles</h3>
     <div class="items-list">
-      @for (item of order.items; track item.productId) {
+      <!-- Suivi par position : le même produit revient une fois par taille commandée. -->
+      @for (item of order.items; track $index) {
         <div class="item-row">
-          <span>{{ item.productName }} × {{ item.quantity }}</span>
+          <span>
+            {{ item.productName }} × {{ item.quantity }}
+            @if (variantLabel(item)) {
+              <small class="item-variant">{{ variantLabel(item) }}</small>
+            }
+          </span>
           <strong>{{ item.unitPrice * item.quantity | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}</strong>
+        </div>
+      }
+      <!-- Un forfait pour toute la commande, déjà compté dans le total. Pas de
+           ligne « Offerte » à zéro : les commandes antérieures à l'enregistrement
+           des frais valent aussi zéro, sans que la livraison leur ait été offerte. -->
+      @if (order.deliveryFee > 0) {
+        <div class="item-row">
+          <span>Livraison</span>
+          <strong>{{ order.deliveryFee | currency: 'TND' : 'symbol' : '1.2-2' : 'fr' }}</strong>
         </div>
       }
     </div>

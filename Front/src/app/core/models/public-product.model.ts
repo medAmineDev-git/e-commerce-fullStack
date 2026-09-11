@@ -12,7 +12,8 @@ export interface ProductReview {
   date: string;
 }
 
-export type ProductSizeOption = 'XS' | 'S' | 'M' | 'L' | 'XL';
+/** Texte libre saisi par le vendeur : « M », « 38 », « 4 ans », « Taille unique ». */
+export type ProductSizeOption = string;
 
 /** Une ligne du bloc « Livraison et retours » de la fiche. */
 export interface ProductServiceTerm {

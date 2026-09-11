@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { CartStore } from '../../../core/stores/cart.store';
+import { cartLineKey } from '../../../core/models/order.model';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { CartPage } from './cart-page';
 
@@ -29,6 +30,8 @@ describe('CartPage', () => {
       gallery: ['img'],
     },
     quantity: 1,
+    size: 'M',
+    color: null,
   };
 
   const mockStore = {
@@ -76,12 +79,17 @@ describe('CartPage', () => {
 
   it('should update item quantity', () => {
     component.setQuantity(mockItem, '3');
-    expect(mockStore.setQuantity).toHaveBeenCalledWith(1, 3);
+    expect(mockStore.setQuantity).toHaveBeenCalledWith(cartLineKey(mockItem), 3);
   });
 
   it('should remove item', () => {
     component.remove(mockItem);
-    expect(mockStore.removeItem).toHaveBeenCalledWith(1);
+    expect(mockStore.removeItem).toHaveBeenCalledWith(cartLineKey(mockItem));
+  });
+
+  it('should show the chosen size under the product name', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.item-variant').textContent).toContain('M');
   });
 
   it('should navigate to checkout', () => {
