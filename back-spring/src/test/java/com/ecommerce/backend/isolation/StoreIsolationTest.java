@@ -176,6 +176,39 @@ class StoreIsolationTest {
                     .andExpect(jsonPath("$.slug").value(ATELIER));
         }
 
+        /** Les frais regles par NOVA partent sur sa vitrine, et seulement la sienne. */
+        @Test
+        void deliverySettingsShouldOnlyChangeTheCallerStore() throws Exception {
+            mockMvc.perform(put("/api/admin/store/delivery")
+                            .header("Authorization", bearer(novaToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"deliveryFee\": 8.5, \"freeDeliveryFrom\": null}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.deliveryFee").value(8.5))
+                    .andExpect(jsonPath("$.freeDeliveryFrom").doesNotExist());
+
+            mockMvc.perform(get("/api/public/stores/" + NOVA))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.deliveryFee").value(8.5))
+                    .andExpect(jsonPath("$.freeDeliveryFrom").doesNotExist());
+
+            mockMvc.perform(get("/api/public/stores/" + ATELIER))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.deliveryFee").value(6.9))
+                    .andExpect(jsonPath("$.freeDeliveryFrom").value(100.0));
+        }
+
+        @Test
+        void deliverySettingsShouldRejectANegativeFee() throws Exception {
+            mockMvc.perform(put("/api/admin/store/delivery")
+                            .header("Authorization", bearer(novaToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"deliveryFee\": -1, \"freeDeliveryFrom\": 0}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.validationErrors.deliveryFee").exists())
+                    .andExpect(jsonPath("$.validationErrors.freeDeliveryFrom").exists());
+        }
+
         @Test
         void productListShouldOnlyContainOwnProducts() throws Exception {
             mockMvc.perform(get("/api/admin/products").header("Authorization", bearer(novaToken)))

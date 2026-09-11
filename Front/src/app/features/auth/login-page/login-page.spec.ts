@@ -20,6 +20,8 @@ const NOVA: PublicStore = {
   email: null,
   address: null,
   domain: null,
+  deliveryFee: 6.9,
+  freeDeliveryFrom: 100,
 };
 
 describe('LoginPage', () => {

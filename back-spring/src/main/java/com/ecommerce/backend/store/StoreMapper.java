@@ -24,6 +24,8 @@ public class StoreMapper {
                 store.getEmail(),
                 store.getAddress(),
                 store.getDomain(),
+                store.getDeliveryFee(),
+                store.getFreeDeliveryFrom(),
                 store.isActive(),
                 store.getCreatedAt(),
                 store.getUpdatedAt(),
@@ -46,7 +48,9 @@ public class StoreMapper {
                 store.getPhone(),
                 store.getEmail(),
                 store.getAddress(),
-                store.getDomain()
+                store.getDomain(),
+                store.getDeliveryFee(),
+                store.getFreeDeliveryFrom()
         );
     }
 

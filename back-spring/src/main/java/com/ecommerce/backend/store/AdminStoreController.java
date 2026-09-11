@@ -1,6 +1,7 @@
 package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.product.ProductImageStorageService;
+import com.ecommerce.backend.store.dto.DeliverySettingsRequest;
 import com.ecommerce.backend.store.dto.StoreResponse;
 import com.ecommerce.backend.store.dto.StoreUpdateRequest;
 import jakarta.validation.Valid;
@@ -45,6 +46,17 @@ public class AdminStoreController {
     ) {
         Store store = storeContext.requireOwnedStore(authentication);
         Store updated = storeService.updateStore(store.getId(), request);
+        return storeMapper.toResponse(updated);
+    }
+
+    /** Frais de livraison et seuil de gratuite, regles dans les parametres. */
+    @PutMapping("/delivery")
+    public StoreResponse updateDeliverySettings(
+            Authentication authentication,
+            @Valid @RequestBody DeliverySettingsRequest request
+    ) {
+        Store store = storeContext.requireOwnedStore(authentication);
+        Store updated = storeService.updateDeliverySettings(store.getId(), request);
         return storeMapper.toResponse(updated);
     }
 

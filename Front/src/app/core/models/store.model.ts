@@ -12,7 +12,14 @@ export type PublicStore = {
   email: string | null;
   address: string | null;
   domain: string | null;
+  /** Forfait compté une fois par commande ; zéro, la livraison est toujours offerte. */
+  deliveryFee: number;
+  /** Montant d'achat, seuil inclus, à partir duquel la livraison est offerte ; null, jamais. */
+  freeDeliveryFrom: number | null;
 };
+
+/** Réglés dans Paramètres › Livraison. */
+export type DeliverySettingsInput = Pick<PublicStore, 'deliveryFee' | 'freeDeliveryFrom'>;
 
 /** Vue du propriétaire sur sa propre boutique. */
 export type OwnedStore = PublicStore & {

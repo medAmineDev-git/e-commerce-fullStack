@@ -899,6 +899,26 @@ paths:
               schema: { $ref: '#/components/schemas/OwnedStore' }
         '400': { $ref: '#/components/responses/BadRequest' }
 
+  /api/admin/store/delivery:
+    put:
+      tags: [Back-office]
+      summary: Régler les frais de livraison
+      description: |
+        Un seul forfait par commande, quel que soit le nombre d'articles. Il
+        s'applique aux commandes suivantes ; celles déjà passées gardent le leur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeliverySettings' }
+      responses:
+        '200':
+          description: Boutique mise à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnedStore' }
+        '400': { description: Montant négatif, seuil nul ou plus de trois décimales }
+
   /api/admin/store/images:
     post:
       tags: [Back-office]
@@ -1102,6 +1122,29 @@ components:
         email: { type: string, nullable: true }
         address: { type: string, nullable: true }
         domain: { type: string, nullable: true }
+        deliveryFee:
+          type: number
+          format: double
+          description: Forfait compté une fois par commande ; zéro, la livraison est toujours offerte
+        freeDeliveryFrom:
+          type: number
+          format: double
+          nullable: true
+          description: Montant d'achat, seuil inclus, à partir duquel la livraison est offerte ; null, jamais
+
+    DeliverySettings:
+      type: object
+      required: [deliveryFee]
+      properties:
+        deliveryFee: { type: number, format: double, minimum: 0, example: 6.9 }
+        freeDeliveryFrom:
+          type: number
+          format: double
+          nullable: true
+          exclusiveMinimum: true
+          minimum: 0
+          example: 100
+          description: Null, la livraison n'est jamais offerte
 
     OwnedStore:
       allOf:

@@ -1,0 +1,107 @@
+<section class="settings">
+  <header>
+    <h1>Paramètres</h1>
+    <p class="intro">
+      Les réglages qui changent la façon dont vous vendez. L'identité et les visuels de la
+      boutique se règlent dans Configuration.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Chargement…</p>
+  } @else if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  } @else {
+    <form class="card" (submit)="$event.preventDefault(); saveDelivery()" data-testid="delivery-form">
+      <div class="card-head">
+        <h2>Livraison</h2>
+        <p>
+          Un seul forfait par commande, quel que soit le nombre d'articles. Il s'applique aux
+          prochaines commandes ; celles déjà passées gardent le leur.
+        </p>
+      </div>
+
+      <label class="field">
+        <span class="label">Frais de livraison (TND)</span>
+        <!-- Champ textuel : la virgule y est acceptée, inputmode garde le pavé numérique. -->
+        <input
+          type="text"
+          inputmode="decimal"
+          placeholder="6,90"
+          [value]="feeText()"
+          (input)="updateFee($any($event.target).value)"
+          data-testid="delivery-fee"
+        />
+        @if (deliverySubmitted() && deliveryErrors().fee) {
+          <small class="field-error">{{ deliveryErrors().fee }}</small>
+        } @else {
+          <small class="hint">0 : la livraison est toujours offerte.</small>
+        }
+      </label>
+
+      <label class="toggle">
+        <input
+          type="checkbox"
+          [checked]="freeDeliveryEnabled()"
+          (change)="setFreeDeliveryEnabled($any($event.target).checked)"
+          data-testid="free-delivery-enabled"
+        />
+        <span>Offrir la livraison à partir d'un montant d'achat</span>
+      </label>
+
+      @if (freeDeliveryEnabled()) {
+        <label class="field field-indent">
+          <span class="label">Offerte à partir de (TND)</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            placeholder="100"
+            [value]="freeFromText()"
+            (input)="updateFreeFrom($any($event.target).value)"
+            data-testid="free-delivery-from"
+          />
+          @if (deliverySubmitted() && deliveryErrors().freeFrom) {
+            <small class="field-error">{{ deliveryErrors().freeFrom }}</small>
+          } @else {
+            <small class="hint">Montant compris : une commande de ce montant exact en profite.</small>
+          }
+        </label>
+      }
+
+      <!-- Ce que lira le client, en une phrase : plus parlant que deux champs. -->
+      @switch (deliverySummary()) {
+        @case ('free') {
+          <p class="summary" data-testid="delivery-summary">La livraison est toujours offerte à vos clients.</p>
+        }
+        @case ('always') {
+          <p class="summary" data-testid="delivery-summary">
+            Vos clients paient
+            <strong>{{ fee() | currency: 'TND' : 'symbol' : '1.2-3' : 'fr' }}</strong>
+            de livraison par commande, quel que soit le montant.
+          </p>
+        }
+        @case ('threshold') {
+          <p class="summary" data-testid="delivery-summary">
+            Vos clients paient
+            <strong>{{ fee() | currency: 'TND' : 'symbol' : '1.2-3' : 'fr' }}</strong>
+            de livraison par commande, offerte dès
+            <strong>{{ freeFrom() | currency: 'TND' : 'symbol' : '1.0-3' : 'fr' }}</strong> d'achat.
+          </p>
+        }
+      }
+
+      @if (deliveryError()) {
+        <p class="error" role="alert">{{ deliveryError() }}</p>
+      }
+
+      <div class="actions">
+        <button type="submit" class="submit" [disabled]="deliverySaving()">
+          {{ deliverySaving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        @if (deliverySavedAt()) {
+          <span class="saved" role="status">Enregistré.</span>
+        }
+      </div>
+    </form>
+  }
+</section>

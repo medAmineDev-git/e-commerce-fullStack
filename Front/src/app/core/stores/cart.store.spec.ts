@@ -1,5 +1,8 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { cartLineKey } from '../models/order.model';
+import { PublicStore } from '../models/store.model';
+import { StoreContextService } from '../services/store-context.service';
 import { CartStore } from './cart.store';
 
 describe('CartStore', () => {
@@ -20,9 +23,15 @@ describe('CartStore', () => {
     gallery: ['img'],
   };
 
+  // Les frais sont ceux de la boutique courante, réglés dans ses paramètres.
+  const currentStore = signal<Pick<PublicStore, 'deliveryFee' | 'freeDeliveryFrom'> | null>(null);
+
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({});
+    currentStore.set({ deliveryFee: 6.9, freeDeliveryFrom: 100 });
+    TestBed.configureTestingModule({
+      providers: [{ provide: StoreContextService, useValue: { store: currentStore.asReadonly() } }],
+    });
     store = TestBed.inject(CartStore);
     store.hydrate('nova');
     store.clearCart();
@@ -54,6 +63,30 @@ describe('CartStore', () => {
     expect(store.subTotal()).toBe(100);
     expect(store.deliveryFee()).toBe(0);
     expect(store.total()).toBe(100);
+  });
+
+  it('applies the fee and threshold the store has set', () => {
+    currentStore.set({ deliveryFee: 8, freeDeliveryFrom: 150 });
+    store.addItem(product, 2);
+
+    expect(store.deliveryFee()).toBe(8);
+    expect(store.total()).toBe(108);
+    expect(store.freeDeliveryFrom()).toBe(150);
+  });
+
+  it('never offers delivery when the store has no threshold', () => {
+    currentStore.set({ deliveryFee: 7, freeDeliveryFrom: null });
+    store.addItem(product, 10);
+
+    expect(store.deliveryFee()).toBe(7);
+  });
+
+  it('always offers delivery when the store fee is zero', () => {
+    currentStore.set({ deliveryFee: 0, freeDeliveryFrom: null });
+    store.addItem(product, 1);
+
+    expect(store.deliveryFee()).toBe(0);
+    expect(store.total()).toBe(50);
   });
 
   it('should update quantity and remove item', () => {

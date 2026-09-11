@@ -1,5 +1,6 @@
 package com.ecommerce.backend.store.dto;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public record StoreResponse(
@@ -14,6 +15,8 @@ public record StoreResponse(
         String email,
         String address,
         String domain,
+        BigDecimal deliveryFee,
+        BigDecimal freeDeliveryFrom,
         boolean active,
         Instant createdAt,
         Instant updatedAt,

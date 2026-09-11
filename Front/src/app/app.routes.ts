@@ -119,6 +119,11 @@ export const routes: Routes = [
           import('./features/admin/store-settings/store-settings').then((m) => m.StoreSettings),
       },
       {
+        path: 'parametres',
+        loadComponent: () =>
+          import('./features/admin/settings/settings-page').then((m) => m.SettingsPage),
+      },
+      {
         path: 'reassurance',
         loadComponent: () =>
           import('./features/admin/highlight-manager/highlight-manager').then(

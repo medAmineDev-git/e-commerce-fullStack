@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  DeliverySettingsInput,
   OwnedStore,
   StoreDetail,
   StoreOwnerInput,
@@ -33,6 +34,10 @@ export class StoreAdminService {
 
   updateMyStore(input: StoreSettingsInput): Promise<OwnedStore> {
     return firstValueFrom(this.http.put<OwnedStore>(this.storeUrl, input));
+  }
+
+  updateDeliverySettings(input: DeliverySettingsInput): Promise<OwnedStore> {
+    return firstValueFrom(this.http.put<OwnedStore>(`${this.storeUrl}/delivery`, input));
   }
 
   /** Dépose un visuel et renvoie son URL. Le stockage est déjà cloisonné par boutique. */

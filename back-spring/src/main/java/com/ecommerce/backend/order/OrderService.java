@@ -106,7 +106,7 @@ public class OrderService {
                 .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         // Un seul forfait pour toute la commande, pas un par article.
-        BigDecimal deliveryFee = DeliveryFeePolicy.feeFor(subtotal);
+        BigDecimal deliveryFee = DeliveryFeePolicy.feeFor(store, subtotal);
 
         order.setDeliveryFee(deliveryFee);
         order.setTotal(subtotal.add(deliveryFee));

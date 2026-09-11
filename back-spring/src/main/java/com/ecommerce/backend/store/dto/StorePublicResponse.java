@@ -1,5 +1,7 @@
 package com.ecommerce.backend.store.dto;
 
+import java.math.BigDecimal;
+
 public record StorePublicResponse(
         Long id,
         String name,
@@ -11,6 +13,10 @@ public record StorePublicResponse(
         String phone,
         String email,
         String address,
-        String domain
+        String domain,
+        /** Le panier affiche les frais avant la commande ; le serveur les recalcule. */
+        BigDecimal deliveryFee,
+        /** Null : la livraison n'est jamais offerte. */
+        BigDecimal freeDeliveryFrom
 ) {
 }

@@ -1,11 +1,13 @@
 package com.ecommerce.backend.store;
 
 import com.ecommerce.backend.auth.AdminUser;
+import com.ecommerce.backend.order.DeliveryFeePolicy;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -60,6 +62,14 @@ public class Store {
     /** Le meme bandeau, repris juste avant le pied de page. */
     @Column(name = "highlights_bottom_enabled", nullable = false)
     private boolean highlightsBottomEnabled = false;
+
+    /** Forfait de livraison, compte une seule fois par commande. Zero : toujours offerte. */
+    @Column(name = "delivery_fee", nullable = false, precision = 12, scale = 3)
+    private BigDecimal deliveryFee = DeliveryFeePolicy.DEFAULT_FEE;
+
+    /** Montant d'achat a partir duquel la livraison est offerte. Null : jamais offerte. */
+    @Column(name = "free_delivery_from", precision = 12, scale = 3)
+    private BigDecimal freeDeliveryFrom = DeliveryFeePolicy.DEFAULT_FREE_FROM;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();

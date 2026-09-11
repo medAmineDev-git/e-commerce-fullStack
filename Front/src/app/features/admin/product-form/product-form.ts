@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
+import { parseAmount } from '../../../core/models/amount';
 import { Category } from '../../../core/models/category.model';
 import {
   ProductColor,
@@ -14,31 +15,14 @@ import { CategoryService } from '../../../core/services/category';
 import { ProductService } from '../../../core/services/product';
 import { ProductStore } from '../../../core/stores/product.store';
 
-/**
- * Conditions proposees a la creation, identiques a celles du serveur : le
- * vendeur voit ce qui sera enregistre plutot que des champs vides.
- */
-/**
- * Interprète un montant saisi à la main.
- *
- * La virgule est le séparateur décimal en français, et c'est elle que porte le
- * pavé numérique d'un téléphone configuré en France ou en Tunisie. La refuser
- * revenait à refuser la saisie naturelle.
- */
-function parseAmount(value: string): number | null {
-  const normalized = value.trim().replace(',', '.');
-  if (normalized === '') {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 /** Limites du serveur (ProductRequest.java) : au-delà, il refuse l'enregistrement. */
 const MAX_SIZE_LENGTH = 20;
 const MAX_SIZES = 30;
 
+/**
+ * Conditions proposees a la creation, identiques a celles du serveur : le
+ * vendeur voit ce qui sera enregistre plutot que des champs vides.
+ */
 const DEFAULT_SERVICE_TERMS: ProductServiceTerm[] = [
   { label: 'Livraison', value: '48 à 72 heures' },
   { label: 'Paiement', value: 'À la livraison ou par virement' },

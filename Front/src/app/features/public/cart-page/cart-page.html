@@ -75,8 +75,11 @@
           </span>
         </div>
 
-        @if (cartStore.deliveryFee() > 0) {
-          <p class="shipping-hint">Livraison offerte à partir de 100 TND.</p>
+        @if (cartStore.deliveryFee() > 0 && cartStore.freeDeliveryFrom() !== null) {
+          <p class="shipping-hint">
+            Livraison offerte à partir de
+            {{ cartStore.freeDeliveryFrom() | currency: 'TND' : 'symbol' : '1.0-2' : 'fr' }}.
+          </p>
         }
 
         <div class="line total">

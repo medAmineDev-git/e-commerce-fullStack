@@ -86,6 +86,31 @@ class OrderServiceTest {
         assertEquals(0, new BigDecimal("51.90").compareTo(response.total()));
     }
 
+    /** Les frais sont ceux de la boutique, regles dans ses parametres. */
+    @Test
+    void placeOrderShouldChargeTheStoreOwnFee() {
+        store.setDeliveryFee(new BigDecimal("8.000"));
+        store.setFreeDeliveryFrom(null);
+        when(productRepository.findByIdAndStore(1L, store)).thenReturn(Optional.of(product(1L, "250.00", 5)));
+
+        OrderResponse response = orderService.placeOrder(store, request(1L, 1, "0"));
+
+        // Sans seuil, la livraison n'est jamais offerte, meme pour 250 DT.
+        assertEquals(0, new BigDecimal("8.000").compareTo(response.deliveryFee()));
+        assertEquals(0, new BigDecimal("258.00").compareTo(response.total()));
+    }
+
+    @Test
+    void placeOrderShouldOfferDeliveryWhenTheStoreFeeIsZero() {
+        store.setDeliveryFee(BigDecimal.ZERO);
+        when(productRepository.findByIdAndStore(1L, store)).thenReturn(Optional.of(product(1L, "20.00", 5)));
+
+        OrderResponse response = orderService.placeOrder(store, request(1L, 1, "0"));
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(response.deliveryFee()));
+        assertEquals(0, new BigDecimal("20.00").compareTo(response.total()));
+    }
+
     /** « Livraison offerte a partir de 100 TND » : 100 pile compte comme atteint. */
     @Test
     void placeOrderShouldOfferDeliveryFromTheThreshold() {

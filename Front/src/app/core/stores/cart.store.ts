@@ -2,7 +2,9 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { CartItem, cartLineKey } from '../models/order.model';
 import { PublicProduct } from '../models/public-product.model';
+import { PublicStore } from '../models/store.model';
 import { BROWSER_STORAGE } from '../platform/browser-storage';
+import { StoreContextService } from '../services/store-context.service';
 
 type CartState = {
   items: CartItem[];
@@ -31,14 +33,18 @@ function storageKey(storeSlug: string | null): string {
 /**
  * Un seul forfait de livraison par commande, quel que soit le nombre
  * d'articles, offert à partir du seuil (inclus, comme l'annonce le panier).
- * Le serveur applique la même règle et fait foi (DeliveryFeePolicy.java) :
- * les deux doivent rester alignées.
+ * Montant et seuil sont ceux de la boutique, réglés dans ses paramètres. Le
+ * serveur applique la même règle et fait foi (DeliveryFeePolicy.java).
  */
-export const DELIVERY_FEE = 6.9;
-export const FREE_DELIVERY_FROM = 100;
-
-function deliveryFeeFor(subTotal: number): number {
-  return subTotal <= 0 || subTotal >= FREE_DELIVERY_FROM ? 0 : DELIVERY_FEE;
+export function deliveryFeeFor(
+  subTotal: number,
+  store: Pick<PublicStore, 'deliveryFee' | 'freeDeliveryFrom'> | null,
+): number {
+  if (!store || subTotal <= 0) {
+    return 0;
+  }
+  const offered = store.freeDeliveryFrom !== null && subTotal >= store.freeDeliveryFrom;
+  return offered ? 0 : store.deliveryFee;
 }
 
 const initialState: CartState = {
@@ -49,16 +55,18 @@ const initialState: CartState = {
 export const CartStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ items }) => {
+  withComputed(({ items }, storeContext = inject(StoreContextService)) => {
     const subTotal = computed(() =>
       items().reduce((total, item) => total + item.product.price * item.quantity, 0),
     );
-    const deliveryFee = computed(() => deliveryFeeFor(subTotal()));
+    const deliveryFee = computed(() => deliveryFeeFor(subTotal(), storeContext.store()));
 
     return {
       totalItems: computed(() => items().reduce((total, item) => total + item.quantity, 0)),
       subTotal,
       deliveryFee,
+      /** Seuil de gratuité de la boutique, pour l'annoncer ; null, jamais offerte. */
+      freeDeliveryFrom: computed(() => storeContext.store()?.freeDeliveryFrom ?? null),
       total: computed(() => subTotal() + deliveryFee()),
       isEmpty: computed(() => items().length === 0),
     };

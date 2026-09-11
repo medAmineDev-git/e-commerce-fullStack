@@ -166,6 +166,18 @@ public class StoreService {
     }
 
     /**
+     * Separe de l'identite de la boutique : les deux se reglent sur des ecrans
+     * differents, et l'un n'a pas a renvoyer les champs de l'autre.
+     */
+    @Transactional
+    public Store updateDeliverySettings(Long storeId, DeliverySettingsRequest request) {
+        Store store = getStoreEntityById(storeId);
+        store.setDeliveryFee(request.deliveryFee());
+        store.setFreeDeliveryFrom(request.freeDeliveryFrom());
+        return storeRepository.save(store);
+    }
+
+    /**
      * Un domaine ne peut servir qu'une boutique : sinon la resolution par domaine
      * deviendrait ambigue et servirait la mauvaise vitrine.
      */

@@ -39,6 +39,7 @@ describe('CartPage', () => {
     totalItems: signal(1),
     subTotal: signal(70),
     deliveryFee: signal(6.9),
+    freeDeliveryFrom: signal(150),
     total: signal(76.9),
     isEmpty: signal(false),
     setQuantity: vi.fn(),
@@ -85,6 +86,11 @@ describe('CartPage', () => {
   it('should remove item', () => {
     component.remove(mockItem);
     expect(mockStore.removeItem).toHaveBeenCalledWith(cartLineKey(mockItem));
+  });
+
+  it("announces the store's own free-delivery threshold", () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.shipping-hint').textContent).toContain('150');
   });
 
   it('should show the chosen size under the product name', () => {
