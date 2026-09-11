@@ -1,5 +1,6 @@
 import { CurrencyPipe } from "@angular/common";
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StoreContextService } from '../../../core/services/store-context.service';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -64,16 +65,30 @@ export class ProductDetailPage {
   readonly subTotal = computed(() => this.unitPrice() * this.quantity());
   readonly cartCount = computed(() => this.cartStore.totalItems());
 
+  /** Numéro du dernier chargement lancé : seule sa réponse a le droit de s'afficher. */
+  private loadSequence = 0;
+
   constructor() {
-    void this.loadProduct();
+    // Passer d'une fiche à une autre (« Dans la même catégorie ») garde la même
+    // route : Angular réutilise le composant au lieu d'en créer un. Lire
+    // l'identifiant une seule fois laissait l'adresse changer sous une fiche
+    // restée figée. On suit donc chaque changement d'identifiant.
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => void this.loadProduct(Number(params.get('id'))));
   }
 
-  private async loadProduct(): Promise<void> {
+  private async loadProduct(id: number): Promise<void> {
+    const sequence = ++this.loadSequence;
     this.loading.set(true);
     this.error.set(null);
+    this.quantity.set(1);
     try {
-      const id = Number(this.route.snapshot.paramMap.get('id'));
       const product = await this.catalogService.getProductById(id);
+      // Deux clics rapprochés : la réponse du premier ne doit pas écraser le second.
+      if (sequence !== this.loadSequence) {
+        return;
+      }
       this.product.set(product);
       this.currentImage.set(product.gallery[0] ?? product.imageUrl ?? this.fallbackImage);
       // Présélection seulement quand il n'y a pas de choix à faire. Retenir
@@ -82,20 +97,25 @@ export class ProductDetailPage {
       this.selectedColor.set(product.colors?.length === 1 ? product.colors[0] : null);
       this.selectedSize.set(product.sizes?.length === 1 ? product.sizes[0] : null);
       this.addedToCart.set(false);
-      await this.loadRelatedProducts(product);
+      await this.loadRelatedProducts(product, sequence);
     } catch {
+      if (sequence !== this.loadSequence) {
+        return;
+      }
       this.product.set(null);
       this.relatedProducts.set([]);
       this.error.set('Impossible de charger ce produit depuis le serveur.');
     } finally {
-      this.loading.set(false);
+      if (sequence === this.loadSequence) {
+        this.loading.set(false);
+      }
     }
   }
 
   /** Les conditions de la fiche, telles que le vendeur les a composees. */
   readonly serviceTerms = computed(() => this.product()?.serviceTerms ?? []);
 
-  private async loadRelatedProducts(product: PublicProduct): Promise<void> {
+  private async loadRelatedProducts(product: PublicProduct, sequence: number): Promise<void> {
     // Sans categorie, il n'y a pas de parente a etablir : deux articles non
     // classes ne se ressemblent pas parce qu'ils partagent une absence.
     if (!product.category) {
@@ -104,6 +124,9 @@ export class ProductDetailPage {
     }
 
     const all = await this.catalogService.listProducts();
+    if (sequence !== this.loadSequence) {
+      return;
+    }
     const related = all
       .filter((candidate) => candidate.id !== product.id && candidate.category === product.category)
       .slice(0, 3);
