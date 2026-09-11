@@ -22,6 +22,8 @@ export interface Product {
   stockQuantity: number;
   sku?: string;
   compareAtPrice?: number | null;
+  /** Prix de gros, facultatif. Renvoyé au back-office seulement, jamais à la vitrine. */
+  wholesalePrice?: number | null;
   status?: ProductStatus;
   imageUrls?: string[];
   sizes?: string[];

@@ -414,7 +414,7 @@ paths:
           description: Produits de ma boutique
           content:
             application/json:
-              schema: { type: array, items: { $ref: '#/components/schemas/Product' } }
+              schema: { type: array, items: { $ref: '#/components/schemas/AdminProduct' } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { description: Aucune boutique rattachée à ce compte }
     post:
@@ -430,7 +430,7 @@ paths:
           description: Produit créé
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Product' }
+              schema: { $ref: '#/components/schemas/AdminProduct' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
@@ -467,7 +467,7 @@ paths:
           description: Produit
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Product' }
+              schema: { $ref: '#/components/schemas/AdminProduct' }
         '404': { description: Inconnu, ou appartenant à une autre boutique }
     put:
       tags: [Back-office]
@@ -483,7 +483,7 @@ paths:
           description: Produit modifié
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Product' }
+              schema: { $ref: '#/components/schemas/AdminProduct' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '404': { description: Inconnu, ou appartenant à une autre boutique }
     delete:
@@ -1218,6 +1218,20 @@ components:
         seoTitle: { type: string, nullable: true }
         seoDescription: { type: string, nullable: true }
 
+    AdminProduct:
+      description: |
+        Produit vu par son vendeur : la fiche publique, plus ses données internes.
+        Les routes de la vitrine renvoient `Product`, qui ne les porte pas.
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            wholesalePrice:
+              type: number
+              format: double
+              nullable: true
+              description: Prix de gros, facultatif. Jamais renvoyé par les routes de la vitrine.
+
     ProductRequest:
       type: object
       required: [name, category, description, price, stockQuantity]
@@ -1230,6 +1244,13 @@ components:
         stockQuantity: { type: integer, minimum: 0 }
         sku: { type: string }
         compareAtPrice: { type: number, format: double, nullable: true }
+        wholesalePrice:
+          type: number
+          format: double
+          nullable: true
+          exclusiveMinimum: true
+          minimum: 0
+          description: Prix de gros, facultatif, trois décimales au plus. Réservé au back-office.
         status: { type: string }
         imageUrls: { type: array, items: { type: string } }
         sizes:

@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.AdminProductResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
 import com.ecommerce.backend.product.dto.ProductResponse;
 import com.ecommerce.backend.product.dto.ProductColorResponse;
@@ -64,9 +65,15 @@ public class ProductMapper {
         );
     }
 
+    /** Reservee aux routes du back-office : elle porte le prix de gros. */
+    public AdminProductResponse toAdminResponse(Product product) {
+        return new AdminProductResponse(toResponse(product), product.getWholesalePrice());
+    }
+
     private void updateCatalogDetails(Product product, ProductRequest request) {
         product.setSku(blankToNull(request.sku()));
         product.setCompareAtPrice(request.compareAtPrice());
+        product.setWholesalePrice(request.wholesalePrice());
         product.setStatus(request.status() == null || request.status().isBlank() ? "ACTIVE" : request.status());
         product.setSeoTitle(blankToNull(request.seoTitle()));
         product.setSeoDescription(blankToNull(request.seoDescription()));

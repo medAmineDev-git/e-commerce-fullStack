@@ -1,8 +1,8 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.AdminProductResponse;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
-import com.ecommerce.backend.product.dto.ProductResponse;
 import com.ecommerce.backend.store.Store;
 import com.ecommerce.backend.store.StoreContext;
 import jakarta.validation.Valid;
@@ -29,10 +29,11 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public List<ProductResponse> getAllProducts(Authentication authentication) {
-        return productService.getAllProducts(storeContext.requireOwnedStore(authentication));
+    public List<AdminProductResponse> getAllProducts(Authentication authentication) {
+        return productService.getAllProductsForAdmin(storeContext.requireOwnedStore(authentication));
     }
 
+    /** Partage la recherche de la vitrine : ses resultats ne portent pas le prix de gros. */
     @GetMapping("/page")
     public ProductPageResponse searchProducts(
             Authentication authentication,
@@ -51,18 +52,18 @@ public class AdminProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductResponse getProductById(@PathVariable Long id, Authentication authentication) {
-        return productService.getProductById(storeContext.requireOwnedStore(authentication), id);
+    public AdminProductResponse getProductById(@PathVariable Long id, Authentication authentication) {
+        return productService.getProductForAdmin(storeContext.requireOwnedStore(authentication), id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse createProduct(@Valid @RequestBody ProductRequest request, Authentication authentication) {
+    public AdminProductResponse createProduct(@Valid @RequestBody ProductRequest request, Authentication authentication) {
         return productService.createProduct(storeContext.requireOwnedStore(authentication), request);
     }
 
     @PutMapping("/{id}")
-    public ProductResponse updateProduct(
+    public AdminProductResponse updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductRequest request,
             Authentication authentication

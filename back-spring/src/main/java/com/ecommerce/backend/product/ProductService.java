@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.AdminProductResponse;
 import com.ecommerce.backend.product.dto.ProductFacetsResponse;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
@@ -45,6 +46,21 @@ public class ProductService {
 
     public ProductResponse getProductById(Store store, Long id) {
         return productMapper.toResponse(findByIdAndStoreOrThrow(id, store));
+    }
+
+    /*
+     * Lectures du back-office : la fiche porte le prix de gros. Les methodes
+     * ci-dessus servent la vitrine et ne le renvoient pas.
+     */
+
+    public List<AdminProductResponse> getAllProductsForAdmin(Store store) {
+        return productRepository.findAllByStoreOrderByIdDesc(store).stream()
+                .map(productMapper::toAdminResponse)
+                .toList();
+    }
+
+    public AdminProductResponse getProductForAdmin(Store store, Long id) {
+        return productMapper.toAdminResponse(findByIdAndStoreOrThrow(id, store));
     }
 
     /** Valeurs sur lesquelles le catalogue de cette boutique peut etre filtre. */
@@ -106,19 +122,19 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse createProduct(Store store, ProductRequest request) {
+    public AdminProductResponse createProduct(Store store, ProductRequest request) {
         Product product = productMapper.toEntity(request);
         product.setStore(store);
         Product created = productRepository.save(product);
-        return productMapper.toResponse(created);
+        return productMapper.toAdminResponse(created);
     }
 
     @Transactional
-    public ProductResponse updateProduct(Store store, Long id, ProductRequest request) {
+    public AdminProductResponse updateProduct(Store store, Long id, ProductRequest request) {
         Product existing = findByIdAndStoreOrThrow(id, store);
         productMapper.updateEntity(existing, request);
         Product updated = productRepository.save(existing);
-        return productMapper.toResponse(updated);
+        return productMapper.toAdminResponse(updated);
     }
 
     @Transactional

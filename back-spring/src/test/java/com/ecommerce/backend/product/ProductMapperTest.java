@@ -121,6 +121,7 @@ class ProductMapperTest {
                 5,
                 null,
                 null,
+                null,
                 "ACTIVE",
                 List.of(),
                 sizes,

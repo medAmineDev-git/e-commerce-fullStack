@@ -158,6 +158,88 @@ class StoreIsolationTest {
     }
 
     // ---------------------------------------------------------------
+    // Le prix de gros reste dans le back-office
+    // ---------------------------------------------------------------
+
+    @Nested
+    @DisplayName("Le prix de gros n'apparait que dans le back-office")
+    class WholesalePrice {
+
+        @BeforeEach
+        void setWholesalePrice() {
+            novaProduct.setWholesalePrice(new BigDecimal("41.500"));
+            productRepository.saveAndFlush(novaProduct);
+        }
+
+        @Test
+        void theOwnerShouldSeeItOnTheProductSheetAndTheList() throws Exception {
+            mockMvc.perform(get("/api/admin/products/" + novaProduct.getId()).header("Authorization", bearer(novaToken)))
+                    .andExpect(status().isOk())
+                    // Le JSON reste plat : les champs de la fiche, plus le prix de gros.
+                    .andExpect(jsonPath("$.name").value("Sneaker Urban Pulse"))
+                    .andExpect(jsonPath("$.wholesalePrice").value(41.5));
+
+            mockMvc.perform(get("/api/admin/products").header("Authorization", bearer(novaToken)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].wholesalePrice").value(41.5));
+        }
+
+        @Test
+        void theStorefrontShouldNeverReceiveIt() throws Exception {
+            mockMvc.perform(get("/api/public/stores/" + NOVA + "/products/" + novaProduct.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.name").value("Sneaker Urban Pulse"))
+                    .andExpect(jsonPath("$.wholesalePrice").doesNotExist());
+
+            mockMvc.perform(get("/api/public/stores/" + NOVA + "/products"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(novaProduct.getId()))
+                    .andExpect(jsonPath("$[0].wholesalePrice").doesNotExist());
+
+            mockMvc.perform(get("/api/public/stores/" + NOVA + "/products/page"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.items[0].id").value(novaProduct.getId()))
+                    .andExpect(jsonPath("$.items[0].wholesalePrice").doesNotExist());
+        }
+
+        @Test
+        void theOwnerShouldSetItAndClearIt() throws Exception {
+            String withPrice = """
+                    {"name": "Sneaker Urban Pulse", "price": 89.90, "stockQuantity": 10, "wholesalePrice": 38.25}
+                    """;
+            mockMvc.perform(put("/api/admin/products/" + novaProduct.getId())
+                            .header("Authorization", bearer(novaToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(withPrice))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.wholesalePrice").value(38.25));
+
+            String withoutPrice = """
+                    {"name": "Sneaker Urban Pulse", "price": 89.90, "stockQuantity": 10, "wholesalePrice": null}
+                    """;
+            mockMvc.perform(put("/api/admin/products/" + novaProduct.getId())
+                            .header("Authorization", bearer(novaToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(withoutPrice))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.wholesalePrice").doesNotExist());
+        }
+
+        @Test
+        void aNegativeWholesalePriceShouldBeRejected() throws Exception {
+            String payload = """
+                    {"name": "Sneaker Urban Pulse", "price": 89.90, "stockQuantity": 10, "wholesalePrice": -1}
+                    """;
+            mockMvc.perform(put("/api/admin/products/" + novaProduct.getId())
+                            .header("Authorization", bearer(novaToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.validationErrors.wholesalePrice").exists());
+        }
+    }
+
+    // ---------------------------------------------------------------
     // Le proprietaire ne voit que sa propre boutique
     // ---------------------------------------------------------------
 

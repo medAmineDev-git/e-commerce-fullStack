@@ -64,6 +64,13 @@ public class Product {
     @Column(precision = 12, scale = 2)
     private BigDecimal compareAtPrice;
 
+    /**
+     * Prix de gros, facultatif. Donnee interne : seul AdminProductResponse
+     * l'expose, ProductResponse (la vitrine) ne la porte pas.
+     */
+    @Column(name = "wholesale_price", precision = 12, scale = 3)
+    private BigDecimal wholesalePrice;
+
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
 

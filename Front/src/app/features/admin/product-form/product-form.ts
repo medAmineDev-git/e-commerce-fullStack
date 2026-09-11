@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
-import { parseAmount } from '../../../core/models/amount';
+import { formatAmountInput, hasAtMostThreeDecimals, parseAmount } from '../../../core/models/amount';
 import { Category } from '../../../core/models/category.model';
 import {
   ProductColor,
@@ -37,6 +37,8 @@ type ProductFormModel = {
   sku: string;
   price: number;
   compareAtPrice: number | null;
+  /** Donnée interne au vendeur : le serveur ne la renvoie jamais à la vitrine. */
+  wholesalePrice: number | null;
   stockQuantity: number;
   status: ProductStatus;
   imageUrls: string[];
@@ -93,6 +95,17 @@ export class ProductForm {
         value.compareAtPrice === null || value.compareAtPrice > value.price
           ? ''
           : 'Le prix avant remise doit être supérieur au prix de vente.',
+      // Facultatif, mais une saisie illisible ne doit pas s'effacer en silence.
+      wholesalePrice:
+        value.wholesalePrice === null
+          ? this.wholesalePriceText().trim()
+            ? 'Montant illisible : écrivez par exemple 24,500.'
+            : ''
+          : value.wholesalePrice <= 0
+            ? 'Le prix de gros doit être supérieur à 0.'
+            : !hasAtMostThreeDecimals(value.wholesalePrice)
+              ? 'Trois décimales au plus : le dinar compte en millimes.'
+              : '',
       stockQuantity: value.stockQuantity >= 0 ? '' : 'Le stock ne peut pas être négatif.',
       imageUrls: value.imageUrls.length ? '' : 'Ajoutez au moins une image produit.',
     };
@@ -312,14 +325,16 @@ export class ProductForm {
    */
   readonly priceText = signal('');
   readonly compareAtPriceText = signal('');
+  readonly wholesalePriceText = signal('');
 
-  updatePrice(field: 'price' | 'compareAtPrice', value: string): void {
-    if (field === 'price') {
-      this.priceText.set(value);
-    } else {
-      this.compareAtPriceText.set(value);
-    }
+  private readonly priceTexts = {
+    price: this.priceText,
+    compareAtPrice: this.compareAtPriceText,
+    wholesalePrice: this.wholesalePriceText,
+  };
 
+  updatePrice(field: 'price' | 'compareAtPrice' | 'wholesalePrice', value: string): void {
+    this.priceTexts[field].set(value);
     const amount = parseAmount(value);
 
     this.model.update((current) =>
@@ -327,7 +342,8 @@ export class ProductForm {
         ? // Le prix de vente n'est pas facultatif : un champ vide vaut zero, que
           // la validation refuse avec un message explicite.
           { ...current, price: amount ?? 0 }
-        : { ...current, compareAtPrice: amount },
+        : // Les deux autres sont facultatifs : vide, ils valent null.
+          { ...current, [field]: amount },
     );
   }
 
@@ -414,6 +430,7 @@ export class ProductForm {
       sku: product.sku ?? '',
       price: product.price,
       compareAtPrice: product.compareAtPrice ?? null,
+      wholesalePrice: product.wholesalePrice ?? null,
       stockQuantity: product.stockQuantity,
       status: product.status ?? 'ACTIVE',
       imageUrls: [...(product.imageUrls ?? [])],
@@ -426,13 +443,11 @@ export class ProductForm {
     });
 
     // Les champs de prix sont textuels : ils reçoivent la valeur enregistrée,
-    // qu'ils garderont ensuite telle que le vendeur la retape.
-    this.priceText.set(String(product.price));
-    this.compareAtPriceText.set(
-      product.compareAtPrice === null || product.compareAtPrice === undefined
-        ? ''
-        : String(product.compareAtPrice),
-    );
+    // écrite avec une virgule comme le vendeur la tape, et la gardent ensuite
+    // telle qu'il la retape.
+    this.priceText.set(formatAmountInput(product.price));
+    this.compareAtPriceText.set(formatAmountInput(product.compareAtPrice));
+    this.wholesalePriceText.set(formatAmountInput(product.wholesalePrice));
   }
 
   private emptyModel(): ProductFormModel {
@@ -444,6 +459,7 @@ export class ProductForm {
       sku: '',
       price: 0,
       compareAtPrice: null,
+      wholesalePrice: null,
       stockQuantity: 0,
       status: 'DRAFT',
       imageUrls: [],

@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.AdminProductResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
 import com.ecommerce.backend.product.dto.ProductPageResponse;
 import com.ecommerce.backend.product.dto.ProductResponse;
@@ -97,13 +98,13 @@ class ProductServiceTest {
         ProductRequest request = request("Cap");
         Product mapped = product(null, "Cap");
         Product persisted = product(10L, "Cap");
-        ProductResponse response = response(10L, "Cap");
+        AdminProductResponse response = new AdminProductResponse(response(10L, "Cap"), null);
 
         when(productMapper.toEntity(request)).thenReturn(mapped);
         when(productRepository.save(mapped)).thenReturn(persisted);
-        when(productMapper.toResponse(persisted)).thenReturn(response);
+        when(productMapper.toAdminResponse(persisted)).thenReturn(response);
 
-        ProductResponse result = productService.createProduct(store, request);
+        AdminProductResponse result = productService.createProduct(store, request);
 
         assertEquals(response, result);
         assertEquals(store, mapped.getStore());
@@ -116,13 +117,13 @@ class ProductServiceTest {
         ProductRequest request = request("Updated Name");
         Product existing = product(5L, "Old Name");
         Product updated = product(5L, "Updated Name");
-        ProductResponse response = response(5L, "Updated Name");
+        AdminProductResponse response = new AdminProductResponse(response(5L, "Updated Name"), null);
 
         when(productRepository.findByIdAndStore(5L, store)).thenReturn(Optional.of(existing));
         when(productRepository.save(existing)).thenReturn(updated);
-        when(productMapper.toResponse(updated)).thenReturn(response);
+        when(productMapper.toAdminResponse(updated)).thenReturn(response);
 
-        ProductResponse result = productService.updateProduct(store, 5L, request);
+        AdminProductResponse result = productService.updateProduct(store, 5L, request);
 
         assertEquals(response, result);
         verify(productMapper).updateEntity(existing, request);

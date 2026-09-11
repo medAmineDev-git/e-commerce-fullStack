@@ -141,6 +141,21 @@ select:focus {
   font-weight: 500;
 }
 
+/* Rassure le vendeur à l'endroit où il se pose la question : ce prix-là ne
+   sort pas du back-office. */
+.private-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+
+  .material-icons {
+    font-size: 0.95rem;
+  }
+}
+
 .add-row {
   gap: 10px;
 }

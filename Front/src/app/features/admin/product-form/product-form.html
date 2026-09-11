@@ -85,6 +85,25 @@
         @if (submitted() && errors().compareAtPrice) { <small class="error">{{ errors().compareAtPrice }}</small> }
       </label>
       <label class="field">
+        <span>Prix de gros (TND) <em>facultatif</em></span>
+        <input
+          type="text"
+          inputmode="decimal"
+          placeholder="24,500"
+          [value]="wholesalePriceText()"
+          (input)="updatePrice('wholesalePrice', $any($event.target).value)"
+          data-testid="wholesale-price"
+        />
+        @if (submitted() && errors().wholesalePrice) {
+          <small class="error">{{ errors().wholesalePrice }}</small>
+        } @else {
+          <small class="private-hint">
+            <span class="material-icons" aria-hidden="true">lock</span>
+            Visible dans le back-office seulement, jamais sur la vitrine.
+          </small>
+        }
+      </label>
+      <label class="field">
         <span>Stock disponible *</span>
         <input type="number" min="0" step="1" [value]="model().stockQuantity" (input)="updateNumberField('stockQuantity', $any($event.target).value)" />
         @if (submitted() && errors().stockQuantity) { <small class="error">{{ errors().stockQuantity }}</small> }

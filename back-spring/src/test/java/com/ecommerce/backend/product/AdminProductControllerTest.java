@@ -1,5 +1,6 @@
 package com.ecommerce.backend.product;
 
+import com.ecommerce.backend.product.dto.AdminProductResponse;
 import com.ecommerce.backend.product.dto.ProductRequest;
 import com.ecommerce.backend.product.dto.ProductResponse;
 import com.ecommerce.backend.store.Store;
@@ -67,7 +68,7 @@ class AdminProductControllerTest {
 
     @Test
     void getAllShouldReturn200AndList() throws Exception {
-        when(productService.getAllProducts(store)).thenReturn(List.of(
+        when(productService.getAllProductsForAdmin(store)).thenReturn(List.of(
                 response(1L, "Sneaker"),
                 response(2L, "T-shirt")
         ));
@@ -81,7 +82,7 @@ class AdminProductControllerTest {
 
     @Test
     void getByIdShouldReturn200() throws Exception {
-        when(productService.getProductById(store, 1L)).thenReturn(response(1L, "Sneaker"));
+        when(productService.getProductForAdmin(store, 1L)).thenReturn(response(1L, "Sneaker"));
 
         mockMvc.perform(get("/api/admin/products/1"))
                 .andExpect(status().isOk())
@@ -90,7 +91,7 @@ class AdminProductControllerTest {
 
     @Test
     void getByIdShouldReturn404WhenNotFoundInThisStore() throws Exception {
-        when(productService.getProductById(store, 99L)).thenThrow(new ProductNotFoundException(99L));
+        when(productService.getProductForAdmin(store, 99L)).thenThrow(new ProductNotFoundException(99L));
 
         mockMvc.perform(get("/api/admin/products/99"))
                 .andExpect(status().isNotFound())
@@ -131,7 +132,7 @@ class AdminProductControllerTest {
     @Test
     void createShouldReturn400WhenASizeIsTooLong() throws Exception {
         ProductRequest request = new ProductRequest(
-                "Body", null, null, null, new BigDecimal("19.90"), 5, null, null, "ACTIVE",
+                "Body", null, null, null, new BigDecimal("19.90"), 5, null, null, null, "ACTIVE",
                 List.of(), List.of("3 mois", "Taille beaucoup trop longue"), List.of(), List.of(),
                 null, null, null);
 
@@ -208,7 +209,9 @@ class AdminProductControllerTest {
         return new ProductRequest(name, "Sneakers", "Description", new BigDecimal("29.90"), 12);
     }
 
-    private ProductResponse response(Long id, String name) {
-        return new ProductResponse(id, name, "Sneakers", "Description", new BigDecimal("29.90"), 12);
+    private AdminProductResponse response(Long id, String name) {
+        return new AdminProductResponse(
+                new ProductResponse(id, name, "Sneakers", "Description", new BigDecimal("29.90"), 12),
+                null);
     }
 }

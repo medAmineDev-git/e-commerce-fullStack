@@ -94,6 +94,7 @@ describe('ProductForm', () => {
       ],
       sku: '',
       compareAtPrice: null,
+      wholesalePrice: null,
       seoTitle: '',
       seoDescription: '',
       subcategory: '',
@@ -284,6 +285,53 @@ describe('ProductForm', () => {
     });
   });
 
+  describe('prix de gros', () => {
+    const fillRequired = async () => {
+      component.updateTextField('name', 'Pull');
+      component.updatePrice('price', '35');
+      component.imageDraft.set('https://example.com/pull.jpg');
+      await component.addImage();
+    };
+
+    it('envoie le prix de gros saisi avec une virgule', async () => {
+      await fillRequired();
+      component.updatePrice('wholesalePrice', '24,500');
+
+      await component.save();
+
+      expect(mockStore.createProduct).toHaveBeenCalledWith(expect.objectContaining({ wholesalePrice: 24.5 }));
+    });
+
+    it('le laisse vide : il est facultatif', async () => {
+      await fillRequired();
+      component.updatePrice('wholesalePrice', '24');
+      component.updatePrice('wholesalePrice', '');
+
+      await component.save();
+
+      expect(mockStore.createProduct).toHaveBeenCalledWith(expect.objectContaining({ wholesalePrice: null }));
+    });
+
+    it("n'efface pas en silence une saisie illisible", async () => {
+      await fillRequired();
+      component.updatePrice('wholesalePrice', 'vingt');
+
+      await component.save();
+
+      expect(mockStore.createProduct).not.toHaveBeenCalled();
+      expect(component.errors().wholesalePrice).toContain('illisible');
+    });
+
+    it('précise au vendeur que la vitrine ne le montre pas', () => {
+      fixture.detectChanges();
+      const field = (fixture.nativeElement as HTMLElement)
+        .querySelector('[data-testid="wholesale-price"]')!
+        .closest('label')!;
+
+      expect(field.textContent).toContain('jamais sur la vitrine');
+    });
+  });
+
   it('should move a selected gallery image to the primary position', async () => {
     component.imageDraft.set('https://example.com/first.jpg');
     await component.addImage();
@@ -322,7 +370,8 @@ describe('ProductForm en edition', () => {
       name: 'Pull sans rayon',
       category: null,
       description: null,
-      price: 35,
+      price: 35.9,
+      wholesalePrice: 24.5,
       stockQuantity: 12,
       imageUrls: ['https://example.com/pull.jpg'],
     };
@@ -359,6 +408,12 @@ describe('ProductForm en edition', () => {
     expect(component.model().category).toBe('');
     expect(component.model().description).toBe('');
     expect(component.model().name).toBe('Pull sans rayon');
+  });
+
+  it('pré-remplit les prix avec une virgule, prix de gros compris', () => {
+    expect(component.priceText()).toBe('35,9');
+    expect(component.wholesalePriceText()).toBe('24,5');
+    expect(component.model().wholesalePrice).toBe(24.5);
   });
 
   it('should update a product whose category and description are absent', async () => {
